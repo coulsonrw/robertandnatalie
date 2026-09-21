@@ -1,0 +1,68 @@
+{
+  "capturedAt": "2026-09-21T23:24:02.485Z",
+  "browser": "chromium 141.0.7390.37",
+  "viewports": {
+    "320": {
+      "opened": {
+        "scrollWidth": 320,
+        "innerWidth": 320,
+        "bodyScrollWidth": 320
+      },
+      "docked": {
+        "scrollWidth": 320,
+        "innerWidth": 320,
+        "bodyScrollWidth": 320
+      },
+      "horizontalOverflow": false
+    },
+    "390": {
+      "opened": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390
+      },
+      "docked": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390
+      },
+      "horizontalOverflow": false
+    },
+    "768": {
+      "opened": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "bodyScrollWidth": 768
+      },
+      "docked": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "bodyScrollWidth": 768
+      },
+      "horizontalOverflow": false
+    },
+    "1440": {
+      "opened": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440
+      },
+      "docked": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440
+      },
+      "horizontalOverflow": false
+    }
+  },
+  "entryFlow1440": {
+    "dialogOpen": true,
+    "restored": true
+  },
+  "entryFlow390": {
+    "dialogOpen": true,
+    "restored": true
+  },
+  "keyboardFocusAfterThreeTabs": "Invitation",
+  "reducedMotionLayerHiddenWithin100ms": true
+}
