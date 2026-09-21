@@ -27,6 +27,7 @@ export function renderRsvp(view) {
     cutoffAt: r.cutoffAt,
     allowPreview: r.allowPreview,
     preview: r.allowPreview ? r.preview : null,
+    mealChoices: r.mealChoices && r.mealChoices.eventId && (r.mealChoices.options || []).length ? r.mealChoices : null,
     closedText: r.closedText,
     notesPurpose: r.notesPurpose,
     contact: view.contact,

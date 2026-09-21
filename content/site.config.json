@@ -8,7 +8,8 @@
     "baseUrl": "https://robertandnatalie.wedding",
     "noindex": true,
     "description": "The wedding of Robert and Natalie, Saturday 19 December 2026, Point Clear, Alabama.",
-    "phase": "pre-event"
+    "phase": "pre-event",
+    "launchApproved": false
   },
   "couple": {
     "displayName": "Robert and Natalie",
@@ -51,7 +52,8 @@
       "state": "approved",
       "owner": "Robert / Natalie",
       "source": "PRD v1.1 §06 approved content master",
-      "reviewed": "2026-09-21"
+      "reviewed": "2026-09-21",
+      "note": "Wording matches the PRD §06 content master. Capitalisation follows the approved invitation artwork (A2: 'With Joy and Gratitude, request the pleasure of Your Company for their Wedding'), which the PRD makes the visual authority; the PRD text shows the same words in lower case. Owner to confirm the capitalisation; the build blocks any change to the words themselves."
     }
   },
   "events": [
@@ -319,72 +321,163 @@
     "closedText": "Online responses have now closed. If you need to change your response, please contact us directly.",
     "notesPurpose": "Optional. Share anything that helps us look after you, such as dietary or access needs. This is used only for planning and shared only with the people who need it.",
     "preview": {
-      "code": "PREVIEW",
-      "household": {
-        "id": "hh_preview",
-        "label": "The Example Household",
-        "contactEmail": "",
-        "guests": [
-          {
-            "id": "g_alex",
-            "name": "Alex Example",
-            "kind": "named"
-          },
-          {
-            "id": "g_sam",
-            "name": "Sam Example",
-            "kind": "named"
-          },
-          {
-            "id": "g_alex_guest",
-            "name": null,
-            "kind": "plus-one",
-            "hostGuestId": "g_alex"
-          },
-          {
-            "id": "g_jordan",
-            "name": "Jordan Example",
-            "kind": "named"
-          }
-        ],
-        "entitlements": [
-          {
-            "guestId": "g_alex",
-            "eventId": "ceremony"
-          },
-          {
-            "guestId": "g_alex",
-            "eventId": "reception"
-          },
-          {
-            "guestId": "g_sam",
-            "eventId": "ceremony"
-          },
-          {
-            "guestId": "g_sam",
-            "eventId": "reception"
-          },
-          {
-            "guestId": "g_alex_guest",
-            "eventId": "ceremony"
-          },
-          {
-            "guestId": "g_alex_guest",
-            "eventId": "reception"
-          },
-          {
-            "guestId": "g_jordan",
-            "eventId": "reception"
-          }
-        ]
-      }
+      "households": [
+        {
+          "code": "PREVIEW",
+          "id": "hh_preview",
+          "label": "The Example Household",
+          "contactEmail": "",
+          "guests": [
+            {
+              "id": "g_alex",
+              "name": "Alex Example",
+              "kind": "named"
+            },
+            {
+              "id": "g_sam",
+              "name": "Sam Example",
+              "kind": "named"
+            },
+            {
+              "id": "g_alex_guest",
+              "name": null,
+              "kind": "plus-one",
+              "hostGuestId": "g_alex"
+            },
+            {
+              "id": "g_jordan",
+              "name": "Jordan Example",
+              "kind": "named"
+            }
+          ],
+          "entitlements": [
+            {
+              "guestId": "g_alex",
+              "eventId": "ceremony"
+            },
+            {
+              "guestId": "g_alex",
+              "eventId": "reception"
+            },
+            {
+              "guestId": "g_sam",
+              "eventId": "ceremony"
+            },
+            {
+              "guestId": "g_sam",
+              "eventId": "reception"
+            },
+            {
+              "guestId": "g_alex_guest",
+              "eventId": "ceremony"
+            },
+            {
+              "guestId": "g_alex_guest",
+              "eventId": "reception"
+            },
+            {
+              "guestId": "g_jordan",
+              "eventId": "reception"
+            }
+          ]
+        },
+        {
+          "code": "SOLO",
+          "id": "hh_preview_solo",
+          "label": "Taylor Example",
+          "contactEmail": "",
+          "guests": [
+            {
+              "id": "g_taylor",
+              "name": "Taylor Example",
+              "kind": "named"
+            }
+          ],
+          "entitlements": [
+            {
+              "guestId": "g_taylor",
+              "eventId": "ceremony"
+            },
+            {
+              "guestId": "g_taylor",
+              "eventId": "reception"
+            }
+          ]
+        },
+        {
+          "code": "FAMILY",
+          "id": "hh_preview_family",
+          "label": "The Rivera Example Family",
+          "contactEmail": "rivera@example.com",
+          "guests": [
+            {
+              "id": "g_morgan",
+              "name": "Morgan Example",
+              "kind": "named"
+            },
+            {
+              "id": "g_jamie",
+              "name": "Jamie Example",
+              "kind": "named"
+            },
+            {
+              "id": "g_riley",
+              "name": "Riley Example",
+              "kind": "named"
+            },
+            {
+              "id": "g_quinn",
+              "name": "Quinn Example",
+              "kind": "named"
+            }
+          ],
+          "entitlements": [
+            {
+              "guestId": "g_morgan",
+              "eventId": "ceremony"
+            },
+            {
+              "guestId": "g_morgan",
+              "eventId": "reception"
+            },
+            {
+              "guestId": "g_jamie",
+              "eventId": "ceremony"
+            },
+            {
+              "guestId": "g_jamie",
+              "eventId": "reception"
+            },
+            {
+              "guestId": "g_riley",
+              "eventId": "ceremony"
+            },
+            {
+              "guestId": "g_riley",
+              "eventId": "reception"
+            },
+            {
+              "guestId": "g_quinn",
+              "eventId": "ceremony"
+            },
+            {
+              "guestId": "g_quinn",
+              "eventId": "reception"
+            }
+          ]
+        }
+      ]
     },
     "approval": {
       "state": "pending",
       "owner": "Robert / Natalie / technical lead",
       "source": "PRD §08–§11",
       "reviewed": "2026-09-21",
-      "note": "Backend service, credential delivery and cutoff are undecided. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only."
+      "note": "Backend service, credential delivery and cutoff are undecided. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. Synthetic fixtures (PRD §14): PREVIEW = couple with a plus-one slot and a reception-only guest; SOLO = an individual; FAMILY = a named family including children as named invitees."
+    },
+    "mealChoices": {
+      "eventId": null,
+      "options": []
     }
   },
   "privacy": {

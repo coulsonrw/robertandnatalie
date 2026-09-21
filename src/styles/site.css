@@ -78,7 +78,7 @@ a:hover { color: var(--ink); }
 .btn-primary:hover { background: #121311; color: #fff; }
 .btn-secondary { background: transparent; color: var(--ink); border-color: var(--ink); }
 .btn-secondary:hover { background: var(--ink); color: var(--paper); }
-.btn-tertiary { background: transparent; color: var(--gold-deep); border-color: var(--gold); }
+.btn-tertiary { background: transparent; color: var(--gold-deep); border-color: var(--gold-deep); }
 .btn-tertiary:hover { color: var(--ink); border-color: var(--ink); }
 .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.55; cursor: progress; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
@@ -118,7 +118,7 @@ a:hover { color: var(--ink); }
   .site-nav { order: 4; }
   .nav-toggle {
     display: inline-flex; align-items: center; gap: 8px; min-height: 44px; min-width: 44px; padding: 0 12px;
-    background: transparent; border: 1.5px solid var(--gold); border-radius: var(--radius);
+    background: transparent; border: 1.5px solid var(--gold-deep); border-radius: var(--radius);
     font-family: var(--font-sc); font-weight: 600; font-size: 1rem; letter-spacing: 0.08em; color: var(--ink); cursor: pointer;
   }
   .nav-toggle-bars { display: inline-flex; flex-direction: column; gap: 4px; width: 18px; }
@@ -337,7 +337,9 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .js-only { display: none; }
 .js .js-only { display: block; }
 .no-js .hero-identity { display: none; }
-.text-button { background: none; border: 0; padding: 4px 2px; font: inherit; color: var(--gold-deep); text-decoration: underline; text-underline-offset: 0.16em; cursor: pointer; }
+.text-button { background: none; border: 0; padding: 0 6px; margin: 0 -6px; min-height: 44px; display: inline-flex; align-items: center; font: inherit; color: var(--gold-deep); text-decoration: underline; text-underline-offset: 0.16em; cursor: pointer; }
+/* Standalone links get a 44px tap area (PRD §13 controls); links inside running prose are left alone. */
+.card-links a, .footer-links a, address a, .standalone-link, .contact-links a, .back-link a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; margin: -10px -6px; }
 .text-button:hover { color: var(--ink); }
 
 .entry { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; background: var(--paper); }
@@ -351,6 +353,7 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .entry-scene { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: clamp(24px, 5vw, 56px) var(--gutter); transition: opacity 0.5s; }
 .entry-scene.is-fading { opacity: 0; pointer-events: none; }
 .entry-hint { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.1em; font-size: 1.05rem; color: var(--ink-soft); text-align: center; margin: 28px 0 0; }
+.entry-glance { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 0; font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.1em; font-size: 1.05rem; color: var(--ink); text-align: center; margin: 12px 0 0; }
 .entry-open { display: flex; flex-direction: column; align-items: center; padding: clamp(20px, 4vw, 48px) var(--gutter) clamp(40px, 6vw, 72px); }
 .entry-open .entry-hint { margin: 22px 0 16px; }
 .entry-card-slot { width: 100%; max-width: 760px; }
@@ -383,6 +386,8 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .keepsake-btn { position: absolute; inset: 0; background: transparent; border: 2px solid transparent; border-radius: 4px; cursor: pointer; padding: 0; }
 .keepsake-btn:hover { border-color: var(--gold); }
 .keepsake-btn:focus-visible { outline: 3px solid var(--navy); outline-offset: 4px; }
+.keepsake-caption { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 6px; font-family: var(--font-sc); font-weight: 600; font-size: 0.85rem; letter-spacing: 0.1em; color: var(--ink); white-space: nowrap; pointer-events: none; }
+.keepsake { margin-bottom: 22px; }
 .invitation-dialog { border: 0; background: transparent; padding: 0; margin: auto; max-width: none; max-height: none; width: min(100vw, 840px); overflow: visible; }
 .invitation-dialog::backdrop { background: rgba(41, 42, 40, 0.55); }
 .dialog-frame { position: relative; }

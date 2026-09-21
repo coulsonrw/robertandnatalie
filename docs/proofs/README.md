@@ -1,6 +1,6 @@
 # Visual proofs
 
-Captured 2026-09-21T23:00:32.471Z with Chromium 141.0.7390.37 on Node v22.22.2 using `npm run proofs` (Playwright, headless).
+Captured 2026-09-21T23:11:28.552Z with Chromium 141.0.7390.37 on Node v22.22.2 using `npm run proofs` (Playwright, headless).
 Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adapter; nothing is saved.
 
 ## Horizontal overflow check (must be none)
@@ -43,12 +43,16 @@ Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adap
 
 ## Entry flow (sealed envelope → invitation → site with keepsake → dialog)
 
-- 390px: after opening, state=open focus=invitation-card; after entering, state=site focus=hero-title entry hidden=true keepsake=39×108 at (12, 724); dialog modal=true focus=dialog-close; after Escape state=site focus=keepsake-btn; deep link /#wedding-day skips the envelope=true scrolled=true; page errors=0.
-- 1440px: after opening, state=open focus=invitation-card; after entering, state=site focus=hero-title entry hidden=true keepsake=98×160 at (12, 728); dialog modal=true focus=dialog-close; after Escape state=site focus=keepsake-btn; deep link /#wedding-day skips the envelope=true scrolled=true; page errors=0.
+- 390px: after opening, state=open focus=invitation-card; after entering, state=site focus=hero-title entry hidden=true keepsake=39×108 at (12, 702); dialog modal=true focus=dialog-close; after Escape state=site focus=keepsake-btn; deep link /#wedding-day skips the envelope=true scrolled=true; page errors=0.
+- 1440px: after opening, state=open focus=invitation-card; after entering, state=site focus=hero-title entry hidden=true keepsake=98×160 at (12, 706); dialog modal=true focus=dialog-close; after Escape state=site focus=keepsake-btn; deep link /#wedding-day skips the envelope=true scrolled=true; page errors=0.
 
 ## Reduced motion, keyboard only (390)
 
-- Enter on the seal: state=open, focus=invitation-card; Enter on the invitation: state=site, focus=hero-title.
+- On load the invitation is shown without the sealed envelope: state=open, seal visible=false, running animations=0; Enter on "Continue to the website": state=site, focus=hero-title, running animations=0.
+
+## Decline-all household (AT-08, synthetic code SOLO, 390)
+
+- Details step skipped when everyone declines: true; decline saved with reference PREVIEW-ABD449 (2 guest/event rows).
 
 ## Private-link access (390)
 
@@ -91,6 +95,8 @@ Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adap
 - rsvp-coming-soon-320.png
 - rsvp-coming-soon-390.png
 - rsvp-coming-soon-768.png
+- rsvp-decline-all-confirmation-390.png
+- rsvp-decline-all-review-390.png
 - rsvp-link-token-390.png
 - rsvp-preview-access-1440.png
 - rsvp-preview-access-320.png

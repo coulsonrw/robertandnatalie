@@ -68,21 +68,26 @@
 
   // ---------- adapters ----------
   function mockAdapter(preview) {
-    var hh = JSON.parse(JSON.stringify(preview.household));
-    var open = false;
-    var store = {
-      revision: 0,
-      responses: hh.entitlements.map(function (e) { return { guestId: e.guestId, eventId: e.eventId, status: 'pending' }; }),
-      plusOneNames: {}, contactEmail: hh.contactEmail || '', notes: '', reference: null, submittedAt: null, seen: {}
-    };
+    var households = JSON.parse(JSON.stringify(preview.households || []));
+    var stores = {};
+    var current = null;
+    function storeFor(hh) {
+      if (!stores[hh.id]) stores[hh.id] = {
+        revision: 0,
+        responses: hh.entitlements.map(function (e) { return { guestId: e.guestId, eventId: e.eventId, status: 'pending', meal: null }; }),
+        plusOneNames: {}, contactEmail: hh.contactEmail || '', notes: '', reference: null, submittedAt: null, seen: {}
+      };
+      return stores[hh.id];
+    }
     function snapshot() {
+      var hh = current; var store = storeFor(hh);
       return {
         household: {
           id: hh.id, label: hh.label, contactEmail: store.contactEmail,
           guests: hh.guests.map(function (g) { return { id: g.id, kind: g.kind, hostGuestId: g.hostGuestId || null, name: g.kind === 'plus-one' ? (store.plusOneNames[g.id] || null) : g.name }; })
         },
         entitlements: hh.entitlements,
-        responses: store.responses.map(function (r) { return { guestId: r.guestId, eventId: r.eventId, status: r.status }; }),
+        responses: store.responses.map(function (r) { return { guestId: r.guestId, eventId: r.eventId, status: r.status, meal: r.meal || null }; }),
         notes: store.notes, revision: store.revision, reference: store.reference, submittedAt: store.submittedAt,
         emailQueued: false, rsvp: { open: true, cutoffAt: cfg.cutoffAt }
       };
@@ -91,23 +96,27 @@
       kind: 'preview',
       openSession: function (code) {
         return wait(350).then(function () {
-          if (String(code || '').trim().toUpperCase() !== preview.code.toUpperCase()) throw new RsvpError('invalid_code');
-          open = true; return snapshot();
+          var c = String(code || '').trim().toUpperCase();
+          var hh = households.filter(function (h) { return String(h.code).toUpperCase() === c; })[0];
+          if (!hh) throw new RsvpError('invalid_code');
+          current = hh; return snapshot();
         });
       },
-      getSession: function () { return Promise.resolve(open ? snapshot() : null); },
+      getSession: function () { return Promise.resolve(current ? snapshot() : null); },
       saveResponse: function (p) {
         return wait(500).then(function () {
-          if (!open) throw new RsvpError('invalid_session');
+          if (!current) throw new RsvpError('invalid_session');
+          var hh = current; var store = storeFor(hh);
           if (store.seen[p.requestId]) return store.seen[p.requestId];
           if (p.revision !== store.revision) throw new RsvpError('conflict', '', { latest: snapshot() });
           p.responses.forEach(function (r) {
             var ok = hh.entitlements.some(function (e) { return e.guestId === r.guestId && e.eventId === r.eventId; });
             if (!ok || ['attending', 'declining'].indexOf(r.status) === -1) throw new RsvpError('validation');
+            if (r.meal != null && (!cfg.mealChoices || cfg.mealChoices.eventId !== r.eventId || cfg.mealChoices.options.indexOf(r.meal) === -1)) throw new RsvpError('validation');
           });
           store.responses = store.responses.map(function (r) {
             var n = p.responses.filter(function (x) { return x.guestId === r.guestId && x.eventId === r.eventId; })[0];
-            return n ? { guestId: r.guestId, eventId: r.eventId, status: n.status } : r;
+            return n ? { guestId: r.guestId, eventId: r.eventId, status: n.status, meal: n.status === 'attending' ? (n.meal || null) : null } : r;
           });
           store.plusOneNames = Object.assign({}, p.plusOneNames || {});
           store.contactEmail = p.contactEmail || '';
@@ -118,7 +127,7 @@
           var snap = snapshot(); store.seen[p.requestId] = snap; return snap;
         });
       },
-      endSession: function () { open = false; return Promise.resolve(); }
+      endSession: function () { current = null; return Promise.resolve(); }
     };
   }
 
@@ -168,9 +177,11 @@
 
   // ---------- state ----------
   var state = {
-    step: 'access', session: null, answers: {}, plusOneNames: {}, contactEmail: '', notes: '',
+    step: 'access', session: null, answers: {}, plusOneNames: {}, contactEmail: '', notes: '', meals: {},
     requestId: null, busy: false, notice: null, errors: {}, focusHeading: false
   };
+  var mealCfg = cfg.mealChoices && cfg.mealChoices.eventId && cfg.mealChoices.options && cfg.mealChoices.options.length ? cfg.mealChoices : null;
+  function mealAsked(gid) { return !!mealCfg && state.answers[key(gid, mealCfg.eventId)] === 'attending'; }
 
   function loadSession(session, keepLocal) {
     var sameHousehold = keepLocal && state.session && state.session.household.id === session.household.id;
@@ -178,7 +189,10 @@
     var localNames = sameHousehold ? state.plusOneNames : {};
     state.session = session;
     state.answers = {};
-    session.responses.forEach(function (r) { state.answers[key(r.guestId, r.eventId)] = r.status === 'pending' ? null : r.status; });
+    var localMeals = sameHousehold ? state.meals : {};
+    state.meals = {};
+    session.responses.forEach(function (r) { state.answers[key(r.guestId, r.eventId)] = r.status === 'pending' ? null : r.status; if (r.meal && mealCfg && r.eventId === mealCfg.eventId) state.meals[r.guestId] = r.meal; });
+    Object.keys(localMeals).forEach(function (k) { if (localMeals[k]) state.meals[k] = localMeals[k]; });
     Object.keys(local).forEach(function (k) { if (local[k]) state.answers[k] = local[k]; });
     state.plusOneNames = {};
     session.household.guests.forEach(function (g) { if (g.kind === 'plus-one' && g.name) state.plusOneNames[g.id] = g.name; });
@@ -252,7 +266,7 @@
     append(form, el('div', { class: 'field' },
       el('label', { for: 'code', text: 'Invitation code' }),
       el('input', { class: 'input', id: 'code', name: 'code', type: 'text', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', required: true, 'aria-describedby': 'code-hint' + (state.errors.code ? ' code-error' : ''), 'aria-invalid': state.errors.code ? 'true' : null, value: state.codeValue || '' }),
-      el('p', { class: 'hint', id: 'code-hint' }, mode === 'preview' ? 'This is a preview with synthetic guests. Use the code ' + cfg.preview.code + '.' : 'Your code is printed with your invitation. If you followed a personal link, you may not need it.'),
+      el('p', { class: 'hint', id: 'code-hint' }, mode === 'preview' ? 'This is a preview with synthetic guests. Codes: ' + (cfg.preview.households || []).map(function (h) { return h.code; }).join(', ') + '.' : 'Your code is printed with your invitation. If you followed a personal link, you may not need it.'),
       state.errors.code ? el('p', { class: 'error-text', id: 'code-error' }, icon('i-alert'), el('span', { text: state.errors.code })) : null
     ));
     append(form, el('div', { class: 'form-actions' }, busyButton('Find my invitation', { class: 'btn btn-primary', type: 'submit', 'data-busy-label': 'Checking…' })));
@@ -323,6 +337,22 @@
       el('p', { class: 'hint', id: 'email-hint', text: 'Used to confirm your response and reach you if plans change. Not shared with anyone else.' }),
       state.errors.contactEmail ? el('p', { class: 'error-text', id: 'email-error' }, icon('i-alert'), el('span', { text: state.errors.contactEmail })) : null
     ));
+    if (mealCfg) {
+      var mealEvent = eventById[mealCfg.eventId] || { label: mealCfg.eventId };
+      var mealGuests = guests().filter(function (g) { return mealAsked(g.id); });
+      if (mealGuests.length) {
+        var fs = el('fieldset', { class: 'meal-group' }, el('legend', { text: 'Meal choice for the ' + mealEvent.label.toLowerCase() }));
+        mealGuests.forEach(function (g) {
+          var id = 'meal-' + g.id; var errKey = 'meal:' + g.id;
+          var select = el('select', { class: 'input', id: id, 'aria-invalid': state.errors[errKey] ? 'true' : null, 'aria-describedby': state.errors[errKey] ? id + '-error' : null, onchange: function (e) { state.meals[g.id] = e.target.value; } },
+            el('option', { value: '', text: 'Choose…' }),
+            mealCfg.options.map(function (o) { return el('option', { value: o, selected: state.meals[g.id] === o ? true : null, text: o }); }));
+          append(fs, el('div', { class: 'field' }, el('label', { for: id, text: guestLabel(g) }), select,
+            state.errors[errKey] ? el('p', { class: 'error-text', id: id + '-error' }, icon('i-alert'), el('span', { text: state.errors[errKey] })) : null));
+        });
+        append(form, fs);
+      }
+    }
     var count = el('p', { class: 'hint char-count', id: 'notes-count', text: (500 - state.notes.length) + ' characters left' });
     append(form, el('div', { class: 'field' },
       el('label', { for: 'notes', text: 'Anything we should know?' }),
@@ -348,10 +378,11 @@
     guests().forEach(function (g) {
       entitlementsFor(g.id).forEach(function (eid) {
         var ev = eventById[eid] || { label: eid, name: '' };
+        var mealCell = mealCfg && eid === mealCfg.eventId && state.answers[key(g.id, eid)] === 'attending' ? ' · ' + (state.meals[g.id] || 'meal not chosen') : '';
         rows.push(el('tr', {},
           el('td', { 'data-label': 'Guest', text: guestLabel(g) }),
           el('td', { 'data-label': 'Event', text: ev.label + (ev.name ? ' — ' + ev.name : '') }),
-          el('td', { 'data-label': 'Response' }, statusPill(state.answers[key(g.id, eid)]))
+          el('td', { 'data-label': 'Response' }, statusPill(state.answers[key(g.id, eid)]), mealCell ? el('span', { class: 'muted', text: mealCell }) : null)
         ));
       });
     });
@@ -384,6 +415,7 @@
     var parts = [stepper('confirmation'), heading('Thank you — your response is saved'),
       el('p', { class: 'reference' }, 'Reference ', el('strong', { text: s.reference || '—' })),
       el('p', { text: (when ? 'Saved ' + when + '. ' : '') + (s.emailQueued && state.contactEmail ? 'A confirmation will be emailed to ' + state.contactEmail + '.' : 'Please keep this reference for your records.') }),
+      (!s.emailQueued && anyoneAttending()) ? el('div', { class: 'status', role: 'note' }, icon('i-info'), el('p', { text: 'A confirmation email is not available' + (mode === 'preview' ? ' in this preview' : ' right now') + '. Your response is saved under the reference above; if you would like a copy, please contact us.' })) : null,
       summaryTable()];
     if (rsvpOpen()) parts.push(el('p', { text: 'You can come back and change your response until responses close.' }));
     parts.push(el('div', { class: 'form-actions' },
@@ -476,7 +508,7 @@
 
   function onNotMine() {
     adapter.endSession().then(function () {
-      state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = '';
+      state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = ''; state.meals = {};
       go('access');
       setNotice('info', 'You have been signed out of that invitation. Enter the code from your own invitation to continue.');
     });
@@ -484,7 +516,7 @@
 
   function onSignOut() {
     adapter.endSession().then(function () {
-      state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = '';
+      state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = ''; state.meals = {};
       go('access');
       setNotice('success', 'Thank you. You have been signed out of this invitation.');
     });
@@ -535,6 +567,11 @@
     }
     state.contactEmail = email;
     state.notes = (state.notes || '').slice(0, 500);
+    if (mealCfg) {
+      var firstMeal = null;
+      guests().forEach(function (g) { if (mealAsked(g.id) && !state.meals[g.id]) { state.errors['meal:' + g.id] = 'Please choose a meal for ' + guestLabel(g) + '.'; firstMeal = firstMeal || ('meal-' + g.id); } });
+      if (firstMeal) { render(); setNotice('error', 'Please choose a meal for each guest attending.'); var m = document.getElementById(firstMeal); if (m) m.focus(); return; }
+    }
     setNotice(null);
     go('review');
   }
@@ -551,7 +588,11 @@
       notes: anyoneAttending() ? state.notes : ''
     };
     guests().forEach(function (g) {
-      entitlementsFor(g.id).forEach(function (eid) { payload.responses.push({ guestId: g.id, eventId: eid, status: state.answers[key(g.id, eid)] }); });
+      entitlementsFor(g.id).forEach(function (eid) {
+        var row = { guestId: g.id, eventId: eid, status: state.answers[key(g.id, eid)] };
+        if (mealCfg && eid === mealCfg.eventId && row.status === 'attending') row.meal = state.meals[g.id] || null;
+        payload.responses.push(row);
+      });
       if (g.kind === 'plus-one' && attendingAny(g.id)) payload.plusOneNames[g.id] = (state.plusOneNames[g.id] || '').trim();
     });
     state.busy = true; render(); setNotice('info', 'Saving your response…');
@@ -575,5 +616,5 @@
       state.step = session.reference ? 'confirmation' : (rsvpOpen() ? 'invitees' : 'closed');
     }
     render();
-  }).catch(function () { render(); });
+  }).catch(function (err) { render(); if (err && err.code === 'network') setNotice('error', MESSAGES.network); });
 })();

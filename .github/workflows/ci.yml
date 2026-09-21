@@ -19,7 +19,13 @@ jobs:
       - name: Validate configuration
         run: npm run check
       - name: Build site
-        run: npm run build
+        run: |
+          npm run build | tee build.log
+          { echo '## Launch readiness'; echo; echo '```'; sed -n '/Launch readiness/,$p' build.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Approval register is up to date
+        run: |
+          npm run register >/dev/null
+          git diff --exit-code -- docs/CONTENT_APPROVAL_REGISTER.md || (echo 'Run npm run register and commit docs/CONTENT_APPROVAL_REGISTER.md' && exit 1)
       - name: Confirm required output
         run: |
           test -f dist/index.html

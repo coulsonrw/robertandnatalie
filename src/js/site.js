@@ -141,7 +141,17 @@
     lift.style.top = Math.round(0.7 * H + 0.6 * H) + 'px';
   }
 
-  function setState(next) { state = next; document.body.setAttribute('data-entry-state', next); }
+  var skipLink = document.querySelector('.skip-link');
+  var namesHeading = document.getElementById('invitation-title');
+  function setState(next) {
+    state = next;
+    document.body.setAttribute('data-entry-state', next);
+    var inEntry = next === 'closed' || next === 'open';
+    // While the site is hidden, the global skip link enters the site instead of pointing at hidden content,
+    // and the invitation heading is the page's level-one heading.
+    if (skipLink) { if (inEntry) skipLink.setAttribute('data-action', 'enter'); else skipLink.removeAttribute('data-action'); }
+    if (namesHeading) { if (inEntry) { namesHeading.setAttribute('role', 'heading'); namesHeading.setAttribute('aria-level', '1'); } else { namesHeading.removeAttribute('role'); namesHeading.removeAttribute('aria-level'); } }
+  }
 
   function dock(animate) {
     keepsake.hidden = false;
@@ -250,6 +260,18 @@
     showSite();
     dock(false);
     if (hashTarget) { hashTarget.scrollIntoView(); }
+  } else if (!motion()) {
+    // Reduced motion: skip the sealed envelope and show the invitation directly (equivalent static rendering).
+    document.body.classList.add('is-entry');
+    site.hidden = true;
+    site.setAttribute('inert', '');
+    slots.inline.classList.add('is-empty');
+    envelope.classList.add('is-open');
+    scene.hidden = true;
+    openStage.hidden = false;
+    slots.open.appendChild(card);
+    entry.hidden = false;
+    setState('open');
   } else {
     startClosed();
   }

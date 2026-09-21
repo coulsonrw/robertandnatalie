@@ -78,7 +78,7 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   await page.waitForTimeout(2000);
   await page.screenshot({ path: path.join(OUT, `entry-opened-${vp.width}.png`), fullPage: true });
   const opened = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), focused: document.activeElement && document.activeElement.id }));
-  await page.click('[data-action="enter"]');
+  await page.click('button[data-action="enter"]');
   await page.waitForTimeout(1500);
   await page.screenshot({ path: path.join(OUT, `entry-site-keepsake-${vp.width}.png`), fullPage: false });
   const entered = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), focused: document.activeElement && document.activeElement.id, entryHidden: document.getElementById('entry').hidden, keepsake: document.getElementById('keepsake').getBoundingClientRect().toJSON() }));
@@ -134,6 +134,30 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   await page.click('[data-action="submit"]');
   await page.waitForSelector('[data-step="confirmation"]');
   await page.screenshot({ path: path.join(OUT, `rsvp-preview-confirmation-${vp.width}.png`), fullPage: true });
+  await context.close();
+}
+
+// Decline-all path (AT-08): no details step, a valid decline is saved
+{
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.goto(base + '/rsvp.html?preview=1', { waitUntil: 'networkidle' });
+  await settle(page);
+  await page.fill('#code', 'SOLO');
+  await page.click('button[type=submit]');
+  await page.waitForSelector('[data-step="invitees"]');
+  await page.click('[data-action="continue"]');
+  await page.waitForSelector('[data-step="attendance"]');
+  for (const r of await page.$$('input[type=radio][value=declining]')) await r.check();
+  await page.click('[data-action="continue"]');
+  await page.waitForSelector('[data-step="review"]');
+  const reviewStep = await page.evaluate(() => ({ step: document.querySelector('[data-step]').getAttribute('data-step'), emailAsked: !!document.getElementById('contactEmail') }));
+  await page.screenshot({ path: path.join(OUT, 'rsvp-decline-all-review-390.png'), fullPage: true });
+  await page.click('[data-action="submit"]');
+  await page.waitForSelector('[data-step="confirmation"]');
+  const confirmed = await page.evaluate(() => ({ reference: (document.querySelector('.reference strong') || {}).textContent, declines: document.querySelectorAll('.status-pill').length }));
+  await page.screenshot({ path: path.join(OUT, 'rsvp-decline-all-confirmation-390.png'), fullPage: true });
+  results.declineAll = { skippedDetails: reviewStep.step === 'review' && !reviewStep.emailAsked, reference: confirmed.reference, rows: confirmed.declines };
   await context.close();
 }
 
@@ -201,15 +225,14 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   const page = await context.newPage();
   await page.goto(base + '/?envelope=1', { waitUntil: 'networkidle' });
   await settle(page);
-  await page.focus('#seal');
-  await page.keyboard.press('Enter');
-  await page.waitForTimeout(200);
+  // With reduced motion the sealed envelope is skipped: the invitation is shown immediately, no animations run.
+  const rm1 = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), animations: document.getAnimations().length, sealVisible: !!(document.getElementById('seal') && document.getElementById('seal').offsetParent) }));
   await page.screenshot({ path: path.join(OUT, 'invitation-reduced-motion-390.png'), fullPage: false });
-  const rm1 = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), focused: document.activeElement && document.activeElement.id }));
+  await page.focus('button[data-action="enter"]');
   await page.keyboard.press('Enter');
   await page.waitForTimeout(200);
-  const rm2 = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), focused: document.activeElement && document.activeElement.id }));
-  results.reducedMotion = { afterOpen: rm1, afterEnter: rm2 };
+  const rm2 = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), focused: document.activeElement && document.activeElement.id, animations: document.getAnimations().length }));
+  results.reducedMotion = { start: rm1, afterEnter: rm2 };
   await context.close();
 }
 
@@ -251,7 +274,11 @@ const lines = [
   '',
   '## Reduced motion, keyboard only (390)',
   '',
-  results.reducedMotion ? `- Enter on the seal: state=${results.reducedMotion.afterOpen.state}, focus=${results.reducedMotion.afterOpen.focused}; Enter on the invitation: state=${results.reducedMotion.afterEnter.state}, focus=${results.reducedMotion.afterEnter.focused}.` : '- not run',
+  results.reducedMotion ? `- On load the invitation is shown without the sealed envelope: state=${results.reducedMotion.start.state}, seal visible=${results.reducedMotion.start.sealVisible}, running animations=${results.reducedMotion.start.animations}; Enter on "Continue to the website": state=${results.reducedMotion.afterEnter.state}, focus=${results.reducedMotion.afterEnter.focused}, running animations=${results.reducedMotion.afterEnter.animations}.` : '- not run',
+  '',
+  '## Decline-all household (AT-08, synthetic code SOLO, 390)',
+  '',
+  results.declineAll ? `- Details step skipped when everyone declines: ${results.declineAll.skippedDetails}; decline saved with reference ${results.declineAll.reference} (${results.declineAll.rows} guest/event rows).` : '- not run',
   '',
   '## Private-link access (390)',
   '',

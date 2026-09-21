@@ -19,9 +19,11 @@ const DIST = path.join(ROOT, 'dist');
 const args = new Set(process.argv.slice(2));
 const CHECK_ONLY = args.has('--check');
 const WRITE_REGISTER = args.has('--register');
+const STRICT = args.has('--strict'); // exit non-zero while launch blockers remain (RELEASE-01)
 
 const APPROVAL_STATES = ['approved', 'draft', 'carried-forward', 'publisher-claim', 'pending'];
 const CANONICAL_CLOSING_LINE = 'Where the ancient Moeli waters meet the Bahia Del Espiritu Santo';
+const CANONICAL_REQUEST = 'with joy and gratitude, request the pleasure of your company for their wedding in {destination}';
 const DAY_PARTS = ['Morning', 'Afternoon', 'Evening', 'Night'];
 
 const errors = [];
@@ -70,6 +72,12 @@ function validate(c) {
   if (!Array.isArray(wedding?.closingLine) || wedding.closingLine.length < 2) fail('wedding.closingLine must be an array of at least two lines');
   else if (wedding.closingLine.join(' ') !== CANONICAL_CLOSING_LINE) warn(`wedding.closingLine differs from the approved wording: "${CANONICAL_CLOSING_LINE}"`);
   if (!Array.isArray(c.invitation?.requestLines) || !c.invitation.requestLines.length) fail('invitation.requestLines is required');
+  else {
+    const joined = c.invitation.requestLines.join(' ').replace(/\s+/g, ' ').trim();
+    if (joined.toLowerCase() !== CANONICAL_REQUEST) fail(`invitation.requestLines wording differs from the PRD §06 content master ("${joined}")`);
+    else if (joined !== CANONICAL_REQUEST && !/capitalis|capitaliz/i.test(c.invitation.approval?.note ?? '')) warn('invitation.requestLines use different capitalisation from the PRD text; record the owner decision in invitation.approval.note');
+  }
+  if (typeof c.site?.launchApproved !== 'boolean') fail('site.launchApproved must be true or false (G3 record, RELEASE-01)');
 
   if (!Array.isArray(events) || !events.length) fail('events must be a non-empty array');
   else {
@@ -103,26 +111,36 @@ function validate(c) {
   if (r?.mode === 'live' && !r.apiBaseUrl) fail('rsvp.mode is live but rsvp.apiBaseUrl is not set');
   if (r?.apiBaseUrl && !/^https:\/\//.test(r.apiBaseUrl)) fail('rsvp.apiBaseUrl must use https');
   if (r?.cutoffAt != null && Number.isNaN(Date.parse(r.cutoffAt))) fail('rsvp.cutoffAt must be an ISO date-time or null');
+  const mc = r?.mealChoices;
+  if (mc && (mc.eventId || (mc.options ?? []).length)) {
+    if (!(events ?? []).some((e) => e.id === mc.eventId)) fail('rsvp.mealChoices.eventId must name an event');
+    if (!Array.isArray(mc.options) || mc.options.length < 2 || mc.options.some((o) => typeof o !== 'string' || !o.trim())) fail('rsvp.mealChoices.options needs at least two non-empty strings');
+  }
   if (r?.allowPreview) {
-    const hh = r.preview?.household;
-    if (!r.preview?.code || !hh) fail('rsvp.preview.code and rsvp.preview.household are required when allowPreview is true');
+    const hhs = r.preview?.households;
+    if (!Array.isArray(hhs) || !hhs.length) fail('rsvp.preview.households[] is required when allowPreview is true');
     else {
-      const gids = new Set();
-      for (const g of hh.guests ?? []) {
-        if (!g.id || gids.has(g.id)) fail(`preview guest id missing or duplicated: ${g.id}`); gids.add(g.id);
-        if (!['named', 'plus-one'].includes(g.kind)) fail(`preview guest ${g.id}: kind must be named or plus-one`);
-        if (g.kind === 'named' && !g.name) fail(`preview guest ${g.id}: named guests need a name`);
-        if (g.kind === 'plus-one' && !(hh.guests ?? []).some((x) => x.id === g.hostGuestId && x.kind === 'named')) fail(`preview guest ${g.id}: hostGuestId must reference a named guest`);
-      }
+      const codes = new Set(); const hids = new Set();
       const eids = new Set((events ?? []).map((e) => e.id));
-      const seen = new Set();
-      for (const e of hh.entitlements ?? []) {
-        const k = `${e.guestId}|${e.eventId}`;
-        if (seen.has(k)) fail(`preview entitlement duplicated: ${k}`); seen.add(k);
-        if (!gids.has(e.guestId)) fail(`preview entitlement references unknown guest ${e.guestId}`);
-        if (!eids.has(e.eventId)) fail(`preview entitlement references unknown event ${e.eventId}`);
+      for (const hh of hhs) {
+        if (!hh.code || !/^[A-Z0-9]{4,}$/i.test(hh.code)) fail(`preview household ${hh.id}: code should be a short alphanumeric code`);
+        if (codes.has((hh.code ?? '').toUpperCase())) fail(`preview household code duplicated: ${hh.code}`); codes.add((hh.code ?? '').toUpperCase());
+        if (!hh.id || hids.has(hh.id)) fail(`preview household id missing or duplicated: ${hh.id}`); hids.add(hh.id);
+        const gids = new Set();
+        for (const g of hh.guests ?? []) {
+          if (!g.id || gids.has(g.id)) fail(`preview guest id missing or duplicated: ${g.id}`); gids.add(g.id);
+          if (!['named', 'plus-one'].includes(g.kind)) fail(`preview guest ${g.id}: kind must be named or plus-one`);
+          if (g.kind === 'named' && !g.name) fail(`preview guest ${g.id}: named guests need a name`);
+          if (g.kind === 'plus-one' && !(hh.guests ?? []).some((x) => x.id === g.hostGuestId && x.kind === 'named')) fail(`preview guest ${g.id}: hostGuestId must reference a named guest`);
+        }
+        const seen = new Set();
+        for (const e of hh.entitlements ?? []) {
+          const k = `${e.guestId}|${e.eventId}`;
+          if (seen.has(k)) fail(`preview entitlement duplicated: ${k}`); seen.add(k);
+          if (!gids.has(e.guestId)) fail(`preview entitlement references unknown guest ${e.guestId}`);
+          if (!eids.has(e.eventId)) fail(`preview entitlement references unknown event ${e.eventId}`);
+        }
       }
-      if (/^[A-Z0-9]{4,}$/i.test(r.preview.code) === false) fail('rsvp.preview.code should be a short alphanumeric code');
     }
   }
 
@@ -205,7 +223,7 @@ function buildView(c) {
     rsvp: postEvent ? { ...c.rsvp, mode: 'closed', allowPreview: false, closedText: c.postEvent.message } : c.rsvp,
     privacy: c.privacy,
     lastReviewedLabel: reviewed.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
-    crestAlt: `The Coulson crest: two silver dolphins with gold collars joined by a gold chain around the ${c.couple.monogram} monogram above blue waves, with the motto “Je mourrai pour ceux que j’aime”.`,
+    crestAlt: `The family crest: two silver dolphins with gold collars joined by a gold chain around the ${c.couple.monogram} monogram above blue waves, with the motto “Je mourrai pour ceux que j’aime”.`,
   };
 }
 
@@ -255,12 +273,14 @@ function emit(c, view) {
 function readiness(c) {
   const items = []; // { level: 'blocker' | 'review' | 'info', item, detail }
   const add = (level, item, detail) => items.push({ level, item, detail });
+  const launching = c.rsvp.mode === 'live';
+  if (!c.site.launchApproved) add('blocker', 'Guest release (G3) not recorded', 'site.launchApproved is false. Set it to true only when RELEASE-01 is satisfied and the owners have approved release; `npm run build -- --strict` fails while any blocker remains.');
   if (c.rsvp.mode !== 'live') add('blocker', 'RSVP is not live', `rsvp.mode is "${c.rsvp.mode}"; guests see the ${c.rsvp.mode} message. A backend service and rsvp.apiBaseUrl are required (PRD §08–§11).`);
   if (!c.rsvp.cutoffAt) add('blocker', 'RSVP cutoff not set', 'rsvp.cutoffAt is null (PRD §16, RSVP-04).');
   if (!c.contact.email && !c.contact.phone) add('blocker', 'No private contact route', 'contact.email / contact.phone are null (PRD CONTENT-04, §03 exception path).');
   if (!c.privacy.rsvpProvider) add('blocker', 'RSVP provider not named in the privacy notice', 'privacy.rsvpProvider is null (PRD SEC-04).');
   for (const ev of c.events) {
-    for (const k of ['entrance', 'parking']) if (ev.venue[k] == null) add('review', `${ev.name}: ${k} unconfirmed`, `events[${ev.id}].venue.${k} is null; omitted from the page (PRD CONTENT-02, §16).`);
+    for (const k of ['entrance', 'parking']) if (ev.venue[k] == null) add(launching && k === 'entrance' ? 'blocker' : 'review', `${ev.name}: ${k} unconfirmed`, `events[${ev.id}].venue.${k} is null; omitted from the page (PRD CONTENT-02, §16).${launching && k === 'entrance' ? ' Essential for guest launch (PRD §15 risk controls).' : ''}`);
   }
   if (c.site.phase === 'post-event') add('info', 'Site is in post-event phase', 'RSVP calls to action are replaced by the thank-you content and online responses are closed (OPS-03).');
   if (!c.banner?.active) add('info', 'Urgent logistics banner is off', 'Set banner.active with an approved message to publish wedding-day logistics above every page (ADMIN-04, OPS-02).');
@@ -333,3 +353,7 @@ if (!CHECK_ONLY) {
 const items = readiness(config);
 printReport(items);
 if (WRITE_REGISTER) writeRegister(config, items);
+if (STRICT && items.some((i) => i.level === 'blocker')) {
+  console.error('Strict mode: launch blockers remain; refusing to treat this build as releasable.');
+  process.exit(2);
+}

@@ -56,6 +56,8 @@ The front end maps HTTP status to these codes when `error.code` is absent: 400 v
 - Guest and household IDs are immutable and opaque. Event IDs match `events[].id` in `content/site.config.json`.
 - `kind: "plus-one"` is a pre-authorized slot (RSVP-02); its `name` is set only when used.
 - `status` is `pending`, `attending` or `declining`. There is no "maybe" (RSVP-04).
+- `meal` (optional, per response) holds a configured meal choice for the event named in `rsvp.mealChoices.eventId`; it is only accepted for `attending` responses and only from the configured option list (RSVP-03, DATA-02). When no meal choices are configured the field is absent.
+- `emailQueued` is `true` only when a confirmation email was enqueued in the same transaction; the page shows an explicit "email not available" note otherwise (RSVP-06/07).
 - `revision` increments on every committed save and is used for optimistic concurrency (RSVP-05).
 
 ## Response payload
@@ -79,6 +81,10 @@ Server rules:
 4. In one transaction: update responses, plus-one names, contact email and notes; increment `revision`; set `reference` on first save; append a mail-outbox row and audit event (ARCH-03). Only then return `200`.
 5. After `rsvp.cutoffAt`, return `423 closed` to guests; owner corrections happen through the admin tools with an audit trail (RSVP-04).
 6. Never include `notes` in confirmation emails or general exports (SEC-05).
+
+## Synthetic fixtures
+
+`content/site.config.json` → `rsvp.preview.households` holds the PRD §14 fixtures used by the in-page mock and reusable by backend tests: `PREVIEW` (a couple, an authorised plus-one slot and a guest invited to the reception only), `SOLO` (an individual) and `FAMILY` (a named family with children as named invitees).
 
 ## Administration (ADMIN-01 to ADMIN-04, out of scope for the static site)
 

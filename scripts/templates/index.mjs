@@ -29,7 +29,7 @@ function invitationCard(view) {
 
 function entryStage(view) {
   const p = view.basePath;
-  return `<div class="entry" id="entry" hidden>
+  return `<main class="entry" id="entry" aria-label="Invitation" hidden>
   <div class="entry-bar">
     <span class="entry-brand">${esc(view.couple.displayName)}</span>
     <div class="entry-bar-actions">
@@ -50,6 +50,7 @@ function entryStage(view) {
         </button>
       </div>
       <p class="entry-hint" id="entry-hint">Tap the seal to open your invitation.</p>
+      <p class="entry-glance"><span>${esc(view.longDate)}</span><span class="dot" aria-hidden="true">·</span><span>${esc(view.wedding.destination)}</span></p>
     </div>
     <div class="entry-open" id="entry-open" hidden>
       <div class="entry-card-slot" id="entry-card-slot"></div>
@@ -60,13 +61,13 @@ function entryStage(view) {
       </div>
     </div>
   </div>
-</div>`;
+</main>`;
 }
 
 function heroSection(view) {
   const p = view.basePath;
   const [name1, name2] = view.couple.names;
-  const times = view.events.map((ev) => `<span>${esc(ev.name)}, ${esc(ev.clock)}</span>`).join('<span class="dot" aria-hidden="true">·</span>');
+  const times = view.events.map((ev) => `<span>${esc(ev.name)}, ${esc(ev.clock)}</span>`).join('<span class="dot" aria-hidden="true">·</span>') + `<span class="dot" aria-hidden="true">·</span><span>${esc(view.events[0].tzLabel)}</span>`;
   return `<section class="hero" aria-labelledby="hero-title">
   <div class="container hero-inner">
     <div class="hero-identity">
@@ -166,7 +167,7 @@ function travelSection(view) {
         <h3 id="getting-there-title">Getting to ${esc(view.wedding.destinationShort)}</h3>
         ${t.gettingThere.paragraphs.map((x) => `<p>${esc(x)}</p>`).join('\n        ')}
         ${t.gettingThere.airports.length ? `<ul class="plain-list">${t.gettingThere.airports.map((a) => `<li>Nearest named airport: ${esc(a.name)}${a.code ? ` (${esc(a.code)})` : ''}</li>`).join('')}</ul>` : ''}
-        <p><a href="${esc(hotel.links.gettingHere)}" rel="noopener">${esc(hotel.name)}: Getting Here</a></p>
+        <p><a class="standalone-link" href="${esc(hotel.links.gettingHere)}" rel="noopener">${esc(hotel.name)}: Getting Here</a></p>
         ${t.betweenVenues ? `<h3 class="h4">Between the venues</h3><p>${esc(t.betweenVenues)}</p>` : ''}
       </article>
     </div>
@@ -227,11 +228,12 @@ ${footer({ view })}
 <div class="keepsake" id="keepsake" hidden>
   <div class="keepsake-scale" id="keepsake-slot"></div>
   <button class="keepsake-btn" type="button" data-action="view-invitation" aria-label="View the invitation" aria-haspopup="dialog"></button>
+  <span class="keepsake-caption" aria-hidden="true">Invitation</span>
 </div>
 <dialog class="invitation-dialog" id="invitation-dialog" aria-label="Your invitation">
   <div class="dialog-frame">
     <button class="dialog-close" type="button" data-action="close-invitation" aria-label="Close the invitation">${icon('i-minus')}<span class="sr-only">Close</span></button>
-    <div class="dialog-slot" id="dialog-slot"></div>
+    <div class="dialog-slot" id="dialog-slot" tabindex="0" role="region" aria-label="Invitation, scrollable"></div>
   </div>
 </dialog>`;
   return shell({ view, title: null, bodyClass: 'home', bodyAttrs: `data-start="${start}"`, body });

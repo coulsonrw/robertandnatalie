@@ -10,7 +10,7 @@ Approval states: **approved** (owner-approved), **draft** (wording drafted by th
 |---|---|---|---|---|---|
 | `config.couple` | approved | Robert / Natalie | PRD v1.1 §01 confirmed basis | 2026-09-21 |  |
 | `config.wedding` | approved | Robert / Natalie | PRD v1.1 §01 and §06 content master | 2026-09-21 |  |
-| `config.invitation` | approved | Robert / Natalie | PRD v1.1 §06 approved content master | 2026-09-21 |  |
+| `config.invitation` | approved | Robert / Natalie | PRD v1.1 §06 approved content master | 2026-09-21 | Wording matches the PRD §06 content master. Capitalisation follows the approved invitation artwork (A2: 'With Joy and Gratitude, request the pleasure of Your Company for their Wedding'), which the PRD makes the visual authority; the PRD text shows the same words in lower case. Owner to confirm the capitalisation; the build blocks any change to the words themselves. |
 | `config.events[ceremony]` | carried-forward | Coordinator / venue | Chapel name and start time: PRD v1.1 §01. Address and website: previous site (repository history, commit e67972f). | 2026-09-21 | Exact chapel address, entrance, arrival, parking and accessibility notes require coordinator confirmation before guest launch (PRD §16). Unconfirmed items are omitted from the page. |
 | `config.events[reception]` | approved | Robert / Natalie; coordinator for entrance details | Venue and start time: PRD v1.1 §01. Resort address: PRD §07 CONTENT-03 [S5]. | 2026-09-21 | Resort address is verified; reception room, guest entrance and parking are unconfirmed and omitted. |
 | `config.weddingDay` | draft | Robert / Natalie | Drafted from PRD §07 CONTENT-02 | 2026-09-21 | Wording drafted by the implementation team; owner approval required. |
@@ -27,13 +27,14 @@ Approval states: **approved** (owner-approved), **draft** (wording drafted by th
 | `config.faqs[access-needs]` | draft | Robert / Natalie | PRD CONTENT-04, SEC-05 | 2026-09-21 |  |
 | `config.faqs[contact]` | pending | Robert / Natalie | — | 2026-09-21 | Contact route not yet supplied. The contact block is rendered from the contact section once set. |
 | `config.contact` | pending | Robert / Natalie | — | 2026-09-21 | Private contact route required before guest launch (PRD §03 exception path, CONTENT-04). |
-| `config.rsvp` | pending | Robert / Natalie / technical lead | PRD §08–§11 | 2026-09-21 | Backend service, credential delivery and cutoff are undecided. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. |
+| `config.rsvp` | pending | Robert / Natalie / technical lead | PRD §08–§11 | 2026-09-21 | Backend service, credential delivery and cutoff are undecided. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. Synthetic fixtures (PRD §14): PREVIEW = couple with a plus-one slot and a reception-only guest; SOLO = an individual; FAMILY = a named family including children as named invitees. |
 | `config.privacy` | draft | Robert / Natalie | PRD SEC-04, SEC-06 | 2026-09-21 | Retention period and RSVP provider require owner approval before launch. The notice does not claim legal compliance. |
 
 ## Launch readiness
 
 | Level | Item | Detail |
 |---|---|---|
+| blocker | Guest release (G3) not recorded | site.launchApproved is false. Set it to true only when RELEASE-01 is satisfied and the owners have approved release; `npm run build -- --strict` fails while any blocker remains. |
 | blocker | RSVP is not live | rsvp.mode is "coming-soon"; guests see the coming-soon message. A backend service and rsvp.apiBaseUrl are required (PRD §08–§11). |
 | blocker | RSVP cutoff not set | rsvp.cutoffAt is null (PRD §16, RSVP-04). |
 | blocker | No private contact route | contact.email / contact.phone are null (PRD CONTENT-04, §03 exception path). |
@@ -58,7 +59,7 @@ Approval states: **approved** (owner-approved), **draft** (wording drafted by th
 | review | config.faqs[access-needs]: draft | PRD CONTENT-04, SEC-05 |
 | review | config.faqs[contact]: pending, not published | Contact route not yet supplied. The contact block is rendered from the contact section once set. |
 | review | config.contact: pending, not published | Private contact route required before guest launch (PRD §03 exception path, CONTENT-04). |
-| review | config.rsvp: pending, not published | Backend service, credential delivery and cutoff are undecided. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. |
+| review | config.rsvp: pending, not published | Backend service, credential delivery and cutoff are undecided. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. Synthetic fixtures (PRD §14): PREVIEW = couple with a plus-one slot and a reception-only guest; SOLO = an individual; FAMILY = a named family including children as named invitees. |
 | review | config.privacy: draft | Retention period and RSVP provider require owner approval before launch. The notice does not claim legal compliance. |
 | info | Urgent logistics banner is off | Set banner.active with an approved message to publish wedding-day logistics above every page (ADMIN-04, OPS-02). |
 | info | No wedding room block published | travel.hotel.roomBlock is null; only general hotel information is shown (PRD CONTENT-03). |
