@@ -2,6 +2,7 @@
 // The browser receives only this household's permitted data (ARCH-01).
 
 import { one } from './db.js';
+import { mealOptionsOf } from './events.js';
 
 // Effective RSVP window: the owner-editable 'rsvp-settings' content (if any) overrides the
 // RSVP_CUTOFF_AT variable. Both are ISO 8601 with the event-local offset (RSVP-04).
@@ -35,7 +36,11 @@ export function buildSnapshot(loaded, window) {
         : { id: g.id, kind: 'named', name: g.display_name })),
     },
     entitlements: entitlements.map((e) => ({ guestId: e.guest_id, eventId: e.event_id })),
-    responses: entitlements.map((e) => ({ guestId: e.guest_id, eventId: e.event_id, status: e.status || 'pending' })),
+    responses: entitlements.map((e) => {
+      const r = { guestId: e.guest_id, eventId: e.event_id, status: e.status || 'pending' };
+      if (mealOptionsOf(e)) r.meal = e.meal_value || null; // present only where meals are configured
+      return r;
+    }),
     notes: notes || '',
     revision: state.revision,
     reference: state.reference || null,

@@ -54,7 +54,7 @@ export async function loadHousehold(db, householdId) {
   const guests = await all(db, 'SELECT * FROM guest WHERE household_id = ? AND state = ? ORDER BY sort_order, id', householdId, 'active');
   const entitlements = await all(
     db,
-    `SELECT ie.id, ie.guest_id, ie.event_id, r.id AS response_id, r.status, r.meal_value, r.submitted_at, r.origin, ev.sort_order
+    `SELECT ie.id, ie.guest_id, ie.event_id, r.id AS response_id, r.status, r.meal_value, r.submitted_at, r.origin, ev.sort_order, ev.meal_options_json
        FROM invitation_entitlement ie
        JOIN guest g ON g.id = ie.guest_id
        JOIN event ev ON ev.id = ie.event_id

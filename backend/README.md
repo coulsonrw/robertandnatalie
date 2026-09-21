@@ -21,6 +21,10 @@ This directory is a reference backend for the RSVP contract in `../docs/RSVP_API
 
 Dependencies: `wrangler`, `vitest`, `@cloudflare/vitest-pool-workers` (dev only). No runtime dependencies, no ORM.
 
+## Meal choices (RSVP-03)
+
+Meals are collected only when `content/site.config.json` → `rsvp.mealChoices` names an event and at least two options; `scripts/events-sync.mjs` (or `PUT /admin/events`) stores the list on that event row (`event.meal_options_json`, migration `0002`). The server then requires a choice from the list for every guest attending that event, ignores meals for other events or for declining guests, returns the value as `meal` in the snapshot, exports it with attendance, and keeps it out of audit details (`test/meals.test.js`).
+
 ## Local development and tests
 
 ```bash

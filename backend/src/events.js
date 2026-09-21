@@ -8,6 +8,15 @@ export function normaliseEvents(config) {
   const timezone = config && config.wedding && config.wedding.timezone;
   const events = config && Array.isArray(config.events) ? config.events : null;
   if (!timezone || !events || !events.length) throw new HttpError(400, 'validation', 'Expected { wedding: { timezone }, events: [...] } as in content/site.config.json.');
+  const mc = config.rsvp && config.rsvp.mealChoices;
+  let mealEventId = null;
+  let mealOptions = null;
+  if (mc && (mc.eventId || (Array.isArray(mc.options) && mc.options.length))) {
+    if (typeof mc.eventId !== 'string' || !events.some((e) => e && e.id === mc.eventId)) throw new HttpError(400, 'validation', 'rsvp.mealChoices.eventId must name one of the events.');
+    if (!Array.isArray(mc.options) || mc.options.length < 2 || mc.options.some((o) => typeof o !== 'string' || !o.trim())) throw new HttpError(400, 'validation', 'rsvp.mealChoices.options needs at least two non-empty strings.');
+    mealEventId = mc.eventId;
+    mealOptions = mc.options.map((o) => o.trim());
+  }
   return events.map((ev, i) => {
     if (!ev || typeof ev.id !== 'string' || !/^[a-z0-9-]{1,32}$/.test(ev.id)) throw new HttpError(400, 'validation', `events[${i}].id is invalid.`);
     if (typeof ev.startsAt !== 'string' || !Number.isFinite(Date.parse(ev.startsAt))) throw new HttpError(400, 'validation', `events[${i}].startsAt must be ISO 8601 with an offset.`);
@@ -25,18 +34,30 @@ export function normaliseEvents(config) {
       directionsConfirmed: !!(venue.entrance || venue.arrival),
       approvalState: (ev.approval && ev.approval.state) || 'pending',
       sortOrder: i,
+      mealOptions: ev.id === mealEventId ? mealOptions : null,
     };
   });
 }
 
-export const UPSERT_EVENT_SQL = `INSERT INTO event (id, label, name, venue_name, starts_at_utc, starts_at_local, ends_at_utc, timezone, directions_confirmed, approval_state, sort_order, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+export const UPSERT_EVENT_SQL = `INSERT INTO event (id, label, name, venue_name, starts_at_utc, starts_at_local, ends_at_utc, timezone, directions_confirmed, approval_state, sort_order, meal_options_json, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT (id) DO UPDATE SET label = excluded.label, name = excluded.name, venue_name = excluded.venue_name, starts_at_utc = excluded.starts_at_utc,
   starts_at_local = excluded.starts_at_local, ends_at_utc = excluded.ends_at_utc, timezone = excluded.timezone, directions_confirmed = excluded.directions_confirmed,
-  approval_state = excluded.approval_state, sort_order = excluded.sort_order, updated_at = excluded.updated_at`;
+  approval_state = excluded.approval_state, sort_order = excluded.sort_order, meal_options_json = excluded.meal_options_json, updated_at = excluded.updated_at`;
 
 export function eventParams(ev, now) {
-  return [ev.id, ev.label, ev.name, ev.venueName, ev.startsAtUtc, ev.startsAtLocal, ev.endsAtUtc, ev.timezone, ev.directionsConfirmed ? 1 : 0, ev.approvalState, ev.sortOrder, now];
+  return [ev.id, ev.label, ev.name, ev.venueName, ev.startsAtUtc, ev.startsAtLocal, ev.endsAtUtc, ev.timezone, ev.directionsConfirmed ? 1 : 0, ev.approvalState, ev.sortOrder, ev.mealOptions ? JSON.stringify(ev.mealOptions) : null, now];
+}
+
+// Parses the stored option list; returns null when meals are not collected for the event.
+export function mealOptionsOf(row) {
+  if (!row || !row.meal_options_json) return null;
+  try {
+    const parsed = JSON.parse(row.meal_options_json);
+    return Array.isArray(parsed) && parsed.length ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 function sqlString(v) {

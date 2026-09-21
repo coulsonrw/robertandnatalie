@@ -13,6 +13,7 @@ import { buildSnapshot, rsvpWindow } from './snapshot.js';
 import { requireSession } from './session.js';
 import { confirmationMail } from './mail/templates.js';
 import { retentionDueAt } from './retention.js';
+import { mealOptionsOf } from './events.js';
 
 const STATUSES = new Set(['attending', 'declining']);
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -31,6 +32,7 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
 
   if (!Array.isArray(payload.responses)) throw new HttpError(400, 'validation', 'responses must be an array.');
   const answered = new Map();
+  const meals = new Map(); // key -> meal value or null, for answered pairs only
   for (const r of payload.responses) {
     if (!isPlainObject(r) || typeof r.guestId !== 'string' || typeof r.eventId !== 'string') {
       throw new HttpError(400, 'validation', 'Each response needs guestId, eventId and status.');
@@ -43,6 +45,19 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
     if (!STATUSES.has(r.status)) throw new HttpError(400, 'validation', 'Each answer must be attending or declining.');
     if (answered.has(key)) throw new HttpError(400, 'validation', 'Duplicate answer for the same guest and event.');
     answered.set(key, r.status);
+    // Meal choice: only where the event has configured options, only for attending guests,
+    // only from the configured list (RSVP-03, DATA-02). Ignored (stored NULL) otherwise.
+    const options = mealOptionsOf(entitledByKey.get(key));
+    if (r.meal !== undefined && r.meal !== null && typeof r.meal !== 'string') throw new HttpError(400, 'validation', 'meal must be text.');
+    if (options && r.status === 'attending') {
+      const meal = typeof r.meal === 'string' ? r.meal.trim() : '';
+      if (meal && !options.includes(meal)) throw new HttpError(400, 'validation', 'That meal choice is not one of the options.');
+      if (!meal && !partial) throw new HttpError(400, 'validation', 'Please choose a meal for each guest attending.');
+      meals.set(key, meal || null);
+    } else {
+      if (r.meal && !options) throw new HttpError(400, 'validation', 'Meal choices are not collected for that event.');
+      meals.set(key, null);
+    }
   }
   if (!partial) {
     for (const key of entitledByKey.keys()) {
@@ -94,7 +109,7 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
   notes = notes.trim().slice(0, MAX_NOTES);
   if (!anyoneAttending) notes = ''; // declining households skip practical details (RSVP-03)
 
-  return { answered, nameUpdates, contactEmail, notes, anyoneAttending };
+  return { answered, meals, nameUpdates, contactEmail, notes, anyoneAttending };
 }
 
 function attendanceSummary(loaded, answered, events, nameUpdates) {
@@ -132,11 +147,13 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
     if (!change.answered.has(key)) continue;
     const status = change.answered.get(key);
     const previous = e.status || 'pending';
+    const meal = change.meals && change.meals.has(key) ? change.meals.get(key) : (status === 'attending' ? (e.meal_value || null) : null);
     if (e.response_id) {
-      statements.push(stmt(db, 'UPDATE response SET status = ?, revision = ?, submitted_at = ?, origin = ?, updated_at = ? WHERE entitlement_id = ?', status, nextRevision, now, origin, now, e.id));
+      statements.push(stmt(db, 'UPDATE response SET status = ?, meal_value = ?, revision = ?, submitted_at = ?, origin = ?, updated_at = ? WHERE entitlement_id = ?', status, meal, nextRevision, now, origin, now, e.id));
     } else {
-      statements.push(stmt(db, 'INSERT INTO response (id, entitlement_id, status, revision, submitted_at, origin, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)', newId('r'), e.id, status, nextRevision, now, origin, now));
+      statements.push(stmt(db, 'INSERT INTO response (id, entitlement_id, status, meal_value, revision, submitted_at, origin, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', newId('r'), e.id, status, meal, nextRevision, now, origin, now));
     }
+    if ((e.meal_value || null) !== meal && !changedFields.includes('meals')) changedFields.push('meals');
     if (previous !== status) {
       statements.push(stmt(db, 'INSERT INTO response_history (entitlement_id, previous_status, new_status, revision, origin, actor, changed_at) VALUES (?, ?, ?, ?, ?, ?, ?)', e.id, previous, status, nextRevision, origin, actor.id, now));
       statusChanges[key] = { from: previous, to: status };
@@ -189,7 +206,10 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
     guests: loaded.guests.map((g) => (change.nameUpdates.has(g.id) ? { ...g, plus_one_name: change.nameUpdates.get(g.id) } : g)),
     entitlements: loaded.entitlements.map((e) => {
       const key = `${e.guest_id}|${e.event_id}`;
-      return change.answered.has(key) ? { ...e, status: change.answered.get(key), submitted_at: now, origin } : e;
+      if (!change.answered.has(key)) return e;
+      const status = change.answered.get(key);
+      const meal = change.meals && change.meals.has(key) ? change.meals.get(key) : (status === 'attending' ? (e.meal_value || null) : null);
+      return { ...e, status, meal_value: meal, submitted_at: now, origin };
     }),
     state: { ...loaded.state, revision: nextRevision, reference, first_submitted_at: loaded.state.first_submitted_at || now, last_submitted_at: now, last_origin: origin, last_email_queued: emailQueued ? 1 : 0 },
     notes: change.notes,
