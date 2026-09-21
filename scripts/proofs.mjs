@@ -30,7 +30,8 @@ const VIEWPORTS = [
   { width: 1440, height: 900, scale: 1 },
 ];
 const PAGES = [
-  { name: 'invitation', url: '/' },
+  { name: 'entry-envelope', url: '/?envelope=1' },
+  { name: 'invitation', url: '/celebration.html' },
   { name: 'rsvp-coming-soon', url: '/rsvp.html' },
   { name: 'rsvp-preview-access', url: '/rsvp.html?preview=1' },
   { name: 'privacy', url: '/privacy.html' },
@@ -56,12 +57,43 @@ for (const vp of VIEWPORTS) {
   }
   // Mobile menu open state
   if (vp.width < 768) {
-    await page.goto(base + '/', { waitUntil: 'networkidle' });
+    await page.goto(base + '/celebration.html', { waitUntil: 'networkidle' });
     await settle(page);
     await page.click('.nav-toggle');
     await page.waitForTimeout(150);
     await page.screenshot({ path: path.join(OUT, `menu-open-${vp.width}.png`), fullPage: false });
   }
+  await context.close();
+}
+
+// Entry flow (HOME-03): sealed envelope -> opened invitation -> site with docked keepsake -> dialog
+for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
+  const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: vp.scale });
+  const page = await context.newPage();
+  const pageErrors = [];
+  page.on('pageerror', (e) => pageErrors.push(e.message));
+  await page.goto(base + '/?envelope=1', { waitUntil: 'networkidle' });
+  await settle(page);
+  await page.click('#seal');
+  await page.waitForTimeout(2000);
+  await page.screenshot({ path: path.join(OUT, `entry-opened-${vp.width}.png`), fullPage: true });
+  const opened = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), focused: document.activeElement && document.activeElement.id }));
+  await page.click('[data-action="enter"]');
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: path.join(OUT, `entry-site-keepsake-${vp.width}.png`), fullPage: false });
+  const entered = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), focused: document.activeElement && document.activeElement.id, entryHidden: document.getElementById('entry').hidden, keepsake: document.getElementById('keepsake').getBoundingClientRect().toJSON() }));
+  await page.click('.keepsake-btn');
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: path.join(OUT, `entry-dialog-${vp.width}.png`), fullPage: false });
+  const dialog = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), modal: document.getElementById('invitation-dialog').matches(':modal'), focused: document.activeElement && document.activeElement.className }));
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(1200);
+  const closed = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), focused: document.activeElement && document.activeElement.className }));
+  await page.goto(base + '/#wedding-day', { waitUntil: 'networkidle' });
+  await settle(page);
+  const deepLink = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), entryHidden: document.getElementById('entry').hidden, scrolled: window.scrollY > 100 }));
+  results.entryFlow = results.entryFlow || [];
+  results.entryFlow.push({ width: vp.width, opened, entered, dialog, closed, deepLink, pageErrors });
   await context.close();
 }
 
@@ -109,7 +141,7 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
 {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
-  await page.goto(base + '/', { waitUntil: 'networkidle' });
+  await page.goto(base + '/celebration.html', { waitUntil: 'networkidle' });
   await settle(page);
   for (let i = 0; i < 9; i++) {
     await page.keyboard.press('Tab');
@@ -129,8 +161,10 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
 {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   const page = await context.newPage();
-  await page.goto(base + '/', { waitUntil: 'networkidle' });
+  await page.goto(base + '/?envelope=1', { waitUntil: 'networkidle' });
   await settle(page);
+  await page.click('#seal');
+  await page.waitForTimeout(2000);
   await page.screenshot({ path: path.join(OUT, 'detail-invitation-390@2x.png'), fullPage: false });
   await page.goto(base + '/rsvp.html?preview=1', { waitUntil: 'networkidle' });
   await settle(page);
@@ -145,13 +179,21 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   await context.close();
 }
 
-// Reduced motion: invitation renders statically
+// Reduced motion: the envelope opens and the site appears without animation, keyboard only
 {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
   const page = await context.newPage();
-  await page.goto(base + '/', { waitUntil: 'networkidle' });
+  await page.goto(base + '/?envelope=1', { waitUntil: 'networkidle' });
   await settle(page);
+  await page.focus('#seal');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(200);
   await page.screenshot({ path: path.join(OUT, 'invitation-reduced-motion-390.png'), fullPage: false });
+  const rm1 = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), focused: document.activeElement && document.activeElement.id }));
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(200);
+  const rm2 = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), focused: document.activeElement && document.activeElement.id }));
+  results.reducedMotion = { afterOpen: rm1, afterEnter: rm2 };
   await context.close();
 }
 
@@ -159,7 +201,7 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
 {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
-  await page.goto(base + '/', { waitUntil: 'networkidle' });
+  await page.goto(base + '/celebration.html', { waitUntil: 'networkidle' });
   await page.addStyleTag({ content: 'html{font-size:200%}' });
   await settle(page);
   const overflow = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }));
@@ -186,6 +228,14 @@ const lines = [
   '## Keyboard focus order (home, 1440)',
   '',
   ...results.focusOrder.map((f, i) => `${i + 1}. ${f ? `${f.tag} — "${f.text}"${f.visible ? '' : ' (not in viewport)'}` : 'none'}`),
+  '',
+  '## Entry flow (sealed envelope → invitation → site with keepsake → dialog)',
+  '',
+  ...(results.entryFlow || []).map((f) => `- ${f.width}px: after opening, state=${f.opened.state} focus=${f.opened.focused}; after entering, state=${f.entered.state} focus=${f.entered.focused} entry hidden=${f.entered.entryHidden} keepsake=${Math.round(f.entered.keepsake.width)}×${Math.round(f.entered.keepsake.height)} at (${Math.round(f.entered.keepsake.left)}, ${Math.round(f.entered.keepsake.top)}); dialog modal=${f.dialog.modal} focus=${f.dialog.focused}; after Escape state=${f.closed.state} focus=${f.closed.focused}; deep link /#wedding-day skips the envelope=${f.deepLink.state === 'site' && f.deepLink.entryHidden} scrolled=${f.deepLink.scrolled}; page errors=${f.pageErrors.length}.`),
+  '',
+  '## Reduced motion, keyboard only (390)',
+  '',
+  results.reducedMotion ? `- Enter on the seal: state=${results.reducedMotion.afterOpen.state}, focus=${results.reducedMotion.afterOpen.focused}; Enter on the invitation: state=${results.reducedMotion.afterEnter.state}, focus=${results.reducedMotion.afterEnter.focused}.` : '- not run',
   '',
   '## RSVP preview error state',
   '',

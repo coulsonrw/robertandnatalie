@@ -27,6 +27,10 @@ The custom composition was chosen because:
 
 If the owners want the comparison run later, `TPL-03` to `TPL-09` remain valid and this build serves as the custom benchmark.
 
+## Opening experience (HOME-03)
+
+At the owner's request (21 September 2026) the landing page is a sealed envelope that opens to reveal the invitation; the next click takes the guest into the site while the invitation docks in the lower-left corner, from where a click brings it back centred and enlarged. Constraints kept from the PRD: skippable (entry bar link and RSVP always visible), keyboard operable (seal, card and dialog are focusable; Escape closes), static under `prefers-reduced-motion`, no autoplay audio, no forced scrolling, no 3D engine, the same live-text card in every state, and deep links bypass the envelope so a wedding-day guest reaches directions in one action (IA-01/02). The docked keepsake is `aria-hidden` and exposed through a labelled button; the dialog is a native modal `<dialog>`.
+
 ## What GitHub Pages changes relative to the PRD
 
 | PRD requirement | Effect of static hosting | Handling |

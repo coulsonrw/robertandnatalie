@@ -1,24 +1,28 @@
 # Visual proofs
 
-Captured 2026-09-21T22:24:52.605Z with Chromium 141.0.7390.37 on Node v22.22.2 using `npm run proofs` (Playwright, headless).
+Captured 2026-09-21T22:53:04.845Z with Chromium 141.0.7390.37 on Node v22.22.2 using `npm run proofs` (Playwright, headless).
 Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adapter; nothing is saved.
 
 ## Horizontal overflow check (must be none)
 
 | Page | Width | scrollWidth | innerWidth | OK |
 |---|---|---|---|---|
+| entry-envelope | 320 | 320 | 320 | yes |
 | invitation | 320 | 320 | 320 | yes |
 | rsvp-coming-soon | 320 | 320 | 320 | yes |
 | rsvp-preview-access | 320 | 320 | 320 | yes |
 | privacy | 320 | 320 | 320 | yes |
+| entry-envelope | 390 | 390 | 390 | yes |
 | invitation | 390 | 390 | 390 | yes |
 | rsvp-coming-soon | 390 | 390 | 390 | yes |
 | rsvp-preview-access | 390 | 390 | 390 | yes |
 | privacy | 390 | 390 | 390 | yes |
+| entry-envelope | 768 | 768 | 768 | yes |
 | invitation | 768 | 768 | 768 | yes |
 | rsvp-coming-soon | 768 | 768 | 768 | yes |
 | rsvp-preview-access | 768 | 768 | 768 | yes |
 | privacy | 768 | 768 | 768 | yes |
+| entry-envelope | 1440 | 1440 | 1440 | yes |
 | invitation | 1440 | 1440 | 1440 | yes |
 | rsvp-coming-soon | 1440 | 1440 | 1440 | yes |
 | rsvp-preview-access | 1440 | 1440 | 1440 | yes |
@@ -33,9 +37,18 @@ Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adap
 4. A — "Travel & Stay"
 5. A — "Questions"
 6. A — "RSVP"
-7. A — "RSVP" (not in viewport)
-8. A — "View Wedding Day" (not in viewport)
-9. A — "Directions" (not in viewport)
+7. A — "RSVP"
+8. A — "View Wedding Day"
+9. BUTTON — "View the invitation"
+
+## Entry flow (sealed envelope → invitation → site with keepsake → dialog)
+
+- 390px: after opening, state=open focus=invitation-card; after entering, state=site focus=hero-title entry hidden=true keepsake=39×108 at (12, 724); dialog modal=true focus=dialog-close; after Escape state=site focus=keepsake-btn; deep link /#wedding-day skips the envelope=true scrolled=true; page errors=0.
+- 1440px: after opening, state=open focus=invitation-card; after entering, state=site focus=hero-title entry hidden=true keepsake=98×160 at (12, 728); dialog modal=true focus=dialog-close; after Escape state=site focus=keepsake-btn; deep link /#wedding-day skips the envelope=true scrolled=true; page errors=0.
+
+## Reduced motion, keyboard only (390)
+
+- Enter on the seal: state=open, focus=invitation-card; Enter on the invitation: state=site, focus=hero-title.
 
 ## RSVP preview error state
 
@@ -46,6 +59,16 @@ Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adap
 
 - detail-invitation-390@2x.png
 - detail-rsvp-attendance-error-390@2x.png
+- entry-dialog-1440.png
+- entry-dialog-390.png
+- entry-envelope-1440.png
+- entry-envelope-320.png
+- entry-envelope-390.png
+- entry-envelope-768.png
+- entry-opened-1440.png
+- entry-opened-390.png
+- entry-site-keepsake-1440.png
+- entry-site-keepsake-390.png
 - invitation-1440.png
 - invitation-320.png
 - invitation-390.png

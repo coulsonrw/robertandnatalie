@@ -33,7 +33,7 @@ export function icon(id, extraClass = '') {
 
 export function header({ view, currentPage }) {
   const p = view.basePath;
-  const home = currentPage === 'index' ? '' : `${p}/`;
+  const home = currentPage === 'index' || currentPage === 'celebration' ? '' : `${p}/`;
   return `<header class="site-header">
   <div class="header-inner">
     <a class="brand" href="${home || p + '/'}#top" aria-label="${esc(view.couple.displayName)} — home">
@@ -70,12 +70,13 @@ export function footer({ view }) {
 </footer>`;
 }
 
-export function page({ view, currentPage, title, description, bodyClass = '', main, scripts = [] }) {
+export function shell({ view, title, description, bodyClass = '', bodyAttrs = '', body, scripts = [] }) {
   const p = view.basePath;
   const fullTitle = title ? `${title} — ${view.couple.displayName}` : `${view.couple.displayName} — ${view.longDate} — ${view.wedding.destination}`;
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
+<script>document.documentElement.className = document.documentElement.className.replace('no-js', 'js');</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(fullTitle)}</title>
@@ -89,16 +90,21 @@ ${view.site.noindex ? '<meta name="robots" content="noindex, nofollow">\n' : ''}
 <link rel="preload" href="${p}/fonts/cormorant-garamond-variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${p}/styles/site.css">
 </head>
-<body class="${esc(bodyClass)}">
+<body class="${esc(bodyClass)}"${bodyAttrs ? ' ' + bodyAttrs : ''}>
 <a class="skip-link" href="#main">Skip to content</a>
 ${SVG_SPRITE}
-<span id="top"></span>
-${header({ view, currentPage })}
-${main}
-${footer({ view })}
+${body}
 <script src="${p}/js/site.js" defer></script>
 ${scripts.map((s) => `<script src="${p}${s}" defer></script>`).join('\n')}
 </body>
 </html>
 `;
+}
+
+export function page({ view, currentPage, title, description, bodyClass = '', main, scripts = [] }) {
+  const body = `<span id="top"></span>
+${header({ view, currentPage })}
+${main}
+${footer({ view })}`;
+  return shell({ view, title, description, bodyClass, body, scripts });
 }

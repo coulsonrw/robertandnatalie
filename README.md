@@ -4,13 +4,22 @@ Saturday, 19 December 2026 · Point Clear, Alabama. Live at **https://robertandn
 
 This is a small static site generated from one configuration file. There is no framework, no build dependency and no tracking. The visual system follows the approved ivory, gold and charcoal invitation and the original-color Coulson crest (see `docs/DECISION_RECORD.md` for how this relates to the PRD).
 
+## The guest experience
+
+1. **Sealed envelope** at `/`. A gold seal with the RN monogram; the entry bar carries "Skip to the wedding details" and RSVP so nobody is forced through the animation (PRD HOME-03).
+2. **Opened invitation.** The flap folds back, the invitation card rises out of the envelope and settles centred: live text, original crest, the approved wording. Tap the card, or use "Continue to the website".
+3. **The website.** The card glides to the bottom-left corner as a keepsake; the site opens on a compact hero (crest, names, date, destination, both start times, RSVP and Wedding Day actions), then Wedding Day, Travel & Stay and Questions.
+4. **Bring the invitation back.** Tap the keepsake (or "View the invitation" in the hero) and the card returns to the centre in a modal dialog; Escape, the close button or the backdrop sends it back to the corner.
+
+Deep links such as `/#wedding-day`, the `/celebration.html` route and a return within the same browser session skip the envelope. `/?envelope=1` forces it. Reduced-motion users get the same states without animation; without JavaScript the invitation simply sits at the top of the page.
+
 ## How it is organized
 
 | Path | Purpose |
 |---|---|
 | `content/site.config.json` | **The single source of truth.** Names, date, time zone, events, venues, travel, FAQs, contact, RSVP mode and privacy values. Every guest-facing date, time, invitation line and calendar file is derived from it. |
 | `scripts/build.mjs` | Validates the configuration, renders `dist/`, writes the two `.ics` files and prints a launch-readiness report. |
-| `scripts/templates/` | HTML templates for the invitation page, RSVP, privacy and 404. |
+| `scripts/templates/` | HTML templates for the home page (envelope entry, invitation, site), the `/celebration.html` direct route, RSVP, privacy and 404. |
 | `src/styles`, `src/js`, `src/img`, `src/fonts` | Stylesheet, progressive-enhancement scripts, crest renditions, self-hosted fonts. |
 | `assets/` | Original artwork (A1 crest, A2 invitation) and the asset manifest. Photos of unconfirmed provenance sit in `assets/review/` and are not published. |
 | `docs/` | Decision record, RSVP API contract, content approval register, font licenses and visual proofs. |
@@ -29,7 +38,7 @@ Approved wording that must not drift: the couple's display name, the closing lin
 ```bash
 npm run build      # writes dist/
 npm run serve      # http://127.0.0.1:8080/
-npm run proofs     # Playwright screenshots + checks into docs/proofs/ (needs Playwright installed)
+npm run proofs     # Playwright screenshots + checks into docs/proofs/ (needs Playwright installed): four widths, entry flow, keyboard, reduced motion, 200% text, RSVP preview
 ```
 
 Node 20 or newer; no `npm install` is required for the build.

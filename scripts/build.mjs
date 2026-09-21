@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { zonedParts, clockLabel, longDate, formalDateLines, formalTimeLine, timeZoneLabel } from './lib/format.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { mapsLinks } from './lib/html.mjs';
-import { renderIndex } from './templates/index.mjs';
+import { renderIndex, renderCelebration } from './templates/index.mjs';
 import { renderRsvp } from './templates/rsvp.mjs';
 import { renderPrivacy } from './templates/privacy.mjs';
 import { renderNotFound } from './templates/notfound.mjs';
@@ -207,6 +207,7 @@ function emit(c, view) {
   fs.rmSync(DIST, { recursive: true, force: true });
   fs.mkdirSync(path.join(DIST, 'calendar'), { recursive: true });
   fs.writeFileSync(path.join(DIST, 'index.html'), renderIndex(view));
+  fs.writeFileSync(path.join(DIST, 'celebration.html'), renderCelebration(view));
   fs.writeFileSync(path.join(DIST, 'rsvp.html'), renderRsvp(view));
   fs.writeFileSync(path.join(DIST, 'privacy.html'), renderPrivacy(view));
   fs.writeFileSync(path.join(DIST, '404.html'), renderNotFound(view));
