@@ -228,7 +228,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wr
 .envelope-layer[hidden] { display: none !important; }
 .envelope { position: relative; width: min(100%, 520px); aspect-ratio: 1.55 / 1; margin: 0 auto; cursor: pointer; border: 0; padding: 0; background: transparent; font: inherit; color: inherit; }
 .env-body { position: absolute; inset: 0; background: #f2ecdf; border: 1px solid var(--gold-deco); box-shadow: 0 20px 40px -24px rgba(41,42,40,.5); }
-.env-body::before, .env-body::after { content: ""; position: absolute; inset: 0; border: 1px solid rgba(179,138,57,.55); }
+.env-body::before, .env-body::after { content: ""; position: absolute; inset: 0; border: 1px solid rgba(179,138,57,.55); z-index: 2; }
 .env-body::before { clip-path: polygon(0 0, 0 100%, 50% 58%); background: #ede5d4; }
 .env-body::after { clip-path: polygon(100% 0, 100% 100%, 50% 58%); background: #ede5d4; }
 .env-bottom { position: absolute; inset: 0; clip-path: polygon(0 100%, 100% 100%, 50% 45%); background: #f6f0e3; border-bottom: 1px solid var(--gold-deco); z-index: 2; }
