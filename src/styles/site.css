@@ -386,7 +386,7 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .keepsake-btn { position: absolute; inset: 0; background: transparent; border: 2px solid transparent; border-radius: 4px; cursor: pointer; padding: 0; }
 .keepsake-btn:hover { border-color: var(--gold); }
 .keepsake-btn:focus-visible { outline: 3px solid var(--navy); outline-offset: 4px; }
-.keepsake-caption { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 6px; font-family: var(--font-sc); font-weight: 600; font-size: 0.85rem; letter-spacing: 0.1em; color: var(--ink); white-space: nowrap; pointer-events: none; }
+.keepsake-caption { position: absolute; left: 0; top: 100%; margin-top: 6px; font-family: var(--font-sc); font-weight: 600; font-size: 0.85rem; letter-spacing: 0.1em; color: var(--ink); white-space: nowrap; pointer-events: none; }
 .keepsake { margin-bottom: 22px; }
 .invitation-dialog { border: 0; background: transparent; padding: 0; margin: auto; max-width: none; max-height: none; width: min(100vw, 840px); overflow: visible; }
 .invitation-dialog::backdrop { background: rgba(41, 42, 40, 0.55); }
@@ -412,7 +412,13 @@ body.is-entry .site { display: none; }
 .hero-names .conj { font-size: 0.55em; }
 .glance-times { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.08em; font-size: 1.02rem; color: var(--ink-soft); display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 0; margin: -8px 0 20px; }
 .hero-keepsake { margin: 18px 0 0; font-size: 1rem; }
-@media (max-width: 479.98px) { .hero-names { flex-direction: column; align-items: center; gap: 0; } .hero-names .conj { font-size: 0.5em; line-height: 1; } }
+@media (max-width: 479.98px) {
+  .hero-names { flex-direction: column; align-items: center; gap: 0; }
+  .hero-names .conj { font-size: 0.5em; line-height: 1; }
+  /* One item per line on phones: no dangling separator dots when the line wraps. */
+  .glance-line, .glance-times, .entry-glance { flex-direction: column; align-items: center; }
+  .glance-line .dot, .glance-times .dot, .entry-glance .dot { display: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .envelope-lift, .envelope-flap, .entry-scene, .seal { transition: none !important; }
 }
