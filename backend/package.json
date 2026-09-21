@@ -1,0 +1,22 @@
+{
+  "name": "robertandnatalie-rsvp-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reference RSVP API for the Robert and Natalie wedding website (Cloudflare Workers + D1). Implements docs/RSVP_API_CONTRACT.md and PRD v1.1 Sections 08-12.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "migrate:local": "wrangler d1 migrations apply rsvp --local",
+    "migrate:remote": "wrangler d1 migrations apply rsvp --remote",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.22.0",
+    "vitest": "4.1.11",
+    "wrangler": "4.124.0"
+  },
+  "license": "UNLICENSED"
+}

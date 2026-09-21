@@ -1,0 +1,101 @@
+# Wrangler configuration for the Robert and Natalie RSVP API (reference implementation).
+# Deploy into the OWNERS' Cloudflare account (ARCH-06). Nothing here is a secret; secrets are set
+# with `wrangler secret put` (see README "Secrets") and never committed.
+
+name = "robertandnatalie-rsvp-api"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Serve the API on the site's own registrable domain so the session cookie is same-site
+# (docs/RSVP_API_CONTRACT.md "Deployment shape"). The zone must already be on Cloudflare DNS.
+# Replace the zone name if the owners host DNS elsewhere and use a workers.dev URL instead
+# (then the cookie is cross-site and SameSite=Lax will not send it: keep the custom domain).
+routes = [
+  { pattern = "api.robertandnatalie.wedding", custom_domain = true }
+]
+
+# Send Worker logs to the Cloudflare dashboard. Request logs are already redacted by src/log.js
+# (no query strings, no cookies, no bodies, tokens masked) before they reach this sink (SEC-02/04).
+[observability]
+enabled = true
+
+# D1 (SQLite) database. Create it with `wrangler d1 create rsvp` and paste the returned
+# database_id below. Migrations in ./migrations are applied with `wrangler d1 migrations apply`.
+[[d1_databases]]
+binding = "DB"
+database_name = "rsvp"
+database_id = "REPLACE-WITH-D1-DATABASE-ID"
+migrations_dir = "migrations"
+
+# Cron trigger for the background worker (ARCH-03, SEC-06): every five minutes it sends queued
+# confirmation mail with retries, raises coordinator alerts for abandoned mail, and applies the
+# retention rule once the retention date has passed.
+[triggers]
+crons = ["*/5 * * * *"]
+
+# Plain (non-secret) configuration. Everything guest-facing that is also in
+# content/site.config.json must be kept identical there (DATA-01); the README lists the pairs.
+[vars]
+# "production" disables every development shortcut (ACCESS_DEV_BYPASS is ignored).
+ENVIRONMENT = "production"
+
+# The static site origin: the only origin allowed by CORS, and the only Origin accepted on
+# state-changing requests (SEC-03).
+SITE_ORIGIN = "https://robertandnatalie.wedding"
+# Where confirmation emails send guests to correct a response.
+SITE_RSVP_URL = "https://robertandnatalie.wedding/rsvp.html"
+
+# Mirrors content/site.config.json: couple.displayName, wedding.date, wedding.timezone.
+COUPLE_DISPLAY_NAME = "Robert and Natalie"
+WEDDING_DATE = "2026-12-19"
+EVENT_TIMEZONE = "America/Chicago"
+WEDDING_DESTINATION = "Point Clear, Alabama"
+
+# RSVP cutoff (RSVP-04). ISO 8601 with the event-local offset, e.g. "2026-11-20T23:59:59-06:00".
+# Empty = not yet approved (DATA-01): guests may respond, and the README lists this as a launch
+# blocker. The value can be overridden without a redeploy through the owner-only
+# /admin/content/rsvp-settings endpoint; keep content/site.config.json rsvp.cutoffAt identical.
+RSVP_CUTOFF_AT = ""
+
+# Retention (SEC-06): mirrors privacy.retentionDaysAfterWedding in content/site.config.json.
+RETENTION_DAYS_AFTER_WEDDING = "90"
+
+# Guest sessions (SEC-03).
+SESSION_TTL_HOURS = "24"
+# Rate limits for POST /session, per client IP and per submitted code (SEC-02).
+RATE_LIMIT_WINDOW_SECONDS = "900"
+RATE_LIMIT_PER_IP = "20"
+RATE_LIMIT_PER_CODE = "10"
+
+# Mail (RSVP-07). MAIL_PROVIDER: "stub" (marks mail as sent without delivering; local/dev only) or
+# "webhook" (POSTs a JSON envelope to MAIL_WEBHOOK_URL with a bearer secret; see src/mail/provider.js
+# and README "Mail"). MAIL_FROM must be an address the owners control.
+MAIL_PROVIDER = "stub"
+MAIL_FROM = "Robert and Natalie <rsvp@robertandnatalie.wedding>"
+MAIL_MAX_ATTEMPTS = "8"
+MAIL_MAX_AGE_HOURS = "48"
+# Where coordinator alerts are emailed (abandoned mail, retention applied). Empty = API only.
+COORDINATOR_EMAIL = ""
+
+# Cloudflare Access (ADMIN-01). The Access application must cover https://api.robertandnatalie.wedding/admin*
+# with an MFA-requiring policy; the Worker verifies the Cf-Access-Jwt-Assertion header against the
+# team's public keys. ACCESS_TEAM_DOMAIN e.g. "example.cloudflareaccess.com"; ACCESS_AUD is the
+# application audience tag shown in the Access application settings.
+ACCESS_TEAM_DOMAIN = ""
+ACCESS_AUD = ""
+# Named staff accounts by role (comma-separated emails). Anyone authenticated by Access but not
+# listed here is refused (deny by default).
+OWNER_EMAILS = ""
+COORDINATOR_EMAILS = ""
+
+# Development only. "true" lets a request set its own admin identity with the
+# x-dev-access-email header. Ignored whenever ENVIRONMENT = "production".
+ACCESS_DEV_BYPASS = "false"
+
+# Secrets (set with `wrangler secret put NAME`, never in this file):
+#   CREDENTIAL_PEPPER   32+ random bytes, hex/base64. HMAC key for credential digests.
+#   SESSION_SECRET      32+ random bytes. HMAC key for session-cookie digests.
+#   MAIL_WEBHOOK_URL    only for MAIL_PROVIDER = "webhook".
+#   MAIL_WEBHOOK_TOKEN  only for MAIL_PROVIDER = "webhook".
+# See .dev.vars.example for local development values.
