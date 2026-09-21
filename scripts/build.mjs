@@ -52,6 +52,16 @@ function validate(c) {
   if (c.schemaVersion !== '1.0') fail(`schemaVersion must be "1.0" (got ${c.schemaVersion})`);
   if (!c.site?.name || !c.site?.baseUrl) fail('site.name and site.baseUrl are required');
   if (c.site?.basePath && !/^\/[A-Za-z0-9._-]+$/.test(c.site.basePath)) fail('site.basePath must look like "/subpath" (no trailing slash)');
+  if (!['pre-event', 'post-event'].includes(c.site?.phase)) fail('site.phase must be pre-event or post-event');
+  if (c.site?.phase === 'post-event') {
+    if (!c.postEvent?.message || c.postEvent?.approval?.state === 'pending') fail('site.phase is post-event but postEvent.message is missing or still pending approval (OPS-03)');
+  }
+  if (c.banner?.active) {
+    if (!c.banner.message) fail('banner.active is true but banner.message is empty');
+    if (c.banner.approval?.state === 'pending') fail('banner.active is true but banner.approval.state is pending; approve the wording first (ADMIN-04)');
+    if (c.banner.linkUrl && !/^(https?:\/\/|\/|#)/.test(c.banner.linkUrl)) fail('banner.linkUrl must be an absolute URL, a site path or an anchor');
+    if (c.banner.linkUrl && !c.banner.linkLabel) fail('banner.linkLabel is required when banner.linkUrl is set');
+  }
   const { couple, wedding, events } = c;
   if (!couple?.displayName || !Array.isArray(couple.names) || couple.names.length !== 2) fail('couple.displayName and couple.names[2] are required');
   else if (couple.displayName !== couple.names.join(` ${couple.conjunction} `)) fail(`couple.displayName ("${couple.displayName}") must equal the names joined with the conjunction`);
@@ -170,9 +180,14 @@ function buildView(c) {
   const betweenVenues = isPublished(c.travel.betweenVenues) && c.travel.betweenVenues.text ? c.travel.betweenVenues.text : null;
   const reviewed = new Date(`${c.lastReviewed}T12:00:00Z`);
 
+  const postEvent = c.site.phase === 'post-event';
+  const banner = c.banner?.active && isPublished(c.banner) ? { message: c.banner.message, linkUrl: c.banner.linkUrl ?? null, linkLabel: c.banner.linkLabel ?? null, updatedAt: c.banner.updatedAt ?? null } : null;
   return {
     basePath: c.site.basePath ?? '',
     site: c.site,
+    phase: c.site.phase,
+    postEvent: postEvent ? { heading: c.postEvent.heading || 'Thank you', message: c.postEvent.message } : null,
+    banner,
     couple: c.couple,
     wedding: { ...c.wedding, destinationShort },
     invitation: { requestLines: c.invitation.requestLines.map(sub) },
@@ -187,7 +202,7 @@ function buildView(c) {
     },
     faqs,
     contact: contactPublished ? { email: c.contact.email, phone: c.contact.phone, phoneDisplay: c.contact.phoneDisplay, note: c.contact.note } : null,
-    rsvp: c.rsvp,
+    rsvp: postEvent ? { ...c.rsvp, mode: 'closed', allowPreview: false, closedText: c.postEvent.message } : c.rsvp,
     privacy: c.privacy,
     lastReviewedLabel: reviewed.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
     crestAlt: `The Coulson crest: two silver dolphins with gold collars joined by a gold chain around the ${c.couple.monogram} monogram above blue waves, with the motto “Je mourrai pour ceux que j’aime”.`,
@@ -247,6 +262,8 @@ function readiness(c) {
   for (const ev of c.events) {
     for (const k of ['entrance', 'parking']) if (ev.venue[k] == null) add('review', `${ev.name}: ${k} unconfirmed`, `events[${ev.id}].venue.${k} is null; omitted from the page (PRD CONTENT-02, §16).`);
   }
+  if (c.site.phase === 'post-event') add('info', 'Site is in post-event phase', 'RSVP calls to action are replaced by the thank-you content and online responses are closed (OPS-03).');
+  if (!c.banner?.active) add('info', 'Urgent logistics banner is off', 'Set banner.active with an approved message to publish wedding-day logistics above every page (ADMIN-04, OPS-02).');
   if (c.rsvp.allowPreview) add('review', 'Synthetic RSVP preview is enabled', 'rsvp.allowPreview is true, so /rsvp.html?preview=1 shows the labeled synthetic household. Set it to false before guest launch (PRD RELEASE-01).');
   if (!c.travel.hotel.roomBlock) add('info', 'No wedding room block published', 'travel.hotel.roomBlock is null; only general hotel information is shown (PRD CONTENT-03).');
   for (const a of approvals) {

@@ -7,21 +7,38 @@
     "domain": "robertandnatalie.wedding",
     "baseUrl": "https://robertandnatalie.wedding",
     "noindex": true,
-    "description": "The wedding of Robert and Natalie, Saturday 19 December 2026, Point Clear, Alabama."
+    "description": "The wedding of Robert and Natalie, Saturday 19 December 2026, Point Clear, Alabama.",
+    "phase": "pre-event"
   },
   "couple": {
     "displayName": "Robert and Natalie",
-    "names": ["Robert", "Natalie"],
+    "names": [
+      "Robert",
+      "Natalie"
+    ],
     "conjunction": "and",
     "monogram": "RN",
-    "approval": { "state": "approved", "owner": "Robert / Natalie", "source": "PRD v1.1 §01 confirmed basis", "reviewed": "2026-09-21" }
+    "approval": {
+      "state": "approved",
+      "owner": "Robert / Natalie",
+      "source": "PRD v1.1 §01 confirmed basis",
+      "reviewed": "2026-09-21"
+    }
   },
   "wedding": {
     "date": "2026-12-19",
     "timezone": "America/Chicago",
     "destination": "Point Clear, Alabama",
-    "closingLine": ["Where the ancient Moeli waters meet", "the Bahia Del Espiritu Santo"],
-    "approval": { "state": "approved", "owner": "Robert / Natalie", "source": "PRD v1.1 §01 and §06 content master", "reviewed": "2026-09-21" }
+    "closingLine": [
+      "Where the ancient Moeli waters meet",
+      "the Bahia Del Espiritu Santo"
+    ],
+    "approval": {
+      "state": "approved",
+      "owner": "Robert / Natalie",
+      "source": "PRD v1.1 §01 and §06 content master",
+      "reviewed": "2026-09-21"
+    }
   },
   "invitation": {
     "requestLines": [
@@ -30,7 +47,12 @@
       "for their Wedding",
       "in {destination}"
     ],
-    "approval": { "state": "approved", "owner": "Robert / Natalie", "source": "PRD v1.1 §06 approved content master", "reviewed": "2026-09-21" }
+    "approval": {
+      "state": "approved",
+      "owner": "Robert / Natalie",
+      "source": "PRD v1.1 §06 approved content master",
+      "reviewed": "2026-09-21"
+    }
   },
   "events": [
     {
@@ -43,7 +65,10 @@
       "venue": {
         "name": "Saint Francis Chapel",
         "alsoKnownAs": "Saint Francis at the Point",
-        "addressLines": ["17280 Scenic Highway 98", "Fairhope, Alabama 36532"],
+        "addressLines": [
+          "17280 Scenic Highway 98",
+          "Fairhope, Alabama 36532"
+        ],
         "website": "https://stfrancisatthepoint.org/",
         "entrance": null,
         "parking": null,
@@ -73,7 +98,10 @@
       "venue": {
         "name": "The Grand Hotel",
         "alsoKnownAs": null,
-        "addressLines": ["One Grand Boulevard", "Point Clear, Alabama 36564"],
+        "addressLines": [
+          "One Grand Boulevard",
+          "Point Clear, Alabama 36564"
+        ],
         "website": "https://www.grand1847.com/",
         "entrance": null,
         "parking": null,
@@ -97,13 +125,47 @@
   "weddingDay": {
     "intro": "Both celebrations take place on {longDate}. Times are local to Point Clear.",
     "venueChangeNote": "The ceremony and the reception are at two different venues. Please allow time to travel from the chapel to the hotel between the two.",
-    "approval": { "state": "draft", "owner": "Robert / Natalie", "source": "Drafted from PRD §07 CONTENT-02", "reviewed": "2026-09-21", "note": "Wording drafted by the implementation team; owner approval required." }
+    "approval": {
+      "state": "draft",
+      "owner": "Robert / Natalie",
+      "source": "Drafted from PRD §07 CONTENT-02",
+      "reviewed": "2026-09-21",
+      "note": "Wording drafted by the implementation team; owner approval required."
+    }
+  },
+  "banner": {
+    "active": false,
+    "message": null,
+    "linkUrl": null,
+    "linkLabel": null,
+    "updatedAt": null,
+    "approval": {
+      "state": "pending",
+      "owner": "Robert / Natalie / coordinator",
+      "source": null,
+      "reviewed": "2026-09-21",
+      "note": "Urgent logistics banner (PRD ADMIN-04, OPS-02). Set active=true with an approved message to publish; it appears above every page."
+    }
+  },
+  "postEvent": {
+    "heading": null,
+    "message": null,
+    "approval": {
+      "state": "pending",
+      "owner": "Robert / Natalie",
+      "source": null,
+      "reviewed": "2026-09-21",
+      "note": "Thank-you content shown when site.phase is post-event (PRD OPS-03). Required before switching the phase."
+    }
   },
   "travel": {
     "hotel": {
       "name": "The Grand Hotel",
       "intro": "The reception is held at The Grand Hotel on Mobile Bay. Guests who would like to stay at the hotel may make general reservations directly with the resort.",
-      "addressLines": ["One Grand Boulevard", "Point Clear, Alabama 36564"],
+      "addressLines": [
+        "One Grand Boulevard",
+        "Point Clear, Alabama 36564"
+      ],
       "phoneDisplay": "(251) 928-9201",
       "phoneTel": "+12519289201",
       "links": {
@@ -126,7 +188,10 @@
         "For current driving directions and airport guidance, the hotel's official Getting Here page is the best starting point."
       ],
       "airports": [
-        { "name": "Mobile Regional Airport", "code": "MOB" }
+        {
+          "name": "Mobile Regional Airport",
+          "code": "MOB"
+        }
       ],
       "approval": {
         "state": "carried-forward",
@@ -138,7 +203,13 @@
     },
     "betweenVenues": {
       "text": null,
-      "approval": { "state": "pending", "owner": "Robert / Natalie / coordinator", "source": null, "reviewed": "2026-09-21", "note": "Inter-venue transport is unconfirmed (PRD §16). Nothing is published until approved." }
+      "approval": {
+        "state": "pending",
+        "owner": "Robert / Natalie / coordinator",
+        "source": null,
+        "reviewed": "2026-09-21",
+        "note": "Inter-venue transport is unconfirmed (PRD §16). Nothing is published until approved."
+      }
     }
   },
   "faqs": [
@@ -146,43 +217,84 @@
       "id": "rsvp-when",
       "question": "When should I respond?",
       "answer": "Please respond by the date shown with your invitation. You can return to this website to update your response until that date.",
-      "approval": { "state": "draft", "owner": "Robert / Natalie", "source": "PRD CONTENT-04", "reviewed": "2026-09-21", "note": "RSVP cutoff date is not yet set; wording avoids naming a date." }
+      "approval": {
+        "state": "draft",
+        "owner": "Robert / Natalie",
+        "source": "PRD CONTENT-04",
+        "reviewed": "2026-09-21",
+        "note": "RSVP cutoff date is not yet set; wording avoids naming a date."
+      }
     },
     {
       "id": "who-is-invited",
       "question": "Who is included in my invitation?",
       "answer": "Your invitation is addressed to the members of your household. When you RSVP, the form shows exactly who is included, and you respond for each person by name.",
-      "approval": { "state": "draft", "owner": "Robert / Natalie", "source": "PRD CONTENT-04, RSVP-01", "reviewed": "2026-09-21", "note": "Children and plus-one policy still to be confirmed; wording is neutral." }
+      "approval": {
+        "state": "draft",
+        "owner": "Robert / Natalie",
+        "source": "PRD CONTENT-04, RSVP-01",
+        "reviewed": "2026-09-21",
+        "note": "Children and plus-one policy still to be confirmed; wording is neutral."
+      }
     },
     {
       "id": "attire",
       "question": "What should I wear?",
       "answer": null,
-      "approval": { "state": "pending", "owner": "Robert / Natalie", "source": null, "reviewed": "2026-09-21", "note": "Dress code not yet decided (PRD §16). Not published." }
+      "approval": {
+        "state": "pending",
+        "owner": "Robert / Natalie",
+        "source": null,
+        "reviewed": "2026-09-21",
+        "note": "Dress code not yet decided (PRD §16). Not published."
+      }
     },
     {
       "id": "between-venues",
       "question": "How do I get from the chapel to the hotel?",
       "answer": "The ceremony and reception are at two different venues. Directions for each are in the Wedding Day section above.",
-      "approval": { "state": "draft", "owner": "Robert / Natalie / coordinator", "source": "PRD CONTENT-04", "reviewed": "2026-09-21", "note": "Transport arrangements unconfirmed; wording makes no transport promise." }
+      "approval": {
+        "state": "draft",
+        "owner": "Robert / Natalie / coordinator",
+        "source": "PRD CONTENT-04",
+        "reviewed": "2026-09-21",
+        "note": "Transport arrangements unconfirmed; wording makes no transport promise."
+      }
     },
     {
       "id": "parking",
       "question": "Where can I park?",
       "answer": null,
-      "approval": { "state": "pending", "owner": "Coordinator / venues", "source": null, "reviewed": "2026-09-21", "note": "Parking at both venues unconfirmed. Not published." }
+      "approval": {
+        "state": "pending",
+        "owner": "Coordinator / venues",
+        "source": null,
+        "reviewed": "2026-09-21",
+        "note": "Parking at both venues unconfirmed. Not published."
+      }
     },
     {
       "id": "access-needs",
       "question": "I have an access or dietary need. How do I let you know?",
       "answer": "When you RSVP there is a short, optional notes field. Anything you share there is used only for planning and is passed only to the people who need it to look after you on the day. You are also welcome to contact us directly.",
-      "approval": { "state": "draft", "owner": "Robert / Natalie", "source": "PRD CONTENT-04, SEC-05", "reviewed": "2026-09-21" }
+      "approval": {
+        "state": "draft",
+        "owner": "Robert / Natalie",
+        "source": "PRD CONTENT-04, SEC-05",
+        "reviewed": "2026-09-21"
+      }
     },
     {
       "id": "contact",
       "question": "How do I reach you with a question?",
       "answer": null,
-      "approval": { "state": "pending", "owner": "Robert / Natalie", "source": null, "reviewed": "2026-09-21", "note": "Contact route not yet supplied. The contact block is rendered from the contact section once set." }
+      "approval": {
+        "state": "pending",
+        "owner": "Robert / Natalie",
+        "source": null,
+        "reviewed": "2026-09-21",
+        "note": "Contact route not yet supplied. The contact block is rendered from the contact section once set."
+      }
     }
   ],
   "contact": {
@@ -190,7 +302,13 @@
     "phone": null,
     "phoneDisplay": null,
     "note": null,
-    "approval": { "state": "pending", "owner": "Robert / Natalie", "source": null, "reviewed": "2026-09-21", "note": "Private contact route required before guest launch (PRD §03 exception path, CONTENT-04)." }
+    "approval": {
+      "state": "pending",
+      "owner": "Robert / Natalie",
+      "source": null,
+      "reviewed": "2026-09-21",
+      "note": "Private contact route required before guest launch (PRD §03 exception path, CONTENT-04)."
+    }
   },
   "rsvp": {
     "mode": "coming-soon",
@@ -207,28 +325,78 @@
         "label": "The Example Household",
         "contactEmail": "",
         "guests": [
-          { "id": "g_alex", "name": "Alex Example", "kind": "named" },
-          { "id": "g_sam", "name": "Sam Example", "kind": "named" },
-          { "id": "g_alex_guest", "name": null, "kind": "plus-one", "hostGuestId": "g_alex" },
-          { "id": "g_jordan", "name": "Jordan Example", "kind": "named" }
+          {
+            "id": "g_alex",
+            "name": "Alex Example",
+            "kind": "named"
+          },
+          {
+            "id": "g_sam",
+            "name": "Sam Example",
+            "kind": "named"
+          },
+          {
+            "id": "g_alex_guest",
+            "name": null,
+            "kind": "plus-one",
+            "hostGuestId": "g_alex"
+          },
+          {
+            "id": "g_jordan",
+            "name": "Jordan Example",
+            "kind": "named"
+          }
         ],
         "entitlements": [
-          { "guestId": "g_alex", "eventId": "ceremony" },
-          { "guestId": "g_alex", "eventId": "reception" },
-          { "guestId": "g_sam", "eventId": "ceremony" },
-          { "guestId": "g_sam", "eventId": "reception" },
-          { "guestId": "g_alex_guest", "eventId": "ceremony" },
-          { "guestId": "g_alex_guest", "eventId": "reception" },
-          { "guestId": "g_jordan", "eventId": "reception" }
+          {
+            "guestId": "g_alex",
+            "eventId": "ceremony"
+          },
+          {
+            "guestId": "g_alex",
+            "eventId": "reception"
+          },
+          {
+            "guestId": "g_sam",
+            "eventId": "ceremony"
+          },
+          {
+            "guestId": "g_sam",
+            "eventId": "reception"
+          },
+          {
+            "guestId": "g_alex_guest",
+            "eventId": "ceremony"
+          },
+          {
+            "guestId": "g_alex_guest",
+            "eventId": "reception"
+          },
+          {
+            "guestId": "g_jordan",
+            "eventId": "reception"
+          }
         ]
       }
     },
-    "approval": { "state": "pending", "owner": "Robert / Natalie / technical lead", "source": "PRD §08–§11", "reviewed": "2026-09-21", "note": "Backend service, credential delivery and cutoff are undecided. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only." }
+    "approval": {
+      "state": "pending",
+      "owner": "Robert / Natalie / technical lead",
+      "source": "PRD §08–§11",
+      "reviewed": "2026-09-21",
+      "note": "Backend service, credential delivery and cutoff are undecided. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only."
+    }
   },
   "privacy": {
     "websiteHost": "GitHub Pages (GitHub, Inc.)",
     "rsvpProvider": null,
     "retentionDaysAfterWedding": 90,
-    "approval": { "state": "draft", "owner": "Robert / Natalie", "source": "PRD SEC-04, SEC-06", "reviewed": "2026-09-21", "note": "Retention period and RSVP provider require owner approval before launch. The notice does not claim legal compliance." }
+    "approval": {
+      "state": "draft",
+      "owner": "Robert / Natalie",
+      "source": "PRD SEC-04, SEC-06",
+      "reviewed": "2026-09-21",
+      "note": "Retention period and RSVP provider require owner approval before launch. The notice does not claim legal compliance."
+    }
   }
 }

@@ -31,10 +31,21 @@ export function icon(id, extraClass = '') {
   return `<svg class="icon ${extraClass}" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;
 }
 
+export function banner(view) {
+  const b = view.banner;
+  if (!b) return '';
+  return `<div class="site-banner" role="status">
+  <div class="container site-banner-inner">${icon('i-alert')}<p><strong>Update:</strong> ${esc(b.message)}${b.linkUrl ? ` <a href="${esc(b.linkUrl)}">${esc(b.linkLabel)}</a>` : ''}</p></div>
+</div>`;
+}
+
 export function header({ view, currentPage }) {
   const p = view.basePath;
   const home = currentPage === 'index' || currentPage === 'celebration' ? '' : `${p}/`;
-  return `<header class="site-header">
+  const rsvpButton = view.postEvent
+    ? `<a class="btn btn-primary btn-rsvp" href="${home}#thank-you">Thank you</a>`
+    : `<a class="btn btn-primary btn-rsvp" href="${p}/rsvp.html"${currentPage === 'rsvp' ? ' aria-current="page"' : ''}>RSVP</a>`;
+  return `${banner(view)}<header class="site-header">
   <div class="header-inner">
     <a class="brand" href="${home || p + '/'}#top" aria-label="${esc(view.couple.displayName)} — home">
       <picture>
@@ -54,7 +65,7 @@ export function header({ view, currentPage }) {
         <li><a href="${home}#questions">Questions</a></li>
       </ul>
     </nav>
-    <a class="btn btn-primary btn-rsvp" href="${p}/rsvp.html"${currentPage === 'rsvp' ? ' aria-current="page"' : ''}>RSVP</a>
+    ${rsvpButton}
   </div>
 </header>`;
 }

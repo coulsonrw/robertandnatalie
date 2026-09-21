@@ -83,6 +83,13 @@ a:hover { color: var(--ink); }
 .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.55; cursor: progress; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 
+/* ---------- Urgent logistics banner (ADMIN-04, OPS-02) ---------- */
+.site-banner { background: var(--navy); color: #fff; }
+.site-banner-inner { display: flex; gap: 12px; align-items: flex-start; padding-top: 10px; padding-bottom: 10px; }
+.site-banner .icon { width: 24px; height: 24px; margin-top: 3px; flex-shrink: 0; }
+.site-banner p { margin: 0; font-size: 1.05rem; line-height: 1.5; }
+.site-banner a { color: #fff; }
+
 /* ---------- Header ---------- */
 .site-header {
   position: sticky; top: 0; z-index: 50;

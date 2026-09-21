@@ -34,7 +34,7 @@ function entryStage(view) {
     <span class="entry-brand">${esc(view.couple.displayName)}</span>
     <div class="entry-bar-actions">
       <a class="entry-skip" href="#main" data-action="enter">Skip to the wedding details</a>
-      <a class="btn btn-primary btn-rsvp" href="${p}/rsvp.html">RSVP</a>
+      ${view.postEvent ? '' : `<a class="btn btn-primary btn-rsvp" href="${p}/rsvp.html">RSVP</a>`}
     </div>
   </div>
   <div class="entry-stage">
@@ -56,7 +56,7 @@ function entryStage(view) {
       <p class="entry-hint" id="entry-open-hint">Tap the invitation to continue to the website.</p>
       <div class="actions">
         <button class="btn btn-primary" type="button" data-action="enter">Continue to the website</button>
-        <a class="btn btn-secondary" href="${p}/rsvp.html">RSVP</a>
+        ${view.postEvent ? '' : `<a class="btn btn-secondary" href="${p}/rsvp.html">RSVP</a>`}
       </div>
     </div>
   </div>
@@ -79,10 +79,23 @@ function heroSection(view) {
     <p class="glance-line"><span>${esc(view.longDate)}</span><span class="dot" aria-hidden="true">·</span><span>${esc(view.wedding.destination)}</span></p>
     <p class="glance-times">${times}</p>
     <div class="actions">
-      <a class="btn btn-primary" href="${p}/rsvp.html">RSVP</a>
+      ${view.postEvent ? `<a class="btn btn-primary" href="#thank-you">${esc(view.postEvent.heading)}</a>` : `<a class="btn btn-primary" href="${p}/rsvp.html">RSVP</a>`}
       <a class="btn btn-secondary" href="#wedding-day">View Wedding Day</a>
     </div>
     <p class="hero-keepsake js-only"><button class="text-button" type="button" data-action="view-invitation">View the invitation</button></p>
+  </div>
+</section>`;
+}
+
+function thankYouSection(view) {
+  if (!view.postEvent) return '';
+  return `<section id="thank-you" class="section" aria-labelledby="thank-you-title">
+  <div class="container">
+    <header class="section-head">
+      <h2 id="thank-you-title">${esc(view.postEvent.heading)}</h2>
+      <svg class="ornament" aria-hidden="true" focusable="false"><use href="#ornament-rule"/></svg>
+      <p class="section-intro">${esc(view.postEvent.message)}</p>
+    </header>
   </div>
 </section>`;
 }
@@ -204,6 +217,7 @@ ${header({ view, currentPage })}
   ${invitationCard(view)}
 </section>
 ${heroSection(view)}
+${thankYouSection(view)}
 ${weddingDaySection(view)}
 ${travelSection(view)}
 ${questionsSection(view)}

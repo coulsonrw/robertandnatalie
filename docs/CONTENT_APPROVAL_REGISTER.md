@@ -14,6 +14,8 @@ Approval states: **approved** (owner-approved), **draft** (wording drafted by th
 | `config.events[ceremony]` | carried-forward | Coordinator / venue | Chapel name and start time: PRD v1.1 §01. Address and website: previous site (repository history, commit e67972f). | 2026-09-21 | Exact chapel address, entrance, arrival, parking and accessibility notes require coordinator confirmation before guest launch (PRD §16). Unconfirmed items are omitted from the page. |
 | `config.events[reception]` | approved | Robert / Natalie; coordinator for entrance details | Venue and start time: PRD v1.1 §01. Resort address: PRD §07 CONTENT-03 [S5]. | 2026-09-21 | Resort address is verified; reception room, guest entrance and parking are unconfirmed and omitted. |
 | `config.weddingDay` | draft | Robert / Natalie | Drafted from PRD §07 CONTENT-02 | 2026-09-21 | Wording drafted by the implementation team; owner approval required. |
+| `config.banner` | pending | Robert / Natalie / coordinator | — | 2026-09-21 | Urgent logistics banner (PRD ADMIN-04, OPS-02). Set active=true with an approved message to publish; it appears above every page. |
+| `config.postEvent` | pending | Robert / Natalie | — | 2026-09-21 | Thank-you content shown when site.phase is post-event (PRD OPS-03). Required before switching the phase. |
 | `config.travel.hotel` | publisher-claim | Robert / Natalie; hotel for room block | Address and links: PRD §07 [S5, S6]. Telephone: previous site (repository history); verify against the hotel's Contact page. | 2026-09-21 | No wedding room block has been supplied. Only general hotel information is published until a room block is confirmed and approved. |
 | `config.travel.gettingThere` | carried-forward | Coordinator | Airport named on the previous site; travel times deliberately omitted. Getting Here link: PRD [S6]. | 2026-09-21 | Verify airport and transport recommendations against current official information before release (PRD CONTENT-03). |
 | `config.travel.betweenVenues` | pending | Robert / Natalie / coordinator | — | 2026-09-21 | Inter-venue transport is unconfirmed (PRD §16). Nothing is published until approved. |
@@ -43,6 +45,8 @@ Approval states: **approved** (owner-approved), **draft** (wording drafted by th
 | review | Synthetic RSVP preview is enabled | rsvp.allowPreview is true, so /rsvp.html?preview=1 shows the labeled synthetic household. Set it to false before guest launch (PRD RELEASE-01). |
 | review | config.events[ceremony]: carried-forward | Exact chapel address, entrance, arrival, parking and accessibility notes require coordinator confirmation before guest launch (PRD §16). Unconfirmed items are omitted from the page. |
 | review | config.weddingDay: draft | Wording drafted by the implementation team; owner approval required. |
+| review | config.banner: pending, not published | Urgent logistics banner (PRD ADMIN-04, OPS-02). Set active=true with an approved message to publish; it appears above every page. |
+| review | config.postEvent: pending, not published | Thank-you content shown when site.phase is post-event (PRD OPS-03). Required before switching the phase. |
 | review | config.travel.hotel: publisher-claim | No wedding room block has been supplied. Only general hotel information is published until a room block is confirmed and approved. |
 | review | config.travel.gettingThere: carried-forward | Verify airport and transport recommendations against current official information before release (PRD CONTENT-03). |
 | review | config.travel.betweenVenues: pending, not published | Inter-venue transport is unconfirmed (PRD §16). Nothing is published until approved. |
@@ -56,6 +60,7 @@ Approval states: **approved** (owner-approved), **draft** (wording drafted by th
 | review | config.contact: pending, not published | Private contact route required before guest launch (PRD §03 exception path, CONTENT-04). |
 | review | config.rsvp: pending, not published | Backend service, credential delivery and cutoff are undecided. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. |
 | review | config.privacy: draft | Retention period and RSVP provider require owner approval before launch. The notice does not claim legal compliance. |
+| info | Urgent logistics banner is off | Set banner.active with an approved message to publish wedding-day logistics above every page (ADMIN-04, OPS-02). |
 | info | No wedding room block published | travel.hotel.roomBlock is null; only general hotel information is shown (PRD CONTENT-03). |
 
 A **blocker** prevents guest launch (PRD RELEASE-01). A **review** item is published or omitted safely but still needs an owner or coordinator decision. **Info** items are recorded for completeness.

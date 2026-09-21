@@ -11,7 +11,7 @@ The static site's RSVP page (`src/js/rsvp.js`) talks to a small server-side serv
 ## Session and security (RSVP-01, SEC-02, SEC-03)
 
 - Household credentials are random (≥128 bits for links; fallback codes with adequate entropy and rate limiting). Only digests are stored; credentials are scoped to one household and revocable.
-- `POST /session` establishes a session and sets an `HttpOnly; Secure; SameSite=Lax` cookie. A link-preview `GET` must never consume a credential or change data.
+- `POST /session` establishes a session and sets an `HttpOnly; Secure; SameSite=Lax` cookie. A link-preview `GET` must never consume a credential or change data. Personal links carry the token in the URL fragment (`/rsvp.html#t=<token>`); the page removes it from the address bar on load and only sends it when the guest presses "Open my invitation". The request body is the same `{ "code": "<token or short code>" }` for both.
 - Every request re-checks that the session's household owns every guest and event ID in the payload (deny by default). Responses carry `Cache-Control: private, no-store`.
 - CORS: allow the site origin only, with `Access-Control-Allow-Credentials: true`.
 - Rate-limit `POST /session` per IP and per code. Never confirm whether a name is on the list.

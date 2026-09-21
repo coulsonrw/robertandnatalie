@@ -1,6 +1,6 @@
 # Visual proofs
 
-Captured 2026-09-21T22:53:04.845Z with Chromium 141.0.7390.37 on Node v22.22.2 using `npm run proofs` (Playwright, headless).
+Captured 2026-09-21T23:00:32.471Z with Chromium 141.0.7390.37 on Node v22.22.2 using `npm run proofs` (Playwright, headless).
 Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adapter; nothing is saved.
 
 ## Horizontal overflow check (must be none)
@@ -50,6 +50,10 @@ Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adap
 
 - Enter on the seal: state=open, focus=invitation-card; Enter on the invitation: state=site, focus=hero-title.
 
+## Private-link access (390)
+
+- Token removed from the address bar before any action: true; "Open my invitation" shown: true; after pressing it the wizard is at step "invitees" and the URL is /rsvp.html?preview=1.
+
 ## RSVP preview error state
 
 - 390px: after submitting an incomplete attendance form, focus moved to `c-g_alex_ceremony-attending`.
@@ -87,6 +91,7 @@ Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adap
 - rsvp-coming-soon-320.png
 - rsvp-coming-soon-390.png
 - rsvp-coming-soon-768.png
+- rsvp-link-token-390.png
 - rsvp-preview-access-1440.png
 - rsvp-preview-access-320.png
 - rsvp-preview-access-390.png

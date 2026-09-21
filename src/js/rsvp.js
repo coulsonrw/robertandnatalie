@@ -147,6 +147,22 @@
   }
 
   var adapter = mode === 'preview' ? mockAdapter(cfg.preview) : httpAdapter(cfg.apiBaseUrl);
+
+  // Private household links carry their credential in the URL fragment (#t=…) or query (?t=…).
+  // It is read once, removed from the address bar immediately so it is not kept in history or
+  // leaked through referrers, and only exchanged for a session when the guest presses the button
+  // (a link-preview fetch must never consume it — PRD SEC-02, IA-02).
+  var linkToken = null;
+  (function readLinkToken() {
+    var hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+    var t = hashParams.get('t') || params.get('t');
+    if (!t) return;
+    linkToken = t;
+    hashParams.delete('t');
+    params.delete('t');
+    var clean = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + (hashParams.toString() ? '#' + hashParams.toString() : '');
+    try { window.history.replaceState(null, '', clean); } catch (e) { /* ignore */ }
+  })();
   var eventById = {};
   cfg.events.forEach(function (e) { eventById[e.id] = e; });
 
@@ -224,6 +240,14 @@
   }
 
   function renderAccess() {
+    if (linkToken) {
+      var linkForm = el('form', { novalidate: true, onsubmit: onLinkSubmit },
+        el('p', { text: 'You followed a personal invitation link. Press the button to open your household’s invitation.' }),
+        el('div', { class: 'form-actions' }, busyButton('Open my invitation', { class: 'btn btn-primary', type: 'submit', 'data-action': 'open-link', 'data-busy-label': 'Opening…' })),
+        el('p', { class: 'hint' }, 'Not you? ', el('button', { class: 'text-button', type: 'button', onclick: function () { linkToken = null; render(); } }, 'Enter an invitation code instead'), '.')
+      );
+      return stepSection('access', [heading('Open your invitation'), linkForm, contactNode('Having trouble? Please contact ')]);
+    }
     var form = el('form', { novalidate: true, onsubmit: onAccessSubmit });
     append(form, el('div', { class: 'field' },
       el('label', { for: 'code', text: 'Invitation code' }),
@@ -428,6 +452,24 @@
     }).catch(function (err) {
       state.busy = false;
       if (err.code === 'invalid_code') { state.errors.code = MESSAGES.invalid_code; render(); document.getElementById('code').focus(); return; }
+      render(); handleError(err);
+    });
+  }
+
+  function onLinkSubmit(e) {
+    e.preventDefault();
+    if (state.busy || !linkToken) return;
+    var token = linkToken;
+    state.busy = true; render(); setNotice(null);
+    adapter.openSession(token).then(function (session) {
+      state.busy = false;
+      linkToken = null;
+      loadSession(session, true);
+      if (!rsvpOpen() && !session.reference) { state.step = 'closed'; state.focusHeading = true; render(); return; }
+      go(session.reference ? 'confirmation' : 'invitees');
+    }).catch(function (err) {
+      state.busy = false;
+      if (err.code === 'invalid_code') { linkToken = null; state.errors.code = 'That invitation link is no longer valid. Please enter the code from your invitation, or contact us.'; render(); var c = document.getElementById('code'); if (c) c.focus(); return; }
       render(); handleError(err);
     });
   }

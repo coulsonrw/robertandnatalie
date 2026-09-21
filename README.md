@@ -31,6 +31,12 @@ Deep links such as `/#wedding-day`, the `/celebration.html` route and a return w
 2. Run `npm run check` to validate, or `npm run build` to build. The build refuses inconsistent data (for example an event that is not on the wedding date or whose UTC offset is wrong for `America/Chicago`) and prints what still blocks guest launch.
 3. Run `npm run register` to refresh `docs/CONTENT_APPROVAL_REGISTER.md`, then commit both files.
 
+Three owner-controlled switches live in the same file:
+
+- **Urgent logistics banner** (`banner`): set `active: true` with an approved `message` (and optional link) and rebuild; it appears above every page in navy with an alert icon (PRD ADMIN-04, OPS-02). The build refuses an active banner whose approval is still pending.
+- **Post-wedding phase** (`site.phase: "post-event"` with approved `postEvent` content): every RSVP call to action becomes a "Thank you" link to the thank-you section, the RSVP page reports responses closed with the thank-you text, and the synthetic preview is disabled (PRD OPS-03).
+- **RSVP mode** (`rsvp.mode`, `rsvp.apiBaseUrl`, `rsvp.cutoffAt`): see RSVP status below. Personal invitation links take the form `/rsvp.html#t=<token>`; the page removes the token from the address bar on load and sends it only when the guest presses "Open my invitation" (PRD SEC-02).
+
 Approved wording that must not drift: the couple's display name, the closing line ("Where the ancient Moeli waters meet the Bahia Del Espiritu Santo"), the venue names and the start times. The build warns if the closing line changes.
 
 ## Local preview

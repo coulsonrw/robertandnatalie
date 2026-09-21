@@ -137,6 +137,22 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   await context.close();
 }
 
+// Private-link access (IA-02, SEC-02): token read from the fragment, stripped from the address bar,
+// exchanged only on an explicit action. Uses the synthetic preview code as the token.
+{
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.goto(base + '/rsvp.html?preview=1#t=PREVIEW', { waitUntil: 'networkidle' });
+  await settle(page);
+  const before = await page.evaluate(() => ({ url: location.href, button: !!document.querySelector('[data-action="open-link"]') }));
+  await page.screenshot({ path: path.join(OUT, 'rsvp-link-token-390.png'), fullPage: true });
+  await page.locator('[data-action="open-link"]').click({ timeout: 10000 });
+  await page.waitForSelector('[data-step="invitees"]', { timeout: 10000 });
+  const after = await page.evaluate(() => ({ url: location.href, step: document.querySelector('[data-step]').getAttribute('data-step') }));
+  results.linkToken = { tokenStrippedBeforeAction: !before.url.includes('t=PREVIEW'), buttonShown: before.button, stepAfter: after.step, urlAfter: after.url };
+  await context.close();
+}
+
 // Keyboard focus order on the home page (desktop) and skip-link visibility
 {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -236,6 +252,10 @@ const lines = [
   '## Reduced motion, keyboard only (390)',
   '',
   results.reducedMotion ? `- Enter on the seal: state=${results.reducedMotion.afterOpen.state}, focus=${results.reducedMotion.afterOpen.focused}; Enter on the invitation: state=${results.reducedMotion.afterEnter.state}, focus=${results.reducedMotion.afterEnter.focused}.` : '- not run',
+  '',
+  '## Private-link access (390)',
+  '',
+  results.linkToken ? `- Token removed from the address bar before any action: ${results.linkToken.tokenStrippedBeforeAction}; "Open my invitation" shown: ${results.linkToken.buttonShown}; after pressing it the wizard is at step "${results.linkToken.stepAfter}" and the URL is ${results.linkToken.urlAfter.replace(/^https?:\/\/[^/]+/, '')}.` : '- not run',
   '',
   '## RSVP preview error state',
   '',
