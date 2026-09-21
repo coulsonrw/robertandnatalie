@@ -1,0 +1,16 @@
+{
+  "name": "robertandnatalie-wedding",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Wedding website for Robert and Natalie, 19 December 2026, Point Clear, Alabama. Static site built from content/site.config.json and deployed to GitHub Pages.",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/build.mjs --check",
+    "register": "node scripts/build.mjs --register",
+    "serve": "node scripts/serve.mjs",
+    "proofs": "node scripts/proofs.mjs"
+  },
+  "license": "UNLICENSED"
+}

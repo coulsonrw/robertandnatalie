@@ -1,0 +1,31 @@
+name: Validate content and build
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate configuration
+        run: npm run check
+      - name: Build site
+        run: npm run build
+      - name: Confirm required output
+        run: |
+          test -f dist/index.html
+          test -f dist/rsvp.html
+          test -f dist/privacy.html
+          test -f dist/404.html
+          test -f dist/calendar/ceremony.ics
+          test -f dist/calendar/reception.ics
+          ! grep -rl "undefined" dist/*.html || (echo "Template emitted 'undefined'" && exit 1)
