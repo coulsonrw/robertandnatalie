@@ -1,0 +1,67 @@
+name: Validate content and build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Validate configuration
+        run: npm run check
+      - name: Unit tests and automated AT-02
+        run: npm test
+      - name: Build site
+        run: |
+          npm run build | tee build.log
+          { echo '## Launch readiness'; echo; echo '```'; sed -n '/Launch readiness/,$p' build.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: External links respond (hotel, chapel, maps)
+        continue-on-error: true
+        run: |
+          node scripts/linkcheck.mjs | tee linkcheck.log
+          { echo '## External link check'; echo; echo '```'; cat linkcheck.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Review build for collaborators (synthetic preview enabled)
+        continue-on-error: true
+        uses: actions/upload-artifact@v5
+        with:
+          name: site-review-build
+          path: dist
+          retention-days: 14
+      - name: Approval register is up to date
+        run: |
+          npm run register >/dev/null
+          git diff --exit-code -- docs/CONTENT_APPROVAL_REGISTER.md || (echo 'Run npm run register and commit docs/CONTENT_APPROVAL_REGISTER.md' && exit 1)
+      - name: Confirm required output
+        run: |
+          test -f dist/index.html
+          test -f dist/rsvp.html
+          test -f dist/privacy.html
+          test -f dist/404.html
+          test -f dist/calendar/ceremony.ics
+          test -f dist/calendar/reception.ics
+          ! grep -rl "undefined" dist/*.html || (echo "Template emitted 'undefined'" && exit 1)
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: RSVP service tests (workerd + local D1)
+        run: npm test

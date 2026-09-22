@@ -1,0 +1,116 @@
+{
+  "capturedAt": "2026-09-22T00:07:08.680Z",
+  "browser": "chromium 141.0.7390.37",
+  "node": "v22.22.2",
+  "viewports": {
+    "320": {
+      "opened": {
+        "scrollWidth": 320,
+        "innerWidth": 320,
+        "bodyScrollWidth": 320
+      },
+      "docked": {
+        "scrollWidth": 320,
+        "innerWidth": 320,
+        "bodyScrollWidth": 320
+      },
+      "horizontalOverflow": false,
+      "fontsLoaded": [
+        "Pinyon Script: true",
+        "Cormorant Garamond: true",
+        "Cormorant SC: true"
+      ]
+    },
+    "390": {
+      "opened": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390
+      },
+      "docked": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "bodyScrollWidth": 390
+      },
+      "horizontalOverflow": false,
+      "fontsLoaded": [
+        "Pinyon Script: true",
+        "Cormorant Garamond: true",
+        "Cormorant SC: true"
+      ]
+    },
+    "768": {
+      "opened": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "bodyScrollWidth": 768
+      },
+      "docked": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "bodyScrollWidth": 768
+      },
+      "horizontalOverflow": false,
+      "fontsLoaded": [
+        "Pinyon Script: true",
+        "Cormorant Garamond: true",
+        "Cormorant SC: true"
+      ]
+    },
+    "1440": {
+      "opened": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440
+      },
+      "docked": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "bodyScrollWidth": 1440
+      },
+      "horizontalOverflow": false,
+      "fontsLoaded": [
+        "Pinyon Script: true",
+        "Cormorant Garamond: true",
+        "Cormorant SC: true"
+      ]
+    }
+  },
+  "entryFlow1440": {
+    "envelopeFocusedOnLoad": true,
+    "invitationCentredAfterOpen": true,
+    "continueVisibleAndFocusedWithoutScroll": true,
+    "dockedAfterContinue": true,
+    "dialogOpenFromKeepsake": true,
+    "restoredAfterEscape": true
+  },
+  "entryFlow390": {
+    "envelopeFocusedOnLoad": true,
+    "invitationCentredAfterOpen": true,
+    "continueVisibleAndFocusedWithoutScroll": true,
+    "dockedAfterContinue": true,
+    "dialogOpenFromKeepsake": true,
+    "restoredAfterEscape": true
+  },
+  "stickyBarVisibleAt390": true,
+  "stickyBarHiddenAt768": true,
+  "firstTabIsSkipLink": true,
+  "keyboardFocusAfterThreeTabs": "Wedding Day",
+  "controlAudit": {
+    "smallFont": [],
+    "smallTarget": [],
+    "bodyFontPx": 18,
+    "closingMatchesInformational": true,
+    "closingComputed": {
+      "fontSize": "18px",
+      "fontWeight": "500",
+      "color": "rgb(41, 42, 40)"
+    },
+    "crestWidthPx": 160
+  },
+  "crestWidthPx390": 120,
+  "reducedMotionInvitationShownWithin100ms": true,
+  "reducedMotionDockedWithin100ms": true,
+  "noJsStaticInvitationVisible": true,
+  "consoleOrRequestErrors": []
+}

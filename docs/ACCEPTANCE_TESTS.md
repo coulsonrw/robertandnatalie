@@ -1,0 +1,42 @@
+# Acceptance-test matrix — status
+
+PRD v1.1 Section 14. Synthetic fixtures only (`content/site.config.json` → `rsvp.preview.households`: PREVIEW, SOLO, FAMILY). "Lab" means headless Chromium 141 through Playwright on this repository's build; no production data, no other browsers, no field data. A fixed defect requires a re-run of the affected cases.
+
+| Test | Scenario (PRD) | Status | Evidence | Still required |
+|---|---|---|---|---|
+| AT-01 | Build matches the G2-approved proof and original artwork; crest detail, no red copy, no distorted names, closing line wraps at matching size | **Evidence captured; owner comparison pending** | `docs/proofs/invitation-*.png`, `detail-invitation-390@2x.png`, `entry-*.png`; CSS tokens in `src/styles/site.css` | Owner G2 sign-off against `assets/invitation-approved-charcoal.png` |
+| AT-02 | Change the ceremony start once; invitation, schedule, confirmation and calendar agree | **Runnable now** (single source in `content/site.config.json`; build validates date and offset) | `scripts/build.mjs` (`formalTimeLine`, `clockLabel`, `buildIcs`), proof of a variant build recorded below | Repeat against the deployed service for the confirmation email |
+| AT-03 | Guest finds date, ceremony, hotel and RSVP without reading a story or completing an animation | **Pass (lab)** | Entry bar "Skip to the wedding details" and RSVP; date and destination under the envelope; hero with both start times; deep links bypass the envelope (`docs/proofs/README.md`) | Six-person usability pilot (§01 outcomes) |
+| AT-04 | Valid household access reveals only that household; invalid or revoked access reveals nothing | **Front end done; service test pending** | Neutral invalid-code and invalid-link messages (`src/js/rsvp.js`); contract rules | Run against the deployed service (`backend/` tests cover the server side) |
+| AT-05 | Manipulate IDs and query protected APIs, assets, exports and caches; cross-household access denied | **Service test pending** | Contract: ownership checked on every request; `backend/` tests | Run against the deployed service |
+| AT-06 | Different responses by event; counts and completeness reconcile | **Front end pass (lab); service pending** | `docs/proofs/rsvp-preview-review-*.png` (Alex attending, Sam declining, Jordan reception-only) | Reporting run against the deployed service |
+| AT-07 | Unauthorized plus-ones, extra children, uninvited events, invalid meals rejected | **Service test pending** | Front end only offers entitled pairs and configured meals; `backend/` tests | Run against the deployed service |
+| AT-08 | Decline all events: no meal or access questions; a valid decline is saved | **Pass (lab, mock)** | `docs/proofs/rsvp-decline-all-review-390.png`, `rsvp-decline-all-confirmation-390.png` | Repeat against the deployed service |
+| AT-09 | Double-click, retry after timeout, lose connectivity: at most one committed revision, no false success | **Front end done; service pending** | `requestId` kept across retries, busy state disables submit, network state keeps input (`src/js/rsvp.js`) | Fault-injection run against the deployed service |
+| AT-10 | Two sessions edit; stale revision cannot silently overwrite | **Front end done; service pending** | Conflict state loads the latest snapshot and asks for review (`handleError`) | Run against the deployed service |
+| AT-11 | Email disabled: RSVP saved, retry queued, coordinator sees the issue | **Service pending** | Explicit email-unavailable state on the confirmation step | Mail outbox test in `backend/` and against the provider |
+| AT-12 | Before/after cutoff in event-local time; guest editing closes; audited admin correction possible | **Service pending** | `rsvp.cutoffAt` honoured by the front end (`rsvpOpen`) | Cutoff set; run against the deployed service |
+| AT-13 | Import then re-import roster; responses persist; general export excludes notes and neutralises formulas | **Service pending** | `backend/` tests | Run with the real roster format |
+| AT-14 | Maps and calendar files on target devices; correct entrance and 2:00/4:00 p.m. starts; no invented end time | **Files generated; device validation pending** | `dist/calendar/*.ics` (TZID America/Chicago, no DTEND), map links from config | Open in Apple Calendar, Google Calendar, Outlook; iOS and Android Maps |
+| AT-15 | Access, RSVP, errors and correction by keyboard and screen reader; zoom and reduced motion | **Automated pass; manual pending** | `docs/evidence/ACCESSIBILITY.md` (0 axe violations, focus indicators, 44 px targets, reduced motion), `docs/proofs/README.md` (keyboard order, 200% text) | VoiceOver (iOS/macOS) and NVDA sessions; 400% reflow check |
+| AT-16 | Restore backup, revoke an invitation, roll back content, exercise fallback capture | **Pending** | `docs/RUNBOOK.md` procedures | Perform each once before launch and record the date |
+| AT-17 | Six to eight credible candidates screened; three alternatives incl. custom benchmark | **Package complete; owner exception needed** | `docs/selection/CANDIDATE_REGISTER.md` (37 rows, 8 retained incl. the custom benchmark; commercial listings could not be opened from this environment, so their gates stay pending) | Owners decide at G1 whether unopened commercial candidates count as screened (TPL-03 exception) |
+| AT-18 | Source, rights and build evidence recorded; clean build reproduced; gates pass | **Custom benchmark pass** | Clean `npm run build` with no runtime dependencies (Playwright is a pinned dev dependency); OFL licences in `docs/licenses/`; gate table in `docs/DECISION_RECORD.md`; `docs/selection/SELECTION_REPORT.md` §3 | External candidates' gates stay pending until their sources can be opened |
+| AT-19 | Weighted scorecard and effort comparison recompute; weights total 100%; no renormalisation | **Pass (independently recounted)** | `docs/selection/SCORECARD.md` (custom 80.0/100 fully evaluated; concepts and external rows as labelled ranges), `KEEP_ADAPT_REPLACE.md` | Owner review at G1 |
+| AT-20 | Three comparable branded proofs at 320/390/768/1440; original assets and exact copy; synthetic data | **Evidence complete; owner review pending** | `docs/proofs/` (custom, working build), `docs/selection/proofs/alt-a-editorial-heritage/`, `docs/selection/proofs/alt-b-couple-template/` (labelled concept mockups, independently re-captured) | Owner review at G1; G2 baseline freeze |
+| AT-21 | Cannot advance on concept approval alone; purchases need named approval; no self-approval | **Pass by construction** | `docs/DECISION_RECORD.md` approvals table blank; `site.launchApproved` false blocks release | — |
+| AT-22 | Decision record and a simulated foundation or typeface change reopen the affected approvals | **Documented** | `docs/DECISION_RECORD.md` change-control section | Owners to exercise once |
+
+## AT-02 variant run (recorded evidence)
+
+Procedure (run 21 September 2026): copy `content/site.config.json`, change `events[ceremony].startsAt` to `2026-12-19T15:30:00-06:00` with `formalDayPart` unchanged, run `npm run build`, inspect the outputs, then restore the file and rebuild.
+
+| Output | Before | After the single change |
+|---|---|---|
+| Invitation formal line | Ceremony at Two O’Clock in the Afternoon | Ceremony at Half Past Three in the Afternoon |
+| Wedding Day card time | `2:00 p.m.` (`datetime="2026-12-19T14:00:00-06:00"`) | `3:30 p.m.` (`datetime="2026-12-19T15:30:00-06:00"`) |
+| Hero schedule line | Saint Francis Chapel, 2:00 p.m. | Saint Francis Chapel, 3:30 p.m. |
+| RSVP page event label | …, 2:00 p.m. Central Time (CST) | …, 3:30 p.m. Central Time (CST) |
+| `calendar/ceremony.ics` | `DTSTART;TZID=America/Chicago:20261219T140000` | `DTSTART;TZID=America/Chicago:20261219T153000` |
+
+All five outputs changed together from the one configuration value; after restoring the file every output returned to the 2:00 p.m. values. The confirmation email path remains to be checked against the deployed service.

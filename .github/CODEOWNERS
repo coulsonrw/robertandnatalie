@@ -1,0 +1,4 @@
+# Changes to guest-facing content and the approval register need an owner's review (PRD CONTENT-06).
+content/            @coulsonrw
+docs/CONTENT_APPROVAL_REGISTER.md @coulsonrw
+docs/DECISION_RECORD.md @coulsonrw

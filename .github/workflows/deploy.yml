@@ -1,0 +1,47 @@
+name: Build and deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Build site from content/site.config.json
+        env:
+          SITE_PREVIEW: '0'
+        run: |
+          # Strict mode refuses to build while launch blockers remain once the owners have recorded G3.
+          if node -e "process.exit(JSON.parse(require('fs').readFileSync('content/site.config.json','utf8')).site.launchApproved ? 0 : 1)"; then npm run build -- --strict | tee build.log; else npm run build | tee build.log; fi
+          { echo '## Launch readiness (this deploy is a review build until G3 is recorded)'; echo; echo '```'; sed -n '/Launch readiness/,$p' build.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
