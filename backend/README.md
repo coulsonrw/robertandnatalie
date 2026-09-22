@@ -37,7 +37,7 @@ Observed test run (Node 22.22.2, npm 10.9.7, vitest 4.1.11, @cloudflare/vitest-p
 
 ```
  Test Files  5 passed (5)
-      Tests  52 passed (52)
+      Tests  53 passed (53)
 ```
 
 To run the Worker locally against a local D1 file:

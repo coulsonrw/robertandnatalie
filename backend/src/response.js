@@ -118,6 +118,13 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
   return { answered, meals, nameUpdates, contactEmail, notes, anyoneAttending };
 }
 
+// Replayed idempotency bodies are stored without the restricted note; attach the household's current note.
+async function withCurrentNotes(db, householdId, body) {
+  if (!body || typeof body !== 'object') return body;
+  const row = await one(db, 'SELECT note FROM restricted_guest_needs WHERE household_id = ? AND guest_id IS NULL', householdId);
+  return { ...body, notes: row ? row.note : '' };
+}
+
 function attendanceSummary(loaded, answered, events, nameUpdates) {
   const guestsById = new Map(loaded.guests.map((g) => [g.id, g]));
   const byEvent = new Map(events.map((ev) => [ev.id, { event: ev, attending: [], declining: [] }]));
@@ -233,7 +240,8 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
   }
 
   if (requestId) {
-    statements.push(stmt(db, 'INSERT INTO idempotency_record (household_id, request_id, status_code, response_json, created_at) VALUES (?, ?, 200, ?, ?)', loaded.household.id, requestId, JSON.stringify(snapshot), now));
+    // The stored replay body never carries the restricted note (SEC-05); it is re-attached on replay.
+    statements.push(stmt(db, 'INSERT INTO idempotency_record (household_id, request_id, status_code, response_json, created_at) VALUES (?, ?, 200, ?, ?)', loaded.household.id, requestId, JSON.stringify({ ...snapshot, notes: '' }), now));
   }
 
   statements.push(audit(db, {
@@ -256,7 +264,7 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
     // concurrent save took this revision.
     if (requestId) {
       const stored = await one(db, 'SELECT response_json FROM idempotency_record WHERE household_id = ? AND request_id = ?', loaded.household.id, requestId);
-      if (stored) return JSON.parse(stored.response_json);
+      if (stored) return withCurrentNotes(db, loaded.household.id, JSON.parse(stored.response_json));
     }
     const fresh = await loadHousehold(db, loaded.household.id);
     if (fresh && fresh.state.revision !== expectedRevision) {
@@ -281,7 +289,7 @@ export async function putResponse(request, env, cfg, payload) {
 
   // Idempotent retry (RSVP-05): return the stored result, no second write.
   const stored = await one(db, 'SELECT status_code, response_json FROM idempotency_record WHERE household_id = ? AND request_id = ?', householdId, payload.requestId);
-  if (stored) return json(stored.status_code, JSON.parse(stored.response_json));
+  if (stored) return json(stored.status_code, await withCurrentNotes(db, householdId, JSON.parse(stored.response_json)));
 
   const window = await rsvpWindow(db, cfg);
   if (!window.open) throw new HttpError(423, 'closed', 'Online responses have closed.');

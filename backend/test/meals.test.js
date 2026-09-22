@@ -94,3 +94,22 @@ describe('meal choices', () => {
     expect(audit.details_json).not.toMatch(/Gulf fish|No nuts/);
   });
 });
+
+describe('idempotency record and restricted notes (SEC-05)', () => {
+  beforeEach(async () => { await resetDb(); await seedEventsWithMeals(); await importRoster(); });
+
+  it('never stores the restricted note in the idempotency record but still replays it to the same household', async () => {
+    const { cookie, snapshot } = await session();
+    const payload = withMeals(fullAnswer(snapshot, 'attending', { plusOneNames: {}, contactEmail: 'taylor@example.invalid', notes: 'Wheelchair access, please.' }), () => 'Vegetarian');
+    const first = await guest(cookie, 'PUT', '/response', payload);
+    expect(first.status).toBe(200);
+    expect((await first.json()).notes).toBe('Wheelchair access, please.');
+    const row = await env.DB.prepare('SELECT response_json FROM idempotency_record WHERE request_id = ?').bind(payload.requestId).first();
+    expect(row.response_json).not.toMatch(/Wheelchair/);
+    const replay = await guest(cookie, 'PUT', '/response', payload);
+    expect(replay.status).toBe(200);
+    const replayed = await replay.json();
+    expect(replayed.notes).toBe('Wheelchair access, please.');
+    expect(replayed.revision).toBe(1);
+  });
+});

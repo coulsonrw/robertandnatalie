@@ -75,10 +75,12 @@ The front end maps HTTP status to these codes when `error.code` is absent: 400 v
 
 Server rules:
 
-1. Reject any `(guestId, eventId)` not in the household's entitlements and any missing pair (an unanswered choice is never a decline; RSVP-01/04).
-2. If `revision` does not equal the stored revision, return `409` with `latest`.
-3. If `requestId` was already committed for this household, return the stored result without writing again (idempotent retries; RSVP-05).
-4. In one transaction: update responses, plus-one names, contact email and notes; increment `revision`; set `reference` on first save; append a mail-outbox row and audit event (ARCH-03). Only then return `200`.
+1. If `requestId` was already committed for this household, return the stored result without writing again (idempotent retries; RSVP-05). This check comes first because a retry of a committed save carries the revision that save consumed. The stored replay body never contains the restricted note; the household's current note is re-attached on replay (SEC-05).
+2. Reject any `(guestId, eventId)` not in the household's entitlements and any missing pair (an unanswered choice is never a decline; RSVP-01/04).
+3. If `revision` does not equal the stored revision, return `409` with `latest`.
+4. In one transaction: update responses (with meal values where configured), plus-one names, contact email and notes; increment `revision`; set `reference` on first save; append a mail-outbox row and audit event (ARCH-03). Only then return `200`.
+
+The reference implementation in `backend/` also exposes `GET /health`, a public `GET /content/urgent-banner` (owner-editable, cached 60 s) and the `/admin` API described in `backend/README.md`; `rsvp.open` and `cutoffAt` in the snapshot come from the owner-editable `rsvp-settings` content when present, otherwise from configuration.
 5. After `rsvp.cutoffAt`, return `423 closed` to guests; owner corrections happen through the admin tools with an audit trail (RSVP-04).
 6. Never include `notes` in confirmation emails or general exports (SEC-05).
 

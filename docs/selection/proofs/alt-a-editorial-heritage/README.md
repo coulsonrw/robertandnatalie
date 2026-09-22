@@ -35,7 +35,7 @@ Sizes: body copy 18 px; controls 16 px minimum; 44 px minimum tap targets on all
 
 ## Capture record
 
-- Capture date: 2026-09-21 (23:25 UTC).
+- Capture date: 2026-09-22 00:06 UTC (re-captured after the independent review fixes below; first capture 2026-09-21 23:25 UTC).
 - Browser: Chromium 141.0.7390.37 via the globally installed Playwright package (`npm root -g`), headless, device scale factor 1 (detail views at 2).
 - Served from the repository root by the tiny node HTTP server inside `capture.mjs`, so `../../../../src/fonts` and `../../../../src/img` resolve. Re-run with `node docs/selection/proofs/alt-a-editorial-heritage/capture.mjs` from the repository.
 - `document.fonts.ready` was awaited before every capture.
@@ -69,6 +69,19 @@ Measured `document.documentElement.scrollWidth` against `window.innerWidth` in b
 - Envelope → open → continue → keepsake → dialog → close: dialog opened with the invitation panel inside it and the panel was restored to the opening grid on Close, at 1440 and 390.
 - Reduced motion (`prefers-reduced-motion: reduce`): the envelope layer was hidden within 100 ms of the click.
 - Keyboard: first Tab lands on the skip link; third Tab lands on "Invitation" in the navigation.
+
+## Independent review (2026-09-22)
+
+Reviewed against PRD TPL-09/TPL-10 and DES-01–04 in headless Chromium 141.0.7390.37 (Playwright 1.56.1, Node v22.22.2) at 320, 390, 768 and 1440 CSS px, in the opened, docked, envelope and keepsake-dialog states. Checks that passed: exact approved wording present (compared programmatically with `content/site.config.json` and PRD §06); crest rendered at its natural 360×556 proportions everywhere it appears (invitation, envelope card, keepsake, dialog); no reddish computed colour on any element; closing line identical to the informational lines in family, size (18 px), weight (500), colour (`rgb(41,42,40)`), style, letter-spacing and line-height, wrapping to two lines (three at 320); both events with `datetime` 2026-12-19T14:00−06:00 / T16:00−06:00 and 2:00 p.m. / 4:00 p.m.; only the synthetic PREVIEW household's names on the page; concept-mockup banner and RSVP mock label visible; `scrollWidth === innerWidth` and no element box past the viewport at every width and state; stored `proof-*.png` files identical (0 differing pixels) to an independent re-capture. Gold text `#856119` on paper `#F7F3EA` computes to 5.10:1 (token arithmetic, not a screenshot sample).
+
+Small defects fixed in place during the review:
+
+1. `.inv-sc` carried `text-transform: lowercase`, so the two date lines rendered as uniform small caps and their DOM text read "on saturday, the nineteenth of december"; the approved artwork sets them with capital initials. The transform was removed; the SC face now renders "On Saturday, The Nineteenth of December / Two Thousand Twenty-Six" exactly as approved.
+2. The crest `<img>` declared `height="360"` for a 360×556 file. Rendering was already proportional (`height: auto`), but the aspect-ratio hint was wrong; corrected to `height="556"`.
+3. `Robert<span>and</span>Natalie` had no spaces, so the accessible name of the heading was "RobertandNatalie" and the words touched on wide screens. Spaces added; the stacked phone layout is unchanged. With the spaces the one-line desktop arrangement no longer fit at 66 px (it wrapped to "Robert and / Natalie", which is neither approved arrangement), so the desktop names size is 62 px, the largest whole size that fits the panel on one line; letterforms are not compressed.
+4. After the envelope opened, focus was not moved (the script tried to focus an `h1` without `tabindex`). The invitation panel now has `tabindex="-1"` and receives focus, so the opened invitation is what the guest sees and hears first.
+
+Not fixed (design-level, recorded for the owners): on phones and tablets the "Continue to the site" action sits in the editorial column below the tall invitation, so after the envelope opens it is not visible without scrolling (at 1440 it is visible beside the invitation). The owner-requested flow (envelope → invitation shown → next click → site with the invitation docked) therefore needs a scroll on narrow screens in this concept; alt-b shows one way to avoid that (a centred invitation stage with Continue pinned below it). The hotel telephone number could not be verified during the review (the hotel's website was not reachable from the review environment); it remains a carried-forward publisher value.
 
 ## What was not done / open items
 

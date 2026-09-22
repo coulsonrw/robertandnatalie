@@ -206,3 +206,10 @@ Change control: a later change to foundation, material dependency/hosting,
 paid licence, crest, typefaces or approved composition requires an impact
 note, updated evidence/costs and renewed approval at the affected gate (TPL-12).
 ```
+
+---
+
+## Revalidation at the pull-request head (2026-09-22, implementation agent)
+
+After the independent reviews, the repository was revalidated on the final branch head of pull request #1 (the exact hash is the merge commit's parent; see `git log`): `npm run check`, `npm test` (5 unit tests including the automated AT-02), `npm run build` (no runtime dependencies; `playwright` is a pinned development dependency, superseding the "no devDependencies" row in §3), `npm run proofs` (47 captures, no horizontal overflow) and `npm run audit` (0 axe violations at 320/390/768/1440, budgets met) all pass; `backend` `npm test` passes 53 tests in workerd. The corrections the reviewers made to this package, the mockups and the evidence tooling are recorded in `CANDIDATE_REGISTER.md` §6, the mockup READMEs and `docs/TEST_RESULTS.md`. No approval is recorded; §9 remains blank.
+

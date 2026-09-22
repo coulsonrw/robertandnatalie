@@ -1,8 +1,9 @@
 // Accessibility and performance evidence for PRD v1.1 §13 (NFR-01–NFR-04) and AT-15.
 // Lab results in headless Chromium only. Output: docs/evidence/{ACCESSIBILITY.md,PERFORMANCE.md,results.json}.
 //
-//   node scripts/audit.mjs [--a11y-only | --perf-only] [--runs N] [--strict] [--dist DIR] [--out DIR]
+//   node scripts/audit.mjs [--a11y-only | --perf-only] [--runs N] [--strict] [--dist DIR] [--out DIR] [--report-only]
 //
+// --report-only rewrites ACCESSIBILITY.md and PERFORMANCE.md from the existing results.json in --out without running anything.
 // --dist DIR audits a different built tree (default dist/); --out DIR writes the reports elsewhere (default docs/evidence/).
 // Both exist so the tooling itself can be checked against a scratch copy with a deliberate defect without touching the repository.
 //
@@ -33,6 +34,7 @@ const RUNS = Math.max(1, Number(opt('--runs', 5)));
 const DO_A11Y = !flag('--perf-only');
 const DO_PERF = !flag('--a11y-only');
 const STRICT = flag('--strict');
+const REPORT_ONLY = flag('--report-only');
 
 // PRD §13 budgets (NFR-01 table). "MB"/"KB" are read as decimal (1,500,000 / 200,000 bytes).
 const BUDGETS = { lcpMs: 2500, cls: 0.1, inpMs: 200, transferBytes: 1_500_000, jsGzipBytes: 200_000 };
@@ -86,9 +88,9 @@ function loadPlaywright() {
   return { pw: require(path.join(globalRoot, 'playwright')), pkg: require(path.join(globalRoot, 'playwright', 'package.json')) };
 }
 const { pw: { chromium }, pkg: pwPkg } = loadPlaywright();
-const server = await startServer({ port: 0, root: DIST });
-const base = `http://127.0.0.1:${server.address().port}`;
-const browser = await chromium.launch();
+const server = REPORT_ONLY ? null : await startServer({ port: 0, root: DIST });
+const base = server ? `http://127.0.0.1:${server.address().port}` : null;
+const browser = REPORT_ONLY ? null : await chromium.launch();
 fs.mkdirSync(OUT, { recursive: true });
 
 import { createHash } from 'node:crypto';
@@ -103,7 +105,7 @@ function buildFingerprint() {
 const results = {
   generatedAt: new Date().toISOString(),
   build: buildFingerprint(),
-  tool: { script: 'scripts/audit.mjs', node: process.version, playwright: pwPkg.version, browser: `Chromium ${browser.version()}`, axeCore: axeVersion,
+  tool: { script: 'scripts/audit.mjs', node: process.version, playwright: pwPkg.version, browser: browser ? `Chromium ${browser.version()}` : null, axeCore: axeVersion,
     host: { platform: `${os.platform()} ${os.release()}`, cpu: os.cpus()[0]?.model || 'unknown', cores: os.cpus().length, memoryGB: +(os.totalmem() / 1e9).toFixed(1) } },
   scope: 'Lab measurements in headless Chromium only. No Safari, Firefox, Edge, iOS or Android runs; no screen-reader (VoiceOver/NVDA) sessions; no field (RUM) data. Browser contexts use Playwright\'s bypassCSP so that axe-core and the measurement probes can be injected; whether the pages behave correctly under their own Content-Security-Policy is not verified by this run.',
   budgets: BUDGETS,
@@ -580,7 +582,7 @@ function writeAccessibilityMd(a) {
   L.push(`Build audited: dist/ written ${results.build.builtAt}, repository HEAD ${results.build.commit || 'unknown'}${results.build.uncommittedSourceFiles ? ` with ${results.build.uncommittedSourceFiles} uncommitted source file(s) (the build under test is the working tree, not the commit)` : ''}. File hashes (sha256, first 12): ${Object.entries(results.build.hashes).map(([f, h]) => `${f} ${h}`).join(', ')}.`, '');
   L.push('**Scope and honesty note.** ' + results.scope + ' These automated checks cover only the part of WCAG 2.2 AA that tools can detect. PRD NFR-01/NFR-03 and AT-15 additionally require manual testing (keyboard-only completion of the RSVP flow, VoiceOver on iOS/macOS, NVDA on Windows, 200 % zoom and 400 % reflow, real reduced-motion devices) and browser coverage that this script does not provide. Those remain open.', '');
   L.push('## Method', '');
-  L.push(`- Pages/states audited at ${a.viewports.join(' px and ')} px, each in a fresh browser context: ${A11Y_STATES.map((s) => `\`${s.id}\` (${s.label})`).join('; ')}.`);
+  L.push(`- Pages/states audited at ${a.viewports.join(', ')} CSS px wide, each in a fresh browser context: ${[...new Map(a.states.map((s) => [s.id, s.label])).entries()].map(([id, label]) => `\`${id}\` (${label})`).join('; ')}.`);
   L.push('- axe-core `axe.run(document)` with the default rule set (WCAG 2.x A/AA plus best-practice rules); every violation node is listed below with impact, rule id, selector and help URL.');
   L.push('- Structural checks run in the page: exactly one rendered `h1`; heading levels never skip downwards; every `img` has an `alt` attribute; every form control has an accessible name (label, aria-label, aria-labelledby or title); the skip link is the first Tab stop on a fresh load; every keyboard focus stop matches `:focus-visible` and has a computed outline or box-shadow (on the control or, for radios, on its label); links, buttons, choice labels and inputs inside `main` measure at least 44 × 44 CSS px (inline links inside sentences are listed but not failed, per the WCAG 2.5.8 inline exception); no horizontal overflow; accessible names of key controls from the Chromium accessibility tree.');
   L.push('- Reduced motion: `prefers-reduced-motion: reduce` emulated, then the envelope is opened, the site entered and the docked invitation re-opened; at each step `document.getAnimations()` must be empty and every text block of the invitation must be rendered at full opacity.', '');
@@ -721,6 +723,7 @@ function writePerformanceMd(p) {
   L.push('', '## Still open', '');
   L.push('- Field data (real guests, real devices) does not exist yet; NFR-01 75th-percentile targets cannot be confirmed from lab runs.');
   L.push('- Runs on Safari/iOS and Chrome/Android hardware (NFR-03), and against the production host with its real compression and CDN behaviour.');
+  L.push('- NFR-02 names "the authenticated guest route". The static build has no such route (rsvp.mode is coming-soon and no private household page is served); the guest home /celebration.html and the RSVP preview with the synthetic household stand in until the RSVP service is live, when the real route must be added to PERF_PAGES and measured.');
   L.push('- The RSVP service budget (95th-percentile save ≤ 1.5 s at 50 concurrent sessions) needs a backend; the preview uses an in-page mock and was not load-tested.');
   L.push('');
   fs.writeFileSync(path.join(OUT, 'PERFORMANCE.md'), L.join('\n'));
@@ -729,17 +732,23 @@ function writePerformanceMd(p) {
 // ---------- main ----------
 let exitCode = 0;
 const reasons = [];
-try {
-  if (DO_A11Y) results.accessibility = await runAccessibility();
-  if (DO_PERF) results.performance = await runPerformance();
-} finally {
-  await browser.close();
-  server.close();
+if (REPORT_ONLY) {
+  // Reuse a finished run: everything below is recomputed from the stored data; generatedAt, tool and build stay as recorded.
+  Object.assign(results, JSON.parse(fs.readFileSync(path.join(OUT, 'results.json'), 'utf8')));
+  console.log(`--report-only: rewriting reports from results.json generated ${results.generatedAt}`);
+} else {
+  try {
+    if (DO_A11Y) results.accessibility = await runAccessibility();
+    if (DO_PERF) results.performance = await runPerformance();
+  } finally {
+    await browser.close();
+    server.close();
+  }
+  results.buildAfterRun = buildFingerprint();
+  results.buildChangedDuringRun = JSON.stringify(results.buildAfterRun.hashes) !== JSON.stringify(results.build.hashes);
 }
 
 const a = results.accessibility, p = results.performance;
-results.buildAfterRun = buildFingerprint();
-results.buildChangedDuringRun = JSON.stringify(results.buildAfterRun.hashes) !== JSON.stringify(results.build.hashes);
 if (results.buildChangedDuringRun) { console.log('WARNING: dist/ changed while the audit was running; results mix two builds. Re-run.'); }
 const structuralFailures = a ? a.states.filter((s) => !s.ok || Object.values(s.checks).some((v) => v === false)).map((s) => `${s.id}@${s.viewport}`) : [];
 const reducedFail = a ? a.reducedMotion.filter((r) => !r.pass).map((r) => `reduced-motion@${r.viewport}`) : [];

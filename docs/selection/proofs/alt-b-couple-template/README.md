@@ -38,16 +38,16 @@ Only the four TPL-09 proof elements plus the Questions block and navigation are 
 
 ## Capture record
 
-- Captured: 2026-09-21T23:35:20Z (UTC)
+- Captured: 2026-09-22T00:07:08.680Z (UTC); re-captured after the independent review fixes below (first capture 2026-09-21T23:35:20Z)
 - Browser: Chromium 141.0.7390.37 (Playwright, headless), Node v22.22.2, Linux
 - Script: `capture.mjs` (serves the repository root on localhost so the relative font, crest and `dist/` paths resolve; run `node docs/selection/proofs/alt-b-couple-template/capture.mjs` from the repository)
 - Machine-readable results: `capture-results.json`
 
 | Viewport | File | Opened state | Docked state | Horizontal overflow |
 |---|---|---|---|---|
-| 320 CSS px | `proof-320.png` (320×9787), `docked-320.png` | scrollWidth 320 / innerWidth 320 | 320 / 320 | none |
+| 320 CSS px | `proof-320.png` (320×9814), `docked-320.png` | scrollWidth 320 / innerWidth 320 | 320 / 320 | none |
 | 390 CSS px | `proof-390.png` (390×9016), `docked-390.png` | 390 / 390 | 390 / 390 | none |
-| 768 CSS px | `proof-768.png` (768×6090), `docked-768.png` | 768 / 768 | 768 / 768 | none |
+| 768 CSS px | `proof-768.png` (768×6065), `docked-768.png` | 768 / 768 | 768 / 768 | none |
 | 1440 CSS px | `proof-1440.png` (1440×5729), `docked-1440.png` | 1440 / 1440 | 1440 / 1440 | none |
 
 `proof-*.png` are full-page captures of the static/opened state (`?entry=none`); `docked-*.png` show the state after Continue (`?state=docked`).
@@ -65,6 +65,20 @@ Additional captures: `entry-envelope-{1440,390}.png`, `entry-opening-{1440,390}.
 - JavaScript disabled: the entry layer stays hidden and the full invitation renders inline (equivalent static rendering, HOME-03): true.
 - No console errors or failed requests during capture.
 
+## Independent review (2026-09-22)
+
+Reviewed against PRD TPL-09/TPL-10 and DES-01–04 in headless Chromium 141.0.7390.37 (Playwright 1.56.1, Node v22.22.2) at 320, 390, 768 and 1440 CSS px, in the opened, docked, envelope, invitation-stage and keepsake-dialog states. Checks that passed: exact approved wording present (compared programmatically with `content/site.config.json` and PRD §06); crest rendered at its natural proportions everywhere it appears (invitation 360×556 file, brand and seal 120×185 file, keepsake, dialog); no reddish computed colour on any element; closing line identical to the informational lines in family, size (18 px), weight (500), colour (`rgb(41,42,40)`), style, letter-spacing and line-height, wrapping to two lines (three at 320); both events with `datetime` 2026-12-19T14:00−06:00 / T16:00−06:00 and 2:00 p.m. / 4:00 p.m.; only the synthetic PREVIEW household's names on the page; concept-mockup banner and RSVP mock label visible; "room block" and transport appear only inside the dashed review annotations; `scrollWidth === innerWidth` at every width and state (the only element boxes past the viewport at 768 are the visually hidden `.cell-label` texts, clipped to 1 px, which do not scroll); after the envelope opens the invitation is centred with Continue visible and focused at all four widths; stored `proof-*.png` files identical (0 differing pixels) to an independent re-capture. Gold text `#856119` on paper `#F7F3EA` computes to 5.10:1 (token arithmetic, not a screenshot sample).
+
+Small defects fixed in place during the review:
+
+1. `.inv-sc` carried `text-transform: lowercase`, so the two date lines rendered as uniform small caps and their DOM text read "on saturday, the nineteenth of december"; the approved artwork sets them with capital initials. The transform was removed; the SC face now renders "On Saturday, The Nineteenth of December / Two Thousand Twenty-Six" exactly as approved.
+2. The two crest `<img>` elements declared `height="360"` for a 360×556 file. Rendering was already proportional (`height: auto`), but the aspect-ratio hint was wrong; corrected to `height="556"`.
+3. `Robert<span>and</span>Natalie` had no spaces, so the accessible name of the heading was "RobertandNatalie" and the words touched on wide screens. Spaces added (heading and the docked-state copy); the stacked phone layout is unchanged.
+4. The Travel & Stay label "Nearest named airport" asserted "nearest", which nothing in the config or PRD establishes; changed to "Airport".
+5. `detail-invitation-390@2x.png` and `detail-rsvp-error-390@2x.png` were captured with the sticky top bar and the fixed phone RSVP bar overlaying the element. `capture.mjs` now takes the bars out of the flow for those two element captures only.
+
+Observation for the owners (not changed): on phones the docked keepsake tile overlaps the lower-left of whatever content is on screen (see `keepsake-docked-390.png`, where it covers part of the page title); the RSVP bar itself is not obscured.
+
 ### What was not tested
 
 These are visual checks in one headless browser on a static concept. Not tested: real devices, Safari/iOS, Chrome/Android, Edge, screen readers (VoiceOver/NVDA), 200% text zoom and 400% reflow, load/performance budgets, calendar files in calendar clients, map links, any RSVP behaviour (there is no backend), or access control. Manual accessibility review and visual judgment by the owners remain required (TPL-10). This proof must not be described as having passed interactive or performance tests.
@@ -73,4 +87,5 @@ These are visual checks in one headless browser on a static concept. Not tested:
 
 - On phones the docked keepsake tile (76 px wide) sits above the bottom RSVP bar and overlaps the lower-left of whatever content is on screen; a production version would need a decision on whether the tile collapses into the bar.
 - The invitation is taller than a phone viewport by design (HOME-02 forbids shrinking it to fit); in the opened stage it scrolls inside the stage while Continue stays visible.
+- The hotel telephone number is a carried-forward publisher value in the config (state `publisher-claim`); it was not verified against the hotel's Contact page during the review (site unreachable from the review environment). Verify before any guest-facing use.
 - The envelope, keepsake and dialog interactions are a sketch. They have had only the smoke run above; they are not accessibility-tested and are P1 optional motion under HOME-03, with the static page as the equivalent rendering.
