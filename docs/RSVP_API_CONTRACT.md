@@ -29,6 +29,10 @@ All bodies are JSON. Errors use `{ "error": { "code": string, "message": string 
 
 The front end maps HTTP status to these codes when `error.code` is absent: 400 validation, 401 invalid_session, 403/404 invalid_code, 409 conflict, 423 closed, 429 rate_limited, otherwise server_error. Network failures are shown as retryable with input kept in page memory (RSVP-06).
 
+A `400 validation` body may also carry `error.fields`, an array of `{ "path", "message" }` naming every guest-fixable problem at once (added 22 September 2026, audit QA-15; additive, older clients ignore it). Paths: `contactEmail`, `notes`, `requestId`, `revision`, `responses` (structural, no id echoed), `responses.<guestId>.<eventId>.status`, `responses.<guestId>.<eventId>.meal`, `plusOneNames` (no id echoed), `plusOneNames.<guestId>`. Authorization and structural problems fail first and never echo a foreign identifier. The front end maps these paths to its inline field errors and announces `error.message`.
+
+`rsvp.cutoffAt` (in configuration and in the owner-editable `rsvp-settings`) must carry an explicit UTC offset or `Z`, for example `2026-11-20T23:59:59-06:00`; the service refuses a cutoff without one, and a configured cutoff it cannot parse closes the window rather than leaving it open (`GET /admin/status` then reports `rsvp.cutoffInvalid: true`).
+
 ## Session snapshot
 
 ```json

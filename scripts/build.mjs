@@ -117,8 +117,9 @@ function validate(c) {
   if (!['coming-soon', 'live', 'closed'].includes(r?.mode)) fail('rsvp.mode must be coming-soon, live or closed');
   if (r?.mode === 'live' && !r.apiBaseUrl) fail('rsvp.mode is live but rsvp.apiBaseUrl is not set');
   if (r?.apiBaseUrl && !/^https:\/\//.test(r.apiBaseUrl)) fail('rsvp.apiBaseUrl must use https');
-  if (r?.cutoffAt != null && Number.isNaN(Date.parse(r.cutoffAt))) fail('rsvp.cutoffAt must be an ISO date-time or null');
-  if (r?.opensAt != null && Number.isNaN(Date.parse(r.opensAt))) fail('rsvp.opensAt must be an ISO date-time or null');
+  const OFFSET_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(Z|[+-]\d{2}:\d{2})$/; // an explicit offset, as the RSVP service requires (audit QA-19)
+  if (r?.cutoffAt != null && (!OFFSET_ISO.test(r.cutoffAt) || Number.isNaN(Date.parse(r.cutoffAt)))) fail('rsvp.cutoffAt must be an ISO date-time with an explicit offset (for example 2026-11-20T23:59:59-06:00) or null');
+  if (r?.opensAt != null && (!OFFSET_ISO.test(r.opensAt) || Number.isNaN(Date.parse(r.opensAt)))) fail('rsvp.opensAt must be an ISO date-time with an explicit offset or null');
   if (r?.opensAt && r?.mode !== 'coming-soon') warn('rsvp.opensAt is set but rsvp.mode is not coming-soon; the opening date is only shown in the not-yet-open state');
   if (r?.opensAt && r?.cutoffAt && Date.parse(r.opensAt) >= Date.parse(r.cutoffAt)) fail('rsvp.opensAt must be before rsvp.cutoffAt');
   const mc = r?.mealChoices;

@@ -461,7 +461,8 @@ body.is-entry .site { display: none; }
 .story-milestones h3 { font-size: 1.3rem; margin: 0 0 0.25em; }
 .story-milestones .when { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.08em; font-size: 0.95rem; color: var(--gold-text); margin: 0 0 0.3em; }
 .story-milestones .story-figure { margin-top: 14px; max-width: 480px; }
-.preview-notice { margin: 24px auto 0; max-width: 780px; }
+.preview-notice { margin: 24px auto 0; max-width: 780px; min-width: 0; }
+.preview-notice span { overflow-wrap: anywhere; }
 .page-story-preview { padding-top: 8px; }
 
 /* Truthful RSVP state (audit IMP-02) */

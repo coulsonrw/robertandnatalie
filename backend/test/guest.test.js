@@ -42,6 +42,9 @@ describe('session (RSVP-01, SEC-02, SEC-03)', () => {
     expect(snapshot.revision).toBe(0);
     expect(snapshot.reference).toBeNull();
     expect(snapshot.rsvp.open).toBe(true);
+    // Nothing from any other household is in the response (QA-10): no ids, labels or names.
+    expect(JSON.stringify(snapshot)).not.toMatch(/hh_solo|hh_family|Taylor|Morgan|Riley|Casey Sample|g_taylor|g_morgan/);
+    expect(res.headers.get('Cache-Control')).toBe('private, no-store');
     // Only the digest is stored.
     const row = await env.DB.prepare('SELECT digest FROM access_credential WHERE id = ?').bind(cred.id).first();
     expect(row.digest).not.toContain(cred.secret.replace(/-/g, ''));

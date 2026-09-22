@@ -3,12 +3,24 @@
 // restrictive header set below (SEC-03).
 
 export class HttpError extends Error {
-  constructor(status, code, message, extra) {
+  // `extra` is merged into the top level of the error body (e.g. `latest` on 409 conflict).
+  // `fields` is an array of { path, message } placed under error.fields so the client can
+  // announce validation problems next to the input concerned (see docs/RSVP_API_CONTRACT.md).
+  constructor(status, code, message, extra, fields) {
     super(message || code);
     this.status = status;
     this.code = code;
     this.extra = extra || null;
+    this.fields = Array.isArray(fields) && fields.length ? fields : null;
   }
+}
+
+// 400 validation with field-level detail. Paths name the payload member concerned:
+//   contactEmail | notes | responses | responses.<guestId>.<eventId>.status |
+//   responses.<guestId>.<eventId>.meal | plusOneNames.<guestId>
+// Only ids that belong to the caller's own household ever appear in a path.
+export function validationError(message, fields) {
+  return new HttpError(400, 'validation', message, null, fields);
 }
 
 export const SECURITY_HEADERS = {
@@ -57,6 +69,7 @@ export function text(status, body, contentType, headers) {
 export function errorResponse(err) {
   if (err instanceof HttpError) {
     const body = { error: { code: err.code, message: err.message } };
+    if (err.fields) body.error.fields = err.fields;
     if (err.extra) Object.assign(body, err.extra);
     return json(err.status, body);
   }
