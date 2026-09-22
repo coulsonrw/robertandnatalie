@@ -307,7 +307,7 @@ dialog .dialog-bar { display: flex; justify-content: flex-end; margin-bottom: 8p
   <section class="opening wrap" id="invitation" aria-labelledby="site-title">
     <div class="opening-grid">
 
-      <article class="stationery" id="invitation-panel" aria-labelledby="names-heading">
+      <article class="stationery" id="invitation-panel" aria-labelledby="names-heading" tabindex="-1">
         <img class="crest" src="../../../../src/img/crest-360.png" width="360" height="556" alt="Family crest of Robert and Natalie: silver and charcoal dolphins with gold collars and chain on a navy shield, with monogram and ribbon.">
         <h2 class="names" id="names-heading">Robert <span class="and">and</span> Natalie</h2>
         <div class="inv-group">
@@ -552,7 +552,7 @@ dialog .dialog-bar { display: flex; justify-content: flex-end; margin-bottom: 8p
     layer.hidden = true;
     document.body.style.overflow = '';
     cont.hidden = false;
-    document.getElementById('site-title').focus();
+    panel.focus();
   }
   function openEnvelope() {
     env.classList.add('is-open');

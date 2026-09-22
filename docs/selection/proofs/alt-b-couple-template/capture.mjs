@@ -91,8 +91,12 @@ for (const w of [1440, 390]) {
   const page = await ctx.newPage();
   await page.goto(`${base}?entry=none`, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
+  // The sticky top bar and the fixed phone RSVP bar are taken out of the flow for the two element captures only,
+  // so the detail views show the element itself rather than the bars overlaying it (review fix, 2026-09-22).
+  const detailStyle = await page.addStyleTag({ content: '.topbar{position:static!important}.rsvp-bar{display:none!important}body{padding-bottom:0!important}' });
   await page.locator('#invitation-panel').screenshot({ path: path.join(here, 'detail-invitation-390@2x.png') });
   await page.locator('#sam-ceremony-cell').screenshot({ path: path.join(here, 'detail-rsvp-error-390@2x.png') });
+  await detailStyle.evaluate(el => el.remove());
   // Phone sticky RSVP bar in the viewport while scrolled to Travel & Stay.
   await page.evaluate(() => document.getElementById('travel').scrollIntoView());
   await page.waitForTimeout(150);
