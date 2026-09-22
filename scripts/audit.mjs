@@ -1,12 +1,15 @@
 // Accessibility and performance evidence for PRD v1.1 §13 (NFR-01–NFR-04) and AT-15.
 // Lab results in headless Chromium only. Output: docs/evidence/{ACCESSIBILITY.md,PERFORMANCE.md,results.json}.
 //
-//   node scripts/audit.mjs [--a11y-only | --perf-only] [--runs N] [--strict]
+//   node scripts/audit.mjs [--a11y-only | --perf-only] [--runs N] [--strict] [--dist DIR] [--out DIR]
+//
+// --dist DIR audits a different built tree (default dist/); --out DIR writes the reports elsewhere (default docs/evidence/).
+// Both exist so the tooling itself can be checked against a scratch copy with a deliberate defect without touching the repository.
 //
 // Exit status is non-zero when any axe-core violation of impact serious/critical exists or any PRD budget
 // is exceeded (median of the cold-cache runs). --strict also fails on the additional structural checks
 // (h1 count, heading order, alt text, labels, skip link, focus indicator, tap targets, reduced motion).
-// Requires a globally installed Playwright with Chromium (the repository has no npm dependencies).
+// Uses the Playwright devDependency from package.json (npm install; npx playwright install chromium), falling back to a global install.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -17,14 +20,15 @@ import { fileURLToPath } from 'node:url';
 import { startServer } from './serve.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const DIST = path.join(ROOT, 'dist');
-const OUT = path.join(ROOT, 'docs', 'evidence');
 const AXE_PATH = path.join(ROOT, 'scripts', 'vendor', 'axe.min.js');
 const require = createRequire(import.meta.url);
 
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
 const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
+const DIST = path.resolve(ROOT, opt('--dist', 'dist'));
+const OUT = path.resolve(ROOT, opt('--out', path.join('docs', 'evidence')));
+const DIST_IS_DEFAULT = DIST === path.join(ROOT, 'dist');
 const RUNS = Math.max(1, Number(opt('--runs', 5)));
 const DO_A11Y = !flag('--perf-only');
 const DO_PERF = !flag('--a11y-only');
@@ -39,14 +43,34 @@ const PROFILE = {
   network: { label: 'approx. slow 4G', latencyMs: 150, downloadKbps: 1600, uploadKbps: 750 },
   runs: RUNS, cache: 'cold (fresh browser context per run)', server: 'scripts/serve.mjs (local, no compression, Cache-Control: no-store)',
 };
-const A11Y_VIEWPORTS = [{ width: 390, height: 844 }, { width: 1440, height: 900 }];
+// PRD NFR-03 layouts: 320, 390, 768 and 1440 CSS px.
+const A11Y_VIEWPORTS = [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1440, height: 900 }];
+// Each page's `interact` performs the page's real first interactions through Playwright; `measure(label, action)` records one.
 const PERF_PAGES = [
-  { id: 'celebration', url: '/celebration.html', label: 'Guest home (/celebration.html)' },
-  { id: 'rsvp-preview', url: '/rsvp.html?preview=1', label: 'RSVP with synthetic guests (/rsvp.html?preview=1)' },
+  { id: 'landing', url: '/', label: 'Landing page (/), sealed envelope then entry to the site', interact: async (page, measure) => {
+    await page.waitForSelector('body[data-entry-state="closed"]', { timeout: 15000 });
+    await measure('tap the seal (opens the envelope, reveals the invitation)', () => page.click('#seal'));
+    await page.waitForSelector('body[data-entry-state="open"]', { timeout: 15000 }).catch(() => {});
+    await measure('tap "Continue to the website" (enters the site, docks the invitation bottom-left)', () => page.click('#entry-open [data-action="enter"]'));
+    await page.waitForSelector('body[data-entry-state="site"]', { timeout: 15000 }).catch(() => {});
+  } },
+  { id: 'celebration', url: '/celebration.html', label: 'Guest home (/celebration.html)', interact: async (page, measure) => {
+    await measure('tap "Menu" (opens the mobile navigation)', () => page.click('.nav-toggle'));
+    await measure('tap "View the invitation" (opens the invitation dialog)', () => page.click('.hero-keepsake [data-action="view-invitation"]'));
+  } },
+  { id: 'rsvp-preview', url: '/rsvp.html?preview=1', label: 'RSVP with synthetic guests (/rsvp.html?preview=1)', interact: async (page, measure) => {
+    await page.waitForSelector('#code');
+    await measure('tap the invitation-code field (focus)', () => page.click('#code'));
+    await page.fill('#code', 'PREVIEW');
+    await measure('tap "Find my invitation" (submits the code; re-renders the busy state)', () => page.click('button[type=submit]'));
+    await page.waitForSelector('[data-step="invitees"]', { timeout: 15000 }).catch(() => {});
+    await measure('tap "These are correct — continue" (renders the attendance step)', () => page.click('[data-action="continue"]'));
+  } },
 ];
 
 // ---------- setup ----------
 if (!fs.existsSync(path.join(DIST, 'index.html'))) {
+  if (!DIST_IS_DEFAULT) { console.error(`no index.html in --dist ${DIST}`); process.exit(2); }
   console.log('dist/ missing — running npm run build');
   execSync('npm run build', { cwd: ROOT, stdio: 'inherit' });
 }
@@ -62,7 +86,7 @@ function loadPlaywright() {
   return { pw: require(path.join(globalRoot, 'playwright')), pkg: require(path.join(globalRoot, 'playwright', 'package.json')) };
 }
 const { pw: { chromium }, pkg: pwPkg } = loadPlaywright();
-const server = await startServer({ port: 0 });
+const server = await startServer({ port: 0, root: DIST });
 const base = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch();
 fs.mkdirSync(OUT, { recursive: true });
@@ -162,18 +186,18 @@ async function openKeepsakeDialog(page) {
 }
 
 const A11Y_STATES = [
-  { id: 'home-sealed', url: '/', label: 'Home: sealed envelope (entry stage)', rsvpFlow: false },
+  { id: 'home-sealed', url: '/', label: 'Home: sealed envelope (entry stage)' },
   { id: 'home-open', url: '/', label: 'Home: envelope opened, invitation shown', setup: openEnvelope },
   { id: 'home-entered', url: '/', label: 'Home: entered the site, invitation docked bottom-left', setup: enterSite },
   { id: 'home-dialog', url: '/', label: 'Home: docked invitation re-opened in the dialog', setup: openKeepsakeDialog },
   { id: 'celebration', url: '/celebration.html', label: 'Guest home /celebration.html (site route)' },
   { id: 'rsvp-coming-soon', url: '/rsvp.html', label: 'RSVP /rsvp.html (coming-soon mode, no form)' },
-  { id: 'rsvp-access', url: '/rsvp.html?preview=1', label: 'RSVP preview: access (code) step', setup: (p) => p.waitForSelector('[data-step="access"]'), rsvpFlow: true },
-  { id: 'rsvp-invitees', url: '/rsvp.html?preview=1', label: 'RSVP preview: invitees step', setup: rsvpEnterCode, rsvpFlow: true },
-  { id: 'rsvp-attendance-error', url: '/rsvp.html?preview=1', label: 'RSVP preview: attendance step with validation errors', setup: rsvpToAttendanceError, rsvpFlow: true },
-  { id: 'rsvp-details', url: '/rsvp.html?preview=1', label: 'RSVP preview: details step', setup: rsvpToDetails, rsvpFlow: true },
-  { id: 'rsvp-review', url: '/rsvp.html?preview=1', label: 'RSVP preview: review step', setup: rsvpToReview, rsvpFlow: true },
-  { id: 'rsvp-confirmation', url: '/rsvp.html?preview=1', label: 'RSVP preview: confirmation step', setup: rsvpToConfirmation, rsvpFlow: true },
+  { id: 'rsvp-access', url: '/rsvp.html?preview=1', label: 'RSVP preview: access (code) step', setup: (p) => p.waitForSelector('[data-step="access"]') },
+  { id: 'rsvp-invitees', url: '/rsvp.html?preview=1', label: 'RSVP preview: invitees step', setup: rsvpEnterCode },
+  { id: 'rsvp-attendance-error', url: '/rsvp.html?preview=1', label: 'RSVP preview: attendance step with validation errors', setup: rsvpToAttendanceError },
+  { id: 'rsvp-details', url: '/rsvp.html?preview=1', label: 'RSVP preview: details step', setup: rsvpToDetails },
+  { id: 'rsvp-review', url: '/rsvp.html?preview=1', label: 'RSVP preview: review step', setup: rsvpToReview },
+  { id: 'rsvp-confirmation', url: '/rsvp.html?preview=1', label: 'RSVP preview: confirmation step', setup: rsvpToConfirmation },
   { id: 'privacy', url: '/privacy.html', label: 'Privacy notice' },
   { id: 'not-found', url: '/404.html', label: '404 page' },
 ];
@@ -337,7 +361,7 @@ async function runAccessibility() {
       const v = rec.axe?.violations || [];
       const bad = rec.structure ? {
         h1: rec.structure.h1.count === 1, headingOrder: rec.structure.headingJumps.length === 0, alt: rec.structure.images.missingAlt.length === 0, labels: rec.structure.controls.unlabeled.length === 0,
-        tapTargets: rec.structure.tapTargets.filter((t) => !t.ok && (st.rsvpFlow ? true : t.inRsvpApp)).length === 0,
+        tapTargets: rec.structure.tapTargets.filter((t) => !t.ok).length === 0,
         focusIndicator: rec.focus.withoutIndicator.length === 0 && rec.focus.invisibleFocused.length === 0,
         skipLink: rec.focus.skipLinkApplicable ? rec.focus.skipLinkFirst : null,
         overflow: rec.structure.overflow.scrollWidth <= rec.structure.overflow.innerWidth,
@@ -484,17 +508,7 @@ async function coldLoad(pageDef, runIndex) {
 
   // Interaction latency (lab INP proxy). Real input through Playwright so Event Timing records it.
   const interactions = [];
-  if (pageDef.id === 'rsvp-preview') {
-    await page.waitForSelector('#code');
-    interactions.push(await measureInteraction(page, 'tap the invitation-code field (focus)', () => page.click('#code')));
-    await page.fill('#code', 'PREVIEW');
-    interactions.push(await measureInteraction(page, 'tap "Find my invitation" (submits the code; re-renders the busy state)', () => page.click('button[type=submit]')));
-    await page.waitForSelector('[data-step="invitees"]', { timeout: 15000 }).catch(() => {});
-    interactions.push(await measureInteraction(page, 'tap "These are correct — continue" (renders the attendance step)', () => page.click('[data-action="continue"]')));
-  } else {
-    interactions.push(await measureInteraction(page, 'tap "Menu" (opens the mobile navigation)', () => page.click('.nav-toggle')));
-    interactions.push(await measureInteraction(page, 'tap "View the invitation" (opens the invitation dialog)', () => page.click('.hero-keepsake [data-action="view-invitation"]')));
-  }
+  await pageDef.interact(page, async (label, action) => { interactions.push(await measureInteraction(page, label, action)); });
 
   const list = [...requests.values()];
   const byType = {};
@@ -545,7 +559,7 @@ async function runPerformance() {
       const f = sizes.files.find((x) => x.file === `dist/${rel}`);
       return s + (f ? f.gzip + 200 : r.bytes || 0); // +200 bytes for headers
     }, 0);
-    const htmlFile = pd.url.replace(/^\//, '').replace(/\?.*$/, '');
+    const htmlFile = pd.url.replace(/^\//, '').replace(/\?.*$/, '') || 'index.html';
     const budget = {
       lcp: { value: summary.lcpMs.median, worst: summary.lcpMs.worst, limit: BUDGETS.lcpMs, pass: summary.lcpMs.median != null && summary.lcpMs.median <= BUDGETS.lcpMs, worstPass: summary.lcpMs.worst != null && summary.lcpMs.worst <= BUDGETS.lcpMs },
       cls: { value: summary.cls.median, worst: summary.cls.worst, limit: BUDGETS.cls, pass: summary.cls.median <= BUDGETS.cls, worstPass: summary.cls.worst <= BUDGETS.cls },
@@ -575,10 +589,10 @@ function writeAccessibilityMd(a) {
   L.push('| Impact | axe violation nodes |', '|---|---|');
   for (const k of ['critical', 'serious', 'moderate', 'minor']) L.push(`| ${k} | ${a.violationsByImpact[k] || 0} |`);
   L.push('', `Serious/critical total: **${a.seriousOrCritical}**.`, '');
-  L.push('| State | Viewport | axe (impact:rule) | h1 | Heading order | img alt | Labels | Skip link first | Focus indicator | Tap ≥44 (main) | Overflow |', '|---|---|---|---|---|---|---|---|---|---|---|');
+  L.push('| State | Viewport | axe violations (impact:rule) | h1 | Heading order | img alt | Labels | Skip link first | Focus indicator | Tap ≥44 (main) | Overflow |', '|---|---|---|---|---|---|---|---|---|---|---|');
   for (const s of a.states) {
     if (!s.ok) { L.push(`| ${s.id} | ${s.viewport} | ERROR: ${s.error} | | | | | | | | |`); continue; }
-    const v = s.axe.violations.map((x) => `${x.impact}:${x.id}`).join(', ') || 'none';
+    const v = (s.axe.violations.map((x) => `${x.impact}:${x.id}`).join(', ') || 'none') + ` (${s.axe.passes} rules passed)`;
     const c = s.checks; const st = s.structure;
     const yn = (b) => (b === null ? 'n/a' : b ? 'yes' : '**no**');
     const tapFails = st.tapTargets.filter((t) => !t.ok).length;
@@ -661,7 +675,7 @@ function writePerformanceMd(p) {
   L.push(`- CDP \`Emulation.setCPUThrottlingRate\` ${p.profile.cpuThrottlingRate}×; \`Network.emulateNetworkConditions\` latency ${p.profile.network.latencyMs} ms, download ${p.profile.network.downloadKbps} kbps, upload ${p.profile.network.uploadKbps} kbps (${p.profile.network.label}); browser cache disabled.`);
   L.push(`- ${p.profile.runs} cold-cache loads per page, each in a fresh browser context; metrics read after \`load\`, network idle, \`document.fonts.ready\` and a 2.5 s settle, before any input.`);
   L.push('- LCP and CLS from `PerformanceObserver` (buffered `largest-contentful-paint` and `layout-shift`; CLS uses the standard 5 s / 1 s session-window maximum). TTFB, DOMContentLoaded and load from the Navigation Timing entry. Bytes from CDP `Network.loadingFinished.encodedDataLength`.');
-  L.push('- Note on TTFB: Chromium DevTools throttling delays body delivery rather than the response headers, so `responseStart` still shows the local server\'s real ~2 ms; the emulated 150 ms latency and throughput appear from `responseEnd` onwards (verified with Resource Timing during this run\'s setup). A production TTFB depends on the host and was not measured.');
+  L.push(`- Note on TTFB: in these runs \`responseStart\` is not delayed by the network emulation while \`responseEnd\` is (medians: ${p.pages.map((pg) => `${pg.id} ${fmtMs(pg.summary.ttfbMs.median)} → ${fmtMs(pg.summary.docResponseEndMs.median)}`).join('; ')}), so the TTFB column reflects the local server, not the emulated latency. A production TTFB depends on the host and was not measured.`);
   L.push('- Interaction latency from the Event Timing API (`event` entries, `durationThreshold` 16 ms) for real Playwright taps; the reported value is the longest event duration of the interaction, which is how INP scores a single interaction. Durations under 16 ms are not reported by the API and are recorded as ≤16 ms.', '');
   L.push('## Budgets (PRD §13)', '');
   L.push(`LCP ≤ ${BUDGETS.lcpMs} ms · CLS ≤ ${BUDGETS.cls} · INP ≤ ${BUDGETS.inpMs} ms · initial transfer ≤ ${fmtBytes(BUDGETS.transferBytes)} · compressed JavaScript ≤ ${fmtBytes(BUDGETS.jsGzipBytes)}. Pass/fail below uses the median of the ${p.profile.runs} runs; the worst run is shown beside it.`, '');
