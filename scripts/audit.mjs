@@ -201,6 +201,7 @@ const A11Y_STATES = [
   { id: 'rsvp-review', url: '/rsvp.html?preview=1', label: 'RSVP preview: review step', setup: rsvpToReview },
   { id: 'rsvp-confirmation', url: '/rsvp.html?preview=1', label: 'RSVP preview: confirmation step', setup: rsvpToConfirmation },
   { id: 'privacy', url: '/privacy.html', label: 'Privacy notice' },
+  { id: 'story-preview', url: '/story-preview.html', label: 'Our Story: protected layout preview with synthetic fixtures (local/CI builds only)' },
   { id: 'not-found', url: '/404.html', label: '404 page' },
 ];
 

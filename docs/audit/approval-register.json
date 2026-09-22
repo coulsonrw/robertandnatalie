@@ -1,0 +1,165 @@
+{
+  "notice": "No decision or approval is implied by these entries. Each key maps to a row of docs/DECISION_REGISTER.md and to the configuration field where the value lands; all remain pending on 22 September 2026.",
+  "decisions": [
+    {
+      "key": "visibility_policy",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md rows 2 and 14",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "site.noindex; docs/DECISION_RECORD.md"
+    },
+    {
+      "key": "rsvp_opening",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md row 21",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "rsvp.opensAt"
+    },
+    {
+      "key": "rsvp_cutoff",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md row 4",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "rsvp.cutoffAt"
+    },
+    {
+      "key": "support_contact",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md rows 4, 11 and 20",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "contact.email / contact.phone"
+    },
+    {
+      "key": "household_roster_and_entitlements",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md row 3",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "backend CSV import"
+    },
+    {
+      "key": "ceremony_space_and_entrance",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md row 5",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "events[ceremony].venue.entrance"
+    },
+    {
+      "key": "reception_room_and_entrance",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md row 5",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "events[reception].venue.entrance"
+    },
+    {
+      "key": "arrival_and_parking",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md row 5",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "events[].venue.arrival / parking"
+    },
+    {
+      "key": "intervenue_transport",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md row 7",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "travel.betweenVenues.text"
+    },
+    {
+      "key": "room_block_or_general_reservations",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md row 6",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "travel.hotel.roomBlock"
+    },
+    {
+      "key": "attire",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md row 7",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "faqs[attire]"
+    },
+    {
+      "key": "children_and_plus_ones",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md row 3",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "faqs[who-is-invited]; roster entitlements"
+    },
+    {
+      "key": "meal_questions",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md row 7",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "rsvp.mealChoices"
+    },
+    {
+      "key": "story_copy_and_photos",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md rows 10 and 22",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "story.*"
+    },
+    {
+      "key": "providers_and_retention",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md rows 11 and 24",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "privacy.rsvpProvider, privacy.retentionDaysAfterWedding"
+    },
+    {
+      "key": "release_authorization",
+      "value": null,
+      "status": "pending",
+      "owner": null,
+      "source": "docs/DECISION_REGISTER.md row 16 and docs/DECISION_RECORD.md (G3)",
+      "approvedBy": null,
+      "approvedAt": null,
+      "landsIn": "site.launchApproved (G3)"
+    }
+  ]
+}

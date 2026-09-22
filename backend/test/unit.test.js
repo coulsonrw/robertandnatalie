@@ -19,6 +19,7 @@ describe('csv', () => {
     expect(csvCell('-x')).toBe('"\'-x"');
     expect(csvCell('@cmd')).toBe('"\'@cmd"');
     expect(csvCell('\tx')).toBe('"\'\tx"');
+    expect(csvCell('\rx')).toBe('"\'\rx"');
     expect(csvCell('plain')).toBe('plain');
     expect(csvCell('a,b')).toBe('"a,b"');
     expect(toCsv(['a'], [{ a: '=1' }])).toBe('a\r\n"\'=1"\r\n');

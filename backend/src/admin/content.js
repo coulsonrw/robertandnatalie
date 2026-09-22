@@ -6,6 +6,7 @@
 
 import { HttpError } from '../http.js';
 import { one, all, stmt, batch, audit, nowIso } from '../db.js';
+import { parseCutoff } from '../snapshot.js';
 
 const HTTPS_RE = /^https:\/\/[^\s]+$/;
 
@@ -23,7 +24,9 @@ const VALIDATORS = {
   'rsvp-settings'(body) {
     let cutoffAt = null;
     if (body.cutoffAt !== null && body.cutoffAt !== undefined && body.cutoffAt !== '') {
-      if (typeof body.cutoffAt !== 'string' || !Number.isFinite(Date.parse(body.cutoffAt))) throw new HttpError(400, 'validation', 'cutoffAt must be ISO 8601 with an offset.');
+      // The offset is mandatory: "2026-11-20T23:59:59" alone would be read as UTC, six hours
+      // before the intended event-local moment (QA-19).
+      if (!Number.isFinite(parseCutoff(body.cutoffAt))) throw new HttpError(400, 'validation', 'cutoffAt must be ISO 8601 with an explicit offset, e.g. 2026-11-20T23:59:59-06:00.');
       cutoffAt = body.cutoffAt;
     }
     return { cutoffAt, open: body.open !== false };

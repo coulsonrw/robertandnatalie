@@ -463,6 +463,25 @@
     }
     if (code === 'closed') { state.step = 'closed'; render(); setNotice('error', MESSAGES.closed); return; }
     if (code === 'invalid_session') { state.step = 'access'; render(); setNotice('error', MESSAGES.invalid_session); return; }
+    var fields = code === 'validation' && err.extra && err.extra.error && err.extra.error.fields;
+    if (fields && fields.length) {
+      // Server-side field errors (audit QA-15): show them inline on the step that owns the field,
+      // move focus to that step's heading and announce the service's message.
+      var mapped = {}; var attendance = false; var details = false; var m;
+      fields.forEach(function (f) {
+        var path = f.path || '';
+        if ((m = /^responses\.([^.]+)\.([^.]+)\.status$/.exec(path))) { mapped[key(m[1], m[2])] = f.message; attendance = true; return; }
+        if ((m = /^responses\.([^.]+)\.([^.]+)\.meal$/.exec(path))) { mapped['meal:' + m[1]] = f.message; details = true; return; }
+        if ((m = /^plusOneNames\.([^.]+)$/.exec(path))) { mapped['name:' + m[1]] = f.message; attendance = true; return; }
+        if (path === 'contactEmail' || path === 'notes') { mapped[path] = f.message; details = true; }
+      });
+      if (attendance || details) {
+        state.step = attendance ? 'attendance' : 'details';
+        state.errors = mapped; state.focusHeading = true; render();
+        setNotice('error', err.message || MESSAGES.validation);
+        return;
+      }
+    }
     setNotice('error', MESSAGES[code] || MESSAGES.server_error);
   }
 

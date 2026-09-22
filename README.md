@@ -50,7 +50,9 @@ Approved wording that must not drift: the couple's display name, the closing lin
 ```bash
 npm run build      # writes dist/
 npm run serve      # http://127.0.0.1:8080/
-npm run proofs     # Playwright screenshots + checks into docs/proofs/ (needs Playwright installed): four widths, entry flow, keyboard, reduced motion, 200% text, RSVP preview
+npm run proofs     # Playwright screenshots + checks into docs/proofs/ (needs Playwright installed): four widths, entry flow, keyboard, reduced motion, 200% text, RSVP preview, story layout preview
+npm run images     # story photographs → metadata-free WebP/JPEG derivatives + manifest (docs/OUR_STORY_INTAKE.md)
+npm run capture:public   # read-only capture of the public routes (from the live-site audit handoff); AUDIT_BASE_URL overrides the origin
 ```
 
 Node 20 or newer; no `npm install` is required for the build.
@@ -68,6 +70,14 @@ GitHub Pages serves static files only. It cannot authorize a household, keep gue
 - `rsvp.mode` is `coming-soon`: guests see a clear message and no form.
 - The full guest-facing RSVP flow is already built (`src/js/rsvp.js`) against the API in `docs/RSVP_API_CONTRACT.md`. Review it with synthetic guests at `/rsvp.html?preview=1` (code `PREVIEW`); a banner states that nothing is saved.
 - To go live: deploy a small backend that implements the contract (Cloudflare Workers + D1, or Supabase, are the candidates), set `rsvp.apiBaseUrl` and `rsvp.mode: "live"`, set `rsvp.cutoffAt`, name the provider in `privacy.rsvpProvider`, and rebuild.
+
+## Our Story
+
+The section is built and switched off. Local and CI builds render a labelled synthetic layout preview at `/story-preview.html`; the deployed build contains no story text, images or navigation link until the owners supply and approve the copy and photographs (`docs/OUR_STORY_INTAKE.md`).
+
+## Live-site audit (22 September 2026)
+
+The audit handoff, its 24-task backlog and 32 acceptance scenarios are tracked with honest statuses in `docs/audit/` (start with `LIVE_SITE_AUDIT_RESPONSE.md`).
 
 ## Before guests are invited
 

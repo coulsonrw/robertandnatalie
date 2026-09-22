@@ -195,7 +195,7 @@ a:hover { color: var(--ink); }
 .section { padding: clamp(56px, 8vw, 96px) 0; }
 .section + .section { border-top: 1px solid var(--gold-rule); }
 .section-head { text-align: center; max-width: 66ch; margin: 0 auto clamp(28px, 4vw, 44px); }
-.section-head h2, .page-title { font-size: clamp(2.1rem, 4vw, 2.8rem); color: var(--gold-text); font-weight: 600; letter-spacing: 0.01em; }
+.section-head h2, .section-head h1, .page-title { font-size: clamp(2.1rem, 4vw, 2.8rem); color: var(--gold-text); font-weight: 600; letter-spacing: 0.01em; }
 .ornament { display: block; width: 170px; height: 14px; margin: 12px auto 18px; color: var(--gold); fill: none; stroke: currentColor; stroke-width: 1.2; }
 .section-intro { font-size: 1.15rem; color: var(--ink-soft); margin: 0; }
 .card { background: var(--paper-light); border: 1px solid var(--gold-rule); border-radius: var(--radius); padding: clamp(22px, 3.5vw, 36px); box-shadow: var(--shadow-card); }
@@ -443,3 +443,31 @@ body.is-entry .site { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .envelope-lift, .envelope-flap, .entry-scene, .seal { transition: none !important; }
 }
+
+/* ---------- Our Story (audit IMP-12/13) ---------- */
+.story-lead { display: grid; gap: 24px; align-items: start; }
+@media (min-width: 900px) { .story-lead { grid-template-columns: 45fr 55fr; gap: 40px; } }
+.story-figure { margin: 0; min-width: 0; }
+.story-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--gold-rule); background: var(--paper-light); object-fit: cover; }
+.story-figure figcaption { font-size: 1rem; color: var(--ink-soft); margin-top: 8px; }
+.story-figure .credit { font-size: 0.9rem; }
+.story-narrative p { font-size: 1.15rem; max-width: 62ch; }
+.story-narrative p + p { margin-top: 1em; }
+.story-grid { display: grid; gap: 20px; margin-top: 32px; }
+@media (min-width: 640px) { .story-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .story-grid.cols-3 { grid-template-columns: repeat(3, 1fr); } }
+.story-milestones { list-style: none; padding: 0; margin: 40px auto 0; max-width: 62ch; border-top: 1px solid var(--gold-rule); }
+.story-milestones li { padding: 20px 0; border-bottom: 1px solid var(--gold-rule); }
+.story-milestones h2, .story-milestones h3 { font-size: 1.3rem; margin: 0 0 0.25em; }
+.story-milestones .when { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.08em; font-size: 0.95rem; color: var(--gold-text); margin: 0 0 0.3em; }
+.story-milestones .story-figure { margin-top: 14px; max-width: 480px; }
+.preview-notice { margin: 24px auto 0; max-width: 780px; min-width: 0; }
+.preview-notice span { overflow-wrap: anywhere; }
+.page-story-preview { padding-top: 8px; }
+
+/* Truthful RSVP state (audit IMP-02) */
+.hero-note { margin: 14px 0 0; color: var(--ink-soft); font-size: 1rem; }
+
+/* Airports (audit IMP-15): a list of official sites, no proximity ranking */
+.airport-list { padding-left: 1.2em; margin: 0.4em 0 1em; }
+.airport-list li { margin-bottom: 0.5em; }

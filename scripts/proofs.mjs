@@ -35,6 +35,7 @@ const PAGES = [
   { name: 'rsvp-coming-soon', url: '/rsvp.html' },
   { name: 'rsvp-preview-access', url: '/rsvp.html?preview=1' },
   { name: 'privacy', url: '/privacy.html' },
+  { name: 'story-preview', url: '/story-preview.html' }, // protected layout preview with synthetic fixtures (local/CI builds only)
 ];
 
 const browser = await chromium.launch();

@@ -6,7 +6,7 @@
 // are required only when the slot attends. The save is one D1 batch that also inserts the
 // idempotency record, the revision guard row, the mail-outbox row and the audit event.
 
-import { HttpError, json } from './http.js';
+import { HttpError, json, validationError } from './http.js';
 import { newId, newReference } from './crypto.js';
 import { one, stmt, batch, audit, nowIso, loadHousehold, loadEvents } from './db.js';
 import { buildSnapshot, rsvpWindow } from './snapshot.js';
@@ -24,48 +24,55 @@ function isPlainObject(v) { return v !== null && typeof v === 'object' && !Array
 
 // Validates a guest payload against the loaded household. Returns the normalised change set.
 // `partial` (admin corrections) allows answering only some pairs.
+//
+// Two classes of problem (QA-15): structural or authorisation problems (wrong types, an id that
+// is not part of this invitation, a duplicate) fail immediately and name no foreign id; problems a
+// guest can fix at an input (an unanswered pair, a missing plus-one name or meal, a bad email) are
+// collected and returned together as error.fields = [{ path, message }].
 export function validatePayload(payload, loaded, { partial = false } = {}) {
-  const errors = [];
+  const problems = [];
+  const problem = (path, message) => problems.push({ path, message });
+  const fail = (path, message) => validationError(message, [{ path, message }]);
   const entitledByKey = new Map();
   for (const e of loaded.entitlements) entitledByKey.set(`${e.guest_id}|${e.event_id}`, e);
   const guestsById = new Map(loaded.guests.map((g) => [g.id, g]));
 
-  if (!Array.isArray(payload.responses)) throw new HttpError(400, 'validation', 'responses must be an array.');
+  if (!Array.isArray(payload.responses)) throw fail('responses', 'responses must be an array.');
   const answered = new Map();
   const meals = new Map(); // key -> meal value or null, for answered pairs only
   for (const r of payload.responses) {
     if (!isPlainObject(r) || typeof r.guestId !== 'string' || typeof r.eventId !== 'string') {
-      throw new HttpError(400, 'validation', 'Each response needs guestId, eventId and status.');
+      throw fail('responses', 'Each response needs guestId, eventId and status.');
     }
     const key = `${r.guestId}|${r.eventId}`;
     if (!entitledByKey.has(key)) {
       // Cross-household or uninvited pair: refuse without saying which (SEC-03).
-      throw new HttpError(400, 'validation', 'One of the answers is not part of this invitation.');
+      throw fail('responses', 'One of the answers is not part of this invitation.');
     }
-    if (!STATUSES.has(r.status)) throw new HttpError(400, 'validation', 'Each answer must be attending or declining.');
-    if (answered.has(key)) throw new HttpError(400, 'validation', 'Duplicate answer for the same guest and event.');
+    const path = `responses.${r.guestId}.${r.eventId}`;
+    if (!STATUSES.has(r.status)) throw fail(`${path}.status`, 'Each answer must be attending or declining.');
+    if (answered.has(key)) throw fail(`${path}.status`, 'Duplicate answer for the same guest and event.');
     answered.set(key, r.status);
     // Meal choice: only where the event has configured options, only for attending guests,
     // only from the configured list (RSVP-03, DATA-02). Ignored (stored NULL) otherwise.
     const options = mealOptionsOf(entitledByKey.get(key));
-    if (r.meal !== undefined && r.meal !== null && typeof r.meal !== 'string') throw new HttpError(400, 'validation', 'meal must be text.');
+    if (r.meal !== undefined && r.meal !== null && typeof r.meal !== 'string') throw fail(`${path}.meal`, 'meal must be text.');
     if (options && r.status === 'attending') {
       const meal = typeof r.meal === 'string' ? r.meal.trim() : '';
-      if (meal && !options.includes(meal)) throw new HttpError(400, 'validation', 'That meal choice is not one of the options.');
-      if (!meal && !partial) throw new HttpError(400, 'validation', 'Please choose a meal for each guest attending.');
+      if (meal && !options.includes(meal)) problem(`${path}.meal`, 'That meal choice is not one of the options.');
+      else if (!meal && !partial) problem(`${path}.meal`, 'Please choose a meal for this guest.');
       // A partial (admin) correction that names no meal keeps the stored choice (commitResponse
       // falls back to the existing value for attending guests) instead of clearing it.
-      if (meal || !partial) meals.set(key, meal || null);
+      else if (meal || !partial) meals.set(key, meal || null);
     } else {
-      if (r.meal && !options) throw new HttpError(400, 'validation', 'Meal choices are not collected for that event.');
+      if (r.meal && !options) throw fail(`${path}.meal`, 'Meal choices are not collected for that event.');
       meals.set(key, null);
     }
   }
   if (!partial) {
-    for (const key of entitledByKey.keys()) {
-      if (!answered.has(key)) errors.push(key);
+    for (const [key, e] of entitledByKey) {
+      if (!answered.has(key)) problem(`responses.${e.guest_id}.${e.event_id}.status`, 'Please choose attending or declining.');
     }
-    if (errors.length) throw new HttpError(400, 'validation', 'Please answer for every guest and event.');
   }
 
   // Effective status per guest after this save (for plus-one and email rules).
@@ -80,16 +87,18 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
   const nameUpdates = new Map();
   for (const [gid, name] of Object.entries(plusOneNames)) {
     const g = guestsById.get(gid);
-    if (!g || g.kind !== 'plus-one') throw new HttpError(400, 'validation', 'A guest name was given for someone not on this invitation.');
-    if (typeof name !== 'string') throw new HttpError(400, 'validation', 'Guest names must be text.');
+    // Not a plus-one slot of this household (a named guest, a child, or a foreign/unknown id):
+    // there is no capacity to expand (RSVP-02), and the id is not echoed back.
+    if (!g || g.kind !== 'plus-one') throw fail('plusOneNames', 'A guest name was given for someone not on this invitation.');
+    if (typeof name !== 'string') throw fail(`plusOneNames.${gid}`, 'Guest names must be text.');
     nameUpdates.set(gid, name.trim().slice(0, MAX_NAME));
   }
   for (const g of loaded.guests) {
     if (g.kind !== 'plus-one') continue;
     if (attendingGuests.has(g.id)) {
       const name = nameUpdates.has(g.id) ? nameUpdates.get(g.id) : (g.plus_one_name || '');
-      if (!name || name.trim().length < 2) throw new HttpError(400, 'validation', 'Please enter the name of the guest who will attend.');
-      nameUpdates.set(g.id, name.trim());
+      if (!name || name.trim().length < 2) problem(`plusOneNames.${g.id}`, 'Please enter the name of the guest who will attend.');
+      else nameUpdates.set(g.id, name.trim());
     } else {
       nameUpdates.set(g.id, null); // slot not used: no name is kept (RSVP-02)
     }
@@ -100,21 +109,24 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
   let contactEmail = payload.contactEmail === undefined || payload.contactEmail === null
     ? (partial ? (loaded.household.contact_email || '') : '')
     : payload.contactEmail;
-  if (typeof contactEmail !== 'string') throw new HttpError(400, 'validation', 'contactEmail must be text.');
+  if (typeof contactEmail !== 'string') throw fail('contactEmail', 'contactEmail must be text.');
   contactEmail = contactEmail.trim();
-  if (contactEmail.length > 254 || (contactEmail && !EMAIL_RE.test(contactEmail))) {
-    throw new HttpError(400, 'validation', 'Please enter a valid email address.');
-  }
   const anyoneAttending = attendingGuests.size > 0;
-  if (anyoneAttending && !contactEmail && !partial) {
-    throw new HttpError(400, 'validation', 'A contact email is needed so we can confirm your response.');
+  if (contactEmail.length > 254 || (contactEmail && !EMAIL_RE.test(contactEmail))) {
+    problem('contactEmail', 'Please enter a valid email address.');
+  } else if (anyoneAttending && !contactEmail && !partial) {
+    problem('contactEmail', 'A contact email is needed so we can confirm your response.');
   }
 
   let notes = payload.notes === undefined || payload.notes === null ? '' : payload.notes;
-  if (typeof notes !== 'string') throw new HttpError(400, 'validation', 'notes must be text.');
+  if (typeof notes !== 'string') throw fail('notes', 'notes must be text.');
   notes = notes.trim().slice(0, MAX_NOTES);
   if (!anyoneAttending) notes = ''; // declining households skip practical details (RSVP-03)
 
+  if (problems.length) {
+    const message = problems.length === 1 ? problems[0].message : `${problems.length} answers need attention. Please review them and try again.`;
+    throw validationError(message, problems);
+  }
   return { answered, meals, nameUpdates, contactEmail, notes, anyoneAttending };
 }
 
@@ -281,10 +293,10 @@ export async function putResponse(request, env, cfg, payload) {
   const db = env.DB;
 
   if (typeof payload.requestId !== 'string' || !/^[A-Za-z0-9-]{8,128}$/.test(payload.requestId)) {
-    throw new HttpError(400, 'validation', 'requestId is required.');
+    throw validationError('requestId is required.', [{ path: 'requestId', message: 'requestId is required.' }]);
   }
   if (!Number.isInteger(payload.revision) || payload.revision < 0) {
-    throw new HttpError(400, 'validation', 'revision is required.');
+    throw validationError('revision is required.', [{ path: 'revision', message: 'revision is required.' }]);
   }
 
   // Idempotent retry (RSVP-05): return the stored result, no second write.

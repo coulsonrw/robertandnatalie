@@ -81,3 +81,16 @@ If the RSVP service is unavailable, guests see the network-error state with thei
 | Domain registrar (robertandnatalie.wedding) | | | |
 | Cloudflare (RSVP service, D1, Access) | | | |
 | Email sending provider | | | |
+
+## 13. Announce the RSVP opening date (audit IMP-02)
+
+Set `rsvp.opensAt` in `content/site.config.json` to the approved date-time with its offset (for example `2026-10-01T09:00:00-05:00`) only once the owners have approved it and the service is ready to open on that day. The not-yet-open state on `/rsvp.html` and the note under the welcome area then name the date in Central Time. Leave it `null` otherwise; the site says only that responses are not open yet. Switching `rsvp.mode` to `live` requires `rsvp.apiBaseUrl` and a deployed service (§1).
+
+## 14. Publish Our Story (audit IMP-12/13)
+
+Follow `docs/OUR_STORY_INTAKE.md`: originals into `assets/story/originals/` (git-ignored), entries in `story.images[]`, `npm run images`, then `story.enabled: true`, `story.visibility: "public"` and `story.approval.state: "approved"`. The build refuses to publish until every image records rights, subject and publication approval and has derivatives. To take the section down, set `story.enabled` to `false` and redeploy. The synthetic layout preview at `/story-preview.html` exists only in local and CI builds.
+
+## 15. Public-site capture (read-only)
+
+`npm run capture:public` runs the audit handoff's read-only browser capture against the live site (or `AUDIT_BASE_URL=http://127.0.0.1:8080 npm run capture:public` against `npm run serve`). It opens `/`, `/#wedding-day`, `/rsvp.html` and `/privacy.html` at 320, 390, 768 and 1440 px, blocks every non-GET request, never clicks or submits, and writes screenshots plus `capture-summary.json` (route inventory, console errors, failed requests, calendar file headers) to `artifacts/public-audit/`. Use it after each deploy as a smoke check; it is a capture, not a test pass. The summary from the local build of 22 September 2026 is kept in `docs/evidence/public-capture/`.
+

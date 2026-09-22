@@ -2,3 +2,6 @@ dist/
 node_modules/
 .DS_Store
 *.log
+# Owner-supplied photographs stay out of version control and out of the public build (docs/OUR_STORY_INTAKE.md).
+assets/story/originals/*
+!assets/story/originals/README.md

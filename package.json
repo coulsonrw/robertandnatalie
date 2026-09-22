@@ -15,7 +15,9 @@
     "proofs": "node scripts/proofs.mjs",
     "audit": "node scripts/audit.mjs",
     "test": "node --test scripts/test.mjs",
-    "linkcheck": "node scripts/linkcheck.mjs"
+    "linkcheck": "node scripts/linkcheck.mjs",
+    "images": "node scripts/images.mjs",
+    "capture:public": "node scripts/capture-public-site.mjs"
   },
   "license": "UNLICENSED",
   "devDependencies": {

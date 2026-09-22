@@ -1,6 +1,6 @@
 # Visual proofs
 
-Captured 2026-09-22T13:04:47.546Z with Chromium 141.0.7390.37 on Node v22.22.2 using `npm run proofs` (Playwright, headless).
+Captured 2026-09-22T14:36:09.717Z with Chromium 141.0.7390.37 on Node v22.22.2 using `npm run proofs` (Playwright, headless).
 Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adapter; nothing is saved.
 
 ## Horizontal overflow check (must be none)
@@ -12,21 +12,25 @@ Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adap
 | rsvp-coming-soon | 320 | 320 | 320 | yes |
 | rsvp-preview-access | 320 | 320 | 320 | yes |
 | privacy | 320 | 320 | 320 | yes |
+| story-preview | 320 | 320 | 320 | yes |
 | entry-envelope | 390 | 390 | 390 | yes |
 | invitation | 390 | 390 | 390 | yes |
 | rsvp-coming-soon | 390 | 390 | 390 | yes |
 | rsvp-preview-access | 390 | 390 | 390 | yes |
 | privacy | 390 | 390 | 390 | yes |
+| story-preview | 390 | 390 | 390 | yes |
 | entry-envelope | 768 | 768 | 768 | yes |
 | invitation | 768 | 768 | 768 | yes |
 | rsvp-coming-soon | 768 | 768 | 768 | yes |
 | rsvp-preview-access | 768 | 768 | 768 | yes |
 | privacy | 768 | 768 | 768 | yes |
+| story-preview | 768 | 768 | 768 | yes |
 | entry-envelope | 1440 | 1440 | 1440 | yes |
 | invitation | 1440 | 1440 | 1440 | yes |
 | rsvp-coming-soon | 1440 | 1440 | 1440 | yes |
 | rsvp-preview-access | 1440 | 1440 | 1440 | yes |
 | privacy | 1440 | 1440 | 1440 | yes |
+| story-preview | 1440 | 1440 | 1440 | yes |
 | invitation @ 200% text | 1440 | 1440 | 1440 | yes |
 
 ## Keyboard focus order (home, 1440)
@@ -52,7 +56,7 @@ Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adap
 
 ## Decline-all household (AT-08, synthetic code SOLO, 390)
 
-- Details step skipped when everyone declines: true; decline saved with reference PREVIEW-5ACE99 (2 guest/event rows).
+- Details step skipped when everyone declines: true; decline saved with reference PREVIEW-C42634 (2 guest/event rows).
 
 ## Private-link access (390)
 
@@ -112,3 +116,7 @@ Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adap
 - rsvp-preview-invitees-390.png
 - rsvp-preview-review-1440.png
 - rsvp-preview-review-390.png
+- story-preview-1440.png
+- story-preview-320.png
+- story-preview-390.png
+- story-preview-768.png

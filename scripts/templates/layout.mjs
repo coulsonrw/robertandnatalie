@@ -73,6 +73,7 @@ export function header({ view, currentPage }) {
         <span class="nav-toggle-text">Menu</span>
       </button>
       <ul id="primary-menu" class="nav-menu">
+        ${view.story?.published ? `<li><a href="${home}#our-story">Our Story</a></li>` : ''}
         <li><a href="${home}#wedding-day">Wedding Day</a></li>
         <li><a href="${home}#travel-stay">Travel &amp; Stay</a></li>
         <li><a href="${home}#questions">Questions</a></li>
@@ -94,7 +95,7 @@ export function footer({ view }) {
 </footer>`;
 }
 
-export function shell({ view, title, description, bodyClass = '', bodyAttrs = '', body, scripts = [] }) {
+export function shell({ view, title, description, bodyClass = '', bodyAttrs = '', body, scripts = [], canonicalPath = null }) {
   const p = view.basePath;
   const fullTitle = title ? `${title} — ${view.couple.displayName}` : `${view.couple.displayName} — ${view.longDate} — ${view.wedding.destination}`;
   return `<!DOCTYPE html>
@@ -107,7 +108,7 @@ export function shell({ view, title, description, bodyClass = '', bodyAttrs = ''
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(fullTitle)}</title>
 <meta name="description" content="${esc(description ?? view.site.description)}">
-${view.site.noindex ? '<meta name="robots" content="noindex, nofollow">\n' : ''}<meta name="color-scheme" content="light">
+${view.site.noindex ? '<meta name="robots" content="noindex, nofollow">\n' : ''}${canonicalPath ? `<link rel="canonical" href="${esc(view.site.baseUrl)}${p}${canonicalPath}">\n` : ''}<meta name="color-scheme" content="light">
 <meta name="theme-color" content="#F7F3EA">
 <link rel="icon" href="${p}/img/crest-64.png" type="image/png">
 <link rel="apple-touch-icon" href="${p}/img/crest-360.png">
@@ -127,10 +128,10 @@ ${scripts.map((s) => `<script src="${p}${s}" defer></script>`).join('\n')}
 `;
 }
 
-export function page({ view, currentPage, title, description, bodyClass = '', main, scripts = [] }) {
+export function page({ view, currentPage, title, description, bodyClass = '', main, scripts = [], canonicalPath = null }) {
   const body = `<span id="top"></span>
 ${header({ view, currentPage })}
 ${main}
 ${footer({ view })}`;
-  return shell({ view, title, description, bodyClass, body, scripts });
+  return shell({ view, title, description, bodyClass, body, scripts, canonicalPath });
 }

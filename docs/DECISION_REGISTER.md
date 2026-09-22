@@ -30,6 +30,17 @@ Owner and coordinator decisions the PRD (v1.1, Section 16) says are still requir
 | 19 | Supply PRD v1.0 and the Word PRD for the archive, or record that they are held elsewhere | Robert / Natalie | Handover | Open | `AGENT_START_HERE.md` |
 | 20 | Name the day-to-day operator, support owner and incident contact | Robert / Natalie | Guest launch | Open | `docs/RUNBOOK.md` §11 and §12 |
 
+## Further decisions surfaced by the live-site audit (22 September 2026)
+
+| # | Decision | Owner | Required by | Status | Where it lands |
+|---|---|---|---|---|---|
+| 21 | Announce an RSVP opening date, or keep the not-yet-open state undated | Robert / Natalie / coordinator | Before invitations are sent | Open (undated; the site says responses are not open yet) | `content/site.config.json` → `rsvp.opensAt` |
+| 22 | Our Story: whether to publish it at all, the approved copy and voice, the selected photographs with rights and subject approval, captions, and public visibility | Robert / Natalie | Optional-module approval (audit IMP-12/13) | Open (module built and switched off; synthetic preview only) | `story.*`; `docs/OUR_STORY_INTAKE.md` |
+| 23 | Verify December 2026 air service and approve the prefilled Pensacola (PNS) and Gulf Shores (JKA) entries, and reconfirm Mobile (MOB) | Coordinator | Travel publication (audit IMP-15) | Open (MOB published as carried-forward; PNS and JKA unpublished) | `travel.gettingThere.airports[]` |
+| 24 | Attendance keepsake exception: whether a minimal who-attended record may be kept after the 90-day deletion, and which fields | Robert / Natalie | Privacy notice before responses open (audit §05) | Open (notice says "may keep a simple record"; no fields defined) | `scripts/templates/privacy.mjs`; `privacy.*` |
+
+Waiting since 22 September 2026 for rows 21–24.
+
 Waiting since 21 September 2026 for every open row.
 
 Established and not reopened: the names, date, venue names, stated start times, closing phrase, original-color crest, and the charcoal/gold/ivory direction.

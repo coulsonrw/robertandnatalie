@@ -2,7 +2,7 @@
 
 This directory is a reference backend for the RSVP contract in `../docs/RSVP_API_CONTRACT.md`, written against PRD v1.1 Sections 08–12. The static site on GitHub Pages calls it from `src/js/rsvp.js`; nothing in the static site stores guest data.
 
-**Status (21 September 2026):** built and tested locally in the Workers runtime with a local D1 database (52 tests, see "Tests"). It has **not** been deployed to any Cloudflare account, no domain has been attached, no Access application exists, and no mail provider is connected. Everything about Cloudflare's hosted behaviour below is labelled *publisher claim* or *not verified* unless it was observed here.
+**Status (22 September 2026):** built and tested locally in the Workers runtime with a local D1 database (71 tests, see "Tests"); verified against the external audit's acceptance scenarios QA-10..QA-22 in `../docs/audit/BACKEND_QA_MATRIX.md`. It has **not** been deployed to any Cloudflare account, no domain has been attached, no Access application exists, and no mail provider is connected. Everything about Cloudflare's hosted behaviour below is labelled *publisher claim* or *not verified* unless it was observed here.
 
 ## Layout
 
@@ -36,9 +36,11 @@ npm test               # vitest inside workerd with a local D1; migrations appli
 Observed test run (Node 22.22.2, npm 10.9.7, vitest 4.1.11, @cloudflare/vitest-pool-workers 0.22.0, wrangler 4.124.0, miniflare 5.20260815.0-alpha, workerd 2026-08-15):
 
 ```
- Test Files  5 passed (5)
-      Tests  53 passed (53)
+ Test Files  6 passed (6)
+      Tests  71 passed (71)
 ```
+
+`test/qa-matrix.test.js` holds the scenarios added for the audit matrix (QA-11, 13–17, 19–22 and the scheduled retention run); the other files are organised by PRD requirement.
 
 To run the Worker locally against a local D1 file:
 
@@ -99,9 +101,9 @@ All admin calls need an Access login (or the local bypass) and, for anything oth
 | Record a phone/email response | `PUT /admin/households/{id}/response {"origin":"coordinator-phone","reason":"…","responses":[…],"contactEmail":"…"}`. Partial answers allowed: pairs, `contactEmail` and meal choices that are omitted keep their stored values; send `"contactEmail":""` to clear the address. |
 | Correct after the cutoff | Same endpoint with `"origin":"owner-correction"` (owner). Each change is written to `response_history` and the audit trail with before/after statuses; the household revision increments so a guest with an open page sees a conflict instead of overwriting. |
 | Urgent logistics banner | `PUT /admin/content/urgent-banner {"body":{"active":true,"message":"…","linkUrl":"https://…","linkLabel":"…"},"note":"…"}`; every save is a new version. `GET /admin/content/urgent-banner` shows history; `POST /admin/content/urgent-banner/rollback {"version":n}`. Public read: `GET /content/urgent-banner` (cacheable 60 s). |
-| Change the cutoff / close editing | `PUT /admin/content/rsvp-settings {"body":{"cutoffAt":"2026-11-20T23:59:59-06:00","open":true}}`; after the wedding set `"open":false` (OPS-03). Mirror the cutoff in `content/site.config.json`. |
+| Change the cutoff / close editing | `PUT /admin/content/rsvp-settings {"body":{"cutoffAt":"2026-11-20T23:59:59-06:00","open":true}}` (the offset is mandatory; a value without one is refused); after the wedding set `"open":false` (OPS-03). Mirror the cutoff in `content/site.config.json`. |
 | Mail problems | `GET /admin/outbox?state=queued|abandoned`, `GET /admin/alerts`, `POST /admin/alerts/{id}/ack`; `POST /admin/mail/process` runs the sender by hand. Abandoned mail never undoes a saved RSVP. |
-| Audit | `GET /admin/audit?householdId=…` (owner). Entries carry actor, action, changed field names and statuses; never notes, emails or credentials. |
+| Audit | `GET /admin/audit?householdId=…` (owner). Entries carry actor, action, origin, changed field names and statuses; never notes, emails or credentials. The `reason` given with a phone/email response or correction is stored in the audit entry verbatim (200 characters), so write "guest telephoned", not the guest's dietary or access details. |
 | Take the API offline | Set `rsvp.mode` to `closed` in the site config (guests see the closed text) and either `PUT /admin/content/rsvp-settings {"body":{"open":false}}` or `npx wrangler delete`. A deleted Worker keeps its D1 database. |
 
 ### Manual RSVP fallback (RSVP-06, SEC-07)
@@ -166,7 +168,8 @@ Other PRD items touched: OPS-02 (banner), OPS-03 (`rsvp-settings.open=false`), N
 - `GET /content/urgent-banner` → `{ key, version, body: { active, message, linkUrl, linkLabel } | null, updatedAt }`, `Cache-Control: public, max-age=60`. The site's `banner` block in `content/site.config.json` is the build-time equivalent; if the site should show owner-published banners without a rebuild, `src/js/site.js` would fetch this endpoint.
 - `GET /health`.
 - The `/admin` API described in the runbook.
-- `rsvp.cutoffAt` in the snapshot comes from `rsvp-settings` content when set, otherwise `RSVP_CUTOFF_AT`; `rsvp.open` is false after the cutoff or when editing is closed by the owners.
+- `rsvp.cutoffAt` in the snapshot comes from `rsvp-settings` content when set, otherwise `RSVP_CUTOFF_AT`; `rsvp.open` is false after the cutoff or when editing is closed by the owners. A cutoff must carry an explicit UTC offset or `Z` (`2026-11-20T23:59:59-06:00`); the settings editor refuses one without it, and a configured value that cannot be parsed closes the window (fail closed) and is reported as `rsvp.cutoffInvalid: true` on `GET /admin/status` (never in the guest snapshot).
+- `400 validation` errors may carry `error.fields`, an array of `{ path, message }` naming the payload member concerned so the page can announce the problem beside the input (QA-15). Paths: `contactEmail`, `notes`, `requestId`, `revision`, `responses` (structural, or an id outside this invitation: no id is echoed), `responses.<guestId>.<eventId>.status`, `responses.<guestId>.<eventId>.meal`, `plusOneNames` (a name for someone who is not a plus-one slot: no id echoed), `plusOneNames.<guestId>`. All guest-fixable problems are returned together; `error.message` is the single problem's text or `"N answers need attention. …"`. `error.code` and `error.message` are unchanged, so a client that ignores `fields` behaves as before.
 
 ## Verification labels
 
