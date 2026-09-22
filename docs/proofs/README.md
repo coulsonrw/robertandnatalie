@@ -1,6 +1,6 @@
 # Visual proofs
 
-Captured 2026-09-22T14:28:02.769Z with Chromium 141.0.7390.37 on Node v22.22.2 using `npm run proofs` (Playwright, headless).
+Captured 2026-09-22T14:36:09.717Z with Chromium 141.0.7390.37 on Node v22.22.2 using `npm run proofs` (Playwright, headless).
 Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adapter; nothing is saved.
 
 ## Horizontal overflow check (must be none)
@@ -56,7 +56,7 @@ Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adap
 
 ## Decline-all household (AT-08, synthetic code SOLO, 390)
 
-- Details step skipped when everyone declines: true; decline saved with reference PREVIEW-6D03BE (2 guest/event rows).
+- Details step skipped when everyone declines: true; decline saved with reference PREVIEW-C42634 (2 guest/event rows).
 
 ## Private-link access (390)
 
