@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 import { zonedParts, clockLabel, longDate, formalDateLines, formalTimeLine, timeZoneLabel } from './lib/format.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { mapsLinks } from './lib/html.mjs';
-import { renderIndex, renderCelebration } from './templates/index.mjs';
+import { renderIndex, renderCelebration, renderStoryPreview } from './templates/index.mjs';
+import { storyPreviewFixture } from './fixtures/story-preview.mjs';
 import { renderRsvp } from './templates/rsvp.mjs';
 import { renderPrivacy } from './templates/privacy.mjs';
 import { renderNotFound } from './templates/notfound.mjs';
@@ -17,6 +18,8 @@ import { renderNotFound } from './templates/notfound.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = process.env.DIST_DIR ? path.resolve(process.env.DIST_DIR) : path.join(ROOT, 'dist');
 const CONFIG_PATH = process.env.SITE_CONFIG ? path.resolve(process.env.SITE_CONFIG) : path.join(ROOT, 'content', 'site.config.json');
+const STORY_DERIVATIVES = process.env.STORY_DERIVATIVES_DIR ? path.resolve(process.env.STORY_DERIVATIVES_DIR) : path.join(ROOT, 'assets', 'story', 'derivatives');
+const PREVIEW_BUILD = process.env.SITE_PREVIEW !== '0'; // deploy.yml sets SITE_PREVIEW=0 so previews never reach the public site
 const args = new Set(process.argv.slice(2));
 const CHECK_ONLY = args.has('--check');
 const WRITE_REGISTER = args.has('--register');
@@ -115,6 +118,9 @@ function validate(c) {
   if (r?.mode === 'live' && !r.apiBaseUrl) fail('rsvp.mode is live but rsvp.apiBaseUrl is not set');
   if (r?.apiBaseUrl && !/^https:\/\//.test(r.apiBaseUrl)) fail('rsvp.apiBaseUrl must use https');
   if (r?.cutoffAt != null && Number.isNaN(Date.parse(r.cutoffAt))) fail('rsvp.cutoffAt must be an ISO date-time or null');
+  if (r?.opensAt != null && Number.isNaN(Date.parse(r.opensAt))) fail('rsvp.opensAt must be an ISO date-time or null');
+  if (r?.opensAt && r?.mode !== 'coming-soon') warn('rsvp.opensAt is set but rsvp.mode is not coming-soon; the opening date is only shown in the not-yet-open state');
+  if (r?.opensAt && r?.cutoffAt && Date.parse(r.opensAt) >= Date.parse(r.cutoffAt)) fail('rsvp.opensAt must be before rsvp.cutoffAt');
   const mc = r?.mealChoices;
   if (mc && (mc.eventId || (mc.options ?? []).length)) {
     if (!(events ?? []).some((e) => e.id === mc.eventId)) fail('rsvp.mealChoices.eventId must name an event');
@@ -152,7 +158,15 @@ function validate(c) {
     if (!f.id || !f.question) fail(`faq entry missing id or question`);
     if (f.approval?.state !== 'pending' && !f.answer) fail(`faq ${f.id}: answer is required unless approval.state is pending`);
     if (f.approval?.state === 'pending' && f.answer) warn(`faq ${f.id}: has an answer but is pending, so it will not be published`);
+    if (f.answerWithCutoff != null && (typeof f.answerWithCutoff !== 'string' || !f.answerWithCutoff.includes('{cutoff}'))) fail(`faq ${f.id}: answerWithCutoff must be a string containing {cutoff}`);
   }
+  for (const a of c.travel?.gettingThere?.airports ?? []) {
+    const t = `travel.gettingThere.airports[${a.code ?? a.name}]`;
+    if (!a.name || !a.code) fail(`${t}: name and code are required`);
+    if (a.website && !/^https:\/\//.test(a.website)) fail(`${t}: website must be an https URL`);
+    if (!a.approval) fail(`${t}: an approval block is required; each airport is published only when its own approval is not pending (audit IMP-15)`);
+  }
+  validateStory(c);
   if (c.contact?.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.contact.email)) fail('contact.email does not look like an email address');
   if (!Number.isInteger(c.privacy?.retentionDaysAfterWedding)) fail('privacy.retentionDaysAfterWedding must be an integer');
   if (c.travel?.hotel?.roomBlock) {
@@ -165,6 +179,82 @@ function validate(c) {
     if (!rb.code && !rb.rate && !rb.cutoffDate && !(rb.inclusions ?? []).length && !rb.cancellation) fail('travel.hotel.roomBlock needs at least one supplied term (code, rate, cutoffDate, inclusions, cancellation)');
   }
   collectApprovals(c);
+}
+
+let storyManifestCache;
+function storyManifest() {
+  if (storyManifestCache === undefined) {
+    const f = path.join(STORY_DERIVATIVES, 'manifest.json');
+    storyManifestCache = fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null;
+  }
+  return storyManifestCache;
+}
+function storyDerivatives(id) { return storyManifest()?.images?.[id] ?? null; }
+function storyPublished(c) { const s = c.story; return !!(s && s.enabled && s.approval?.state === 'approved' && s.visibility === 'public'); }
+
+// Our Story (audit IMP-12/13, QA-06–08): nothing reaches the public build until the owners have
+// approved the copy, marked it public and recorded rights and subject approval for every picture.
+function validateStory(c) {
+  const s = c.story;
+  if (!s) return;
+  if (typeof s.enabled !== 'boolean') fail('story.enabled must be true or false');
+  if (s.visibility != null && s.visibility !== 'public') fail('story.visibility must be "public" or null; a private story needs server-side access control, which static hosting cannot provide (docs/OUR_STORY_INTAKE.md)');
+  const imgs = s.images ?? [];
+  const ids = new Set();
+  for (const im of imgs) {
+    const t = `story.images[${im.id}]`;
+    if (!im.id || ids.has(im.id)) fail(`${t}: id missing or duplicated`); ids.add(im.id);
+    if (!['lead', 'supporting', 'milestone'].includes(im.role)) fail(`${t}: role must be lead, supporting or milestone`);
+    if (!im.source || !/^assets\/story\/originals\//.test(im.source)) fail(`${t}: source must be a file under assets/story/originals/ (never copied to the public build)`);
+    const fp = im.focalPoint;
+    if (fp && !(fp.x >= 0 && fp.x <= 1 && fp.y >= 0 && fp.y <= 1)) fail(`${t}: focalPoint.x and .y must be between 0 and 1`);
+  }
+  if (imgs.filter((i) => i.role === 'lead').length > 1) fail('story.images: only one image may have the role "lead"');
+  if (imgs.length > 6) fail('story.images: at most six images (audit §06 selection limit)');
+  for (const m of s.milestones ?? []) {
+    if (!m.id || !m.title || !m.description) fail(`story.milestones[${m.id}]: id, title and description are required`);
+    if (m.imageId && !ids.has(m.imageId)) fail(`story.milestones[${m.id}]: imageId "${m.imageId}" is not in story.images`);
+  }
+  if (!s.enabled) return;
+  if (s.approval?.state !== 'approved') fail('story.enabled is true but story.approval.state is not "approved"; the section stays out of the public build until the owners approve the copy and photographs (audit IMP-12)');
+  if (s.visibility !== 'public') fail('story.enabled is true but story.visibility is not "public" (owner visibility decision, audit IMP-03)');
+  const paras = s.narrative?.paragraphs ?? [];
+  if (!paras.length || paras.some((x) => typeof x !== 'string' || !x.trim())) fail('story.narrative.paragraphs must hold at least one non-empty paragraph when the story is enabled');
+  if (paras.length > 3) warn('story.narrative has more than three paragraphs; the audit brief suggests three short paragraphs');
+  const words = paras.join(' ').split(/\s+/).filter(Boolean).length;
+  if (words < 150 || words > 250) warn(`story.narrative is ${words} words; the audit brief targets 150–250`);
+  if (!imgs.some((i) => i.role === 'lead')) fail('story.images needs one image with the role "lead" when the story is enabled');
+  for (const im of imgs) {
+    const t = `story.images[${im.id}]`;
+    if (!im.alt || !im.alt.trim()) fail(`${t}: alt text is required (audit §06)`);
+    for (const k of ['rightsConfirmed', 'subjectsApproved', 'publicationApproved']) if (im[k] !== true) fail(`${t}: ${k} must be true before publication`);
+    if (im.visibility !== 'public') fail(`${t}: visibility must be "public"`);
+    const d = storyDerivatives(im.id);
+    if (!d || !d.sizes?.length) fail(`${t}: no derivatives in ${path.relative(ROOT, STORY_DERIVATIVES)}/manifest.json; run npm run images`);
+    else for (const sz of d.sizes) for (const k of ['webp', 'jpg']) if (!fs.existsSync(path.join(STORY_DERIVATIVES, sz[k]))) fail(`${t}: derivative ${sz[k]} is missing; run npm run images`);
+  }
+}
+
+function storyView(c) {
+  const s = c.story;
+  if (!storyPublished(c)) return { published: false, preview: PREVIEW_BUILD && !!s };
+  const images = (s.images ?? []).map((im) => {
+    const d = storyDerivatives(im.id);
+    return { id: im.id, role: im.role, alt: im.alt, caption: im.caption ?? null, photographer: im.photographer ?? null, focal: im.focalPoint ?? { x: 0.5, y: 0.5 }, width: d.width, height: d.height, sizes: d.sizes.map((sz) => ({ w: sz.w, h: sz.h, webp: `/img/story/${sz.webp}`, jpg: `/img/story/${sz.jpg}` })) };
+  });
+  return {
+    published: true,
+    preview: false,
+    heading: s.heading || 'Our Story',
+    paragraphs: s.narrative.paragraphs,
+    milestones: (s.milestones ?? []).map((m) => ({ id: m.id, title: m.title, description: m.description, when: m.when ?? null, place: m.place ?? null, image: m.imageId ? images.find((i) => i.id === m.imageId) ?? null : null })),
+    images,
+  };
+}
+
+function cutoffLabel(iso, tz) {
+  const parts = zonedParts(iso, tz);
+  return `${longDate(parts)} at ${clockLabel(parts)} ${timeZoneLabel(tz, parts)}`;
 }
 
 function isPublished(block) {
@@ -213,7 +303,9 @@ function buildView(c) {
 
   const destinationShort = c.wedding.destination.split(',')[0].trim();
   const sub = (s) => String(s).replace('{destination}', c.wedding.destination).replace('{longDate}', longDate(weddingParts));
-  const faqs = (c.faqs ?? []).filter((f) => isPublished(f) && f.answer).map((f) => ({ id: f.id, question: f.question, answer: f.answer }));
+  const cutoff = c.rsvp.cutoffAt ? cutoffLabel(c.rsvp.cutoffAt, tz) : null;
+  const opensAt = c.rsvp.opensAt ? cutoffLabel(c.rsvp.opensAt, tz) : null;
+  const faqs = (c.faqs ?? []).filter((f) => isPublished(f) && f.answer).map((f) => ({ id: f.id, question: f.question, answer: cutoff && f.answerWithCutoff ? f.answerWithCutoff.replace('{cutoff}', cutoff) : f.answer }));
   const contactPublished = isPublished(c.contact) && (c.contact.email || c.contact.phone);
   const betweenVenues = isPublished(c.travel.betweenVenues) && c.travel.betweenVenues.text ? c.travel.betweenVenues.text : null;
   const reviewed = new Date(`${c.lastReviewed}T12:00:00Z`);
@@ -235,14 +327,19 @@ function buildView(c) {
     weddingDay: { intro: sub(c.weddingDay.intro), venueChangeNote: isPublished(c.weddingDay) ? c.weddingDay.venueChangeNote : null },
     travel: {
       hotel: { ...c.travel.hotel, roomBlock: roomBlockView(c.travel.hotel.roomBlock) },
-      gettingThere: { paragraphs: c.travel.gettingThere.paragraphs, airports: c.travel.gettingThere.airports ?? [] },
+      gettingThere: {
+        paragraphs: c.travel.gettingThere.paragraphs,
+        airports: (c.travel.gettingThere.airports ?? []).filter(isPublished).map((a) => ({ name: a.name, code: a.code, website: a.website ?? null, note: a.note ?? null })),
+        airportsNote: c.travel.gettingThere.airportsNote ?? null,
+      },
       betweenVenues,
     },
     faqs,
     contact: contactPublished ? { email: c.contact.email, phone: c.contact.phone, phoneDisplay: c.contact.phoneDisplay, note: c.contact.note } : null,
     // The synthetic preview is disabled in deployed review builds (SITE_PREVIEW=0, set by deploy.yml) so that
     // review previews stay out of the public domain (PRD TPL-09); local builds keep it.
-    rsvp: postEvent ? { ...c.rsvp, mode: 'closed', allowPreview: false, closedText: c.postEvent.message } : (process.env.SITE_PREVIEW === '0' ? { ...c.rsvp, allowPreview: false } : c.rsvp),
+    rsvp: { ...(postEvent ? { ...c.rsvp, mode: 'closed', allowPreview: false, closedText: c.postEvent.message } : (PREVIEW_BUILD ? c.rsvp : { ...c.rsvp, allowPreview: false })), cutoffLabel: cutoff, opensAtLabel: opensAt },
+    story: storyView(c),
     privacy: c.privacy,
     lastReviewedLabel: reviewed.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
     crestAlt: `The family crest: two silver dolphins with gold collars joined by a gold chain around the ${c.couple.monogram} monogram above blue waves, with the motto “Je mourrai pour ceux que j’aime”.`,
@@ -287,6 +384,13 @@ function emit(c, view) {
   }
 
   for (const dir of ['styles', 'js', 'img', 'fonts']) copyDir(path.join(ROOT, 'src', dir), path.join(DIST, dir));
+  if (view.story.published) {
+    // Only the derivatives of published images are copied; originals and manifest never are.
+    fs.mkdirSync(path.join(DIST, 'img', 'story'), { recursive: true });
+    for (const im of view.story.images) for (const sz of im.sizes) for (const k of ['webp', 'jpg']) fs.copyFileSync(path.join(STORY_DERIVATIVES, path.basename(sz[k])), path.join(DIST, 'img', 'story', path.basename(sz[k])));
+  } else if (view.story.preview) {
+    fs.writeFileSync(path.join(DIST, 'story-preview.html'), renderStoryPreview(view, storyPreviewFixture(view)));
+  }
   const cname = path.join(ROOT, 'CNAME');
   if (fs.existsSync(cname)) fs.copyFileSync(cname, path.join(DIST, 'CNAME'));
   fs.writeFileSync(path.join(DIST, '.nojekyll'), '');
@@ -310,6 +414,11 @@ function readiness(c) {
   if (!c.banner?.active) add('info', 'Urgent logistics banner is off', 'Set banner.active with an approved message to publish wedding-day logistics above every page (ADMIN-04, OPS-02).');
   if (c.rsvp.allowPreview) add('review', 'Synthetic RSVP preview is enabled', 'rsvp.allowPreview is true, so /rsvp.html?preview=1 shows the labeled synthetic household. Set it to false before guest launch (PRD RELEASE-01).');
   if (!c.travel.hotel.roomBlock) add('info', 'No wedding room block published', 'travel.hotel.roomBlock is null; only general hotel information is shown (PRD CONTENT-03).');
+  if (c.rsvp.mode === 'coming-soon') add('info', c.rsvp.opensAt ? 'RSVP opening date announced' : 'RSVP opening date not announced', c.rsvp.opensAt ? `rsvp.opensAt is ${c.rsvp.opensAt}; the not-yet-open state names it (audit IMP-02).` : 'rsvp.opensAt is null; the not-yet-open state names no date. Set it only once the owners approve an opening date (audit IMP-02).');
+  if (!storyPublished(c)) add('info', 'config.story: Our Story not published', `story.enabled=${c.story?.enabled ?? 'absent'}, approval ${c.story?.approval?.state ?? 'absent'}, visibility ${c.story?.visibility ?? 'null'}. Optional module (PRD CONTENT-01, audit IMP-12/13): local and CI builds render a synthetic-fixture layout preview at /story-preview.html; the deployed build omits the section, its navigation link and every story image. Intake: docs/OUR_STORY_INTAKE.md.`);
+  else add('review', 'config.story: Our Story is published', `${c.story.images.length} image(s) with recorded rights, subject and publication approval; confirm captions and copy before guest launch (audit QA-07).`);
+  const pendingAirports = (c.travel.gettingThere.airports ?? []).filter((a) => a.approval?.state === 'pending').map((a) => a.code);
+  if (pendingAirports.length) add('review', 'Airports awaiting verification', `${pendingAirports.join(', ')} are prefilled but unpublished until the coordinator verifies December 2026 service and approves them (audit IMP-15).`);
   for (const a of approvals) {
     if (a.state === 'approved') continue;
     if (a.state === 'pending') add(items.some((i) => i.item.includes(a.path)) ? 'info' : 'review', `${a.path}: pending, not published`, a.note ?? '');

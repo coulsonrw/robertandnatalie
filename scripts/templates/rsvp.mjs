@@ -18,7 +18,7 @@ export function renderRsvp(view) {
   } else if (r.mode === 'closed') {
     staticBlock = `<div class="card card-notice" id="rsvp-static"><p class="kicker">Responses closed</p><p>${esc(r.closedText)}</p>${contactLine(view)}</div>`;
   } else {
-    staticBlock = `<div class="card card-notice" id="rsvp-static"><p class="kicker">Coming soon</p><p>${esc(r.comingSoonText)}</p>${contactLine(view)}</div>`;
+    staticBlock = `<div class="card card-notice" id="rsvp-static"><p class="kicker">Not yet open</p><p>${esc(r.comingSoonText)}</p>${r.opensAtLabel ? `<p><strong>Responses open on ${esc(r.opensAtLabel)}.</strong></p>` : ''}${contactLine(view)}</div>`;
   }
 
   const clientConfig = {
@@ -38,12 +38,12 @@ export function renderRsvp(view) {
   const main = `<main id="main" class="page-rsvp">
   <div class="container narrow">
     <h1 class="page-title">RSVP</h1>
-    <p class="lede">Respond for each member of your household for the ceremony and the reception. You can return to update your response until responses close.</p>
+    <p class="lede">${r.mode === 'coming-soon' ? 'Responses are not open yet. When they are, you will respond here for each member of your household for the ceremony and the reception.' : r.mode === 'closed' ? 'Online responses have closed.' : `Respond for each member of your household for the ceremony and the reception. You can return to update your response until responses close${r.cutoffLabel ? ` on ${esc(r.cutoffLabel)}` : ''}.`}</p>
     ${staticBlock}
     <div id="rsvp-app" hidden></div>
     <script type="application/json" id="rsvp-config">${jsonForScript(clientConfig)}</script>
     <p class="back-link"><a href="${view.basePath}/#wedding-day">Back to the wedding details</a></p>
   </div>
 </main>`;
-  return page({ view: { ...view, referrerPolicy: 'no-referrer' }, currentPage: 'rsvp', title: 'RSVP', description: `RSVP for the wedding of ${view.couple.displayName}.`, main, bodyClass: 'rsvp', scripts: ['/js/rsvp.js'] });
+  return page({ view: { ...view, referrerPolicy: 'no-referrer' }, currentPage: 'rsvp', title: 'RSVP', description: `RSVP for the wedding of ${view.couple.displayName}.`, main, bodyClass: 'rsvp', scripts: ['/js/rsvp.js'], canonicalPath: '/rsvp.html' });
 }

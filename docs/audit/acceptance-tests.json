@@ -1,0 +1,357 @@
+{
+  "note": "Statuses recorded by the implementation team on 22 September 2026. passed_lab = automated or headless-browser check in the repository environment; passed_lab_synthetic = layout verified with synthetic fixtures only; partially_passed_lab = part of the pass condition verified; see_backend_matrix = service-level scenarios recorded in docs/audit/BACKEND_QA_MATRIX.md; not_run stays not_run.",
+  "tests": [
+    {
+      "id": "QA-01",
+      "scenario": "First visit and optional invitation opening",
+      "pass_condition": "Date/destination and practical shortcuts are available; no required extended animation or audio.",
+      "status": "passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Proofs entry-envelope/entry-opened at 320/390/768/1440 show date, destination and both start times under the sealed envelope plus the entry-bar skip link and RSVP; no audio; reduced motion opens statically (docs/proofs/README.md)."
+      ]
+    },
+    {
+      "id": "QA-02",
+      "scenario": "Direct event/RSVP link and repeat visit",
+      "pass_condition": "Intended destination loads without replaying the full opening; browser back returns appropriately.",
+      "status": "passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "scripts/proofs.mjs deep-link check: /#wedding-day skips the envelope; same-session return via sessionStorage; /celebration.html starts in the site state. Browser-back behaviour not separately asserted."
+      ]
+    },
+    {
+      "id": "QA-03",
+      "scenario": "Mobile menu and anchor navigation",
+      "pass_condition": "Keyboard/touch operation, focus, close behaviour and header offsets work at all target widths.",
+      "status": "passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Keyboard proofs (keyboard-skip-link, keyboard-focus) and axe at four widths; menu toggle aria-expanded/controls; header offset via scroll-margin. Touch on a physical device not run."
+      ]
+    },
+    {
+      "id": "QA-04",
+      "scenario": "Invitation modal, where retained",
+      "pass_condition": "Labeled dialog, contained focus, Escape, inactive background and trigger-focus restoration work.",
+      "status": "passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Native <dialog aria-label> with showModal (focus contained, Escape closes, backdrop inert), focus returned to the keepsake button (scripts/proofs.mjs dialog check; docs/evidence/ACCESSIBILITY.md accessible names)."
+      ]
+    },
+    {
+      "id": "QA-05",
+      "scenario": "Typography and original artwork",
+      "pass_condition": "Approved crest retains detail/aspect ratio; no red copy; closing line wraps at matching size; no horizontal overflow.",
+      "status": "passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Card face is the approved artwork; crest untouched pixels; no red copy; closing line at the small-caps size; no horizontal overflow on any capture (scripts/proofs.mjs overflow check, test \"QA-31\")."
+      ]
+    },
+    {
+      "id": "QA-06",
+      "scenario": "Our Story not approved",
+      "pass_condition": "Section, navigation and unpublished media are excluded from public output; protected preview remains available.",
+      "status": "passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Test \"QA-06/QA-31\": deployed build has no story section, link, images or preview page; preview exists only in local/CI builds."
+      ]
+    },
+    {
+      "id": "QA-07",
+      "scenario": "Our Story approved with images",
+      "pass_condition": "Correct text/photos/captions, natural crops, meaningful alternatives, stable layout and correct reading order.",
+      "status": "passed_lab_synthetic",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Test \"QA-07/08\" with a synthetic manifest; layout proofs of /story-preview.html at four widths. Real copy and photographs not supplied."
+      ]
+    },
+    {
+      "id": "QA-08",
+      "scenario": "Missing images or long story text",
+      "pass_condition": "No broken image icons, collapsed layout or hidden content; publication validation catches essential omissions.",
+      "status": "passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Build refuses missing derivatives, missing alt or approvals; warns on narrative length (test \"QA-07/08\")."
+      ]
+    },
+    {
+      "id": "QA-09",
+      "scenario": "RSVP pre-opening state",
+      "pass_condition": "Accurate status, optional approved opening date and actionable assistance; no false response confirmation.",
+      "status": "passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "RSVP page and hero state \"not open\"; opening date shown only when rsvp.opensAt is set (test \"IMP-02/07\"); no form rendered in coming-soon mode."
+      ]
+    },
+    {
+      "id": "QA-10",
+      "scenario": "Valid link/code",
+      "pass_condition": "Correct household only; no general guest search or other household data in the response/cache.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-11",
+      "scenario": "Invalid/revoked/expired credential",
+      "pass_condition": "Neutral error, rate limiting and help; no disclosure that a particular named household exists.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-12",
+      "scenario": "Mixed attendance and event entitlements",
+      "pass_condition": "Each permitted guest/event pair is explicit; uninvited events and extra guests cannot be submitted.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-13",
+      "scenario": "Authorized plus-one and children policy",
+      "pass_condition": "Only approved slots exist; permitted name collection works; no arbitrary capacity expansion.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-14",
+      "scenario": "Full decline",
+      "pass_condition": "Saves valid declines without requiring meals or sensitive notes; confirmation does not imply attendance.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-15",
+      "scenario": "Validation and accessible review",
+      "pass_condition": "Inline errors and summary announced; focus reaches errors; entered values survive correction; review matches inputs.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-16",
+      "scenario": "Double-click and timed-out retry",
+      "pass_condition": "One logical committed submission; no duplicate guest counts or confirmation-outbox entries.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-17",
+      "scenario": "Simultaneous edits",
+      "pass_condition": "Stale revision is detected; later saved changes cannot be silently overwritten.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-18",
+      "scenario": "Email failure",
+      "pass_condition": "Response stays saved; safe confirmation appears; queued retry and coordinator alert operate.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-19",
+      "scenario": "Before and after cutoff",
+      "pass_condition": "Server enforces approved event-local cutoff; correct edit/contact experience; admin exceptions audited.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-20",
+      "scenario": "Household isolation / guessed IDs in staging",
+      "pass_condition": "Unauthorized reads, writes, files, exports and cached data are denied.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-21",
+      "scenario": "Coordinator import/re-import",
+      "pass_condition": "Validated preview; duplicates/conflicts flagged; saved attendance preserved and reconciled.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-22",
+      "scenario": "Event counts and exports",
+      "pass_condition": "Person/event totals agree; general exports exclude restricted notes; formula-like input neutralized.",
+      "status": "see_backend_matrix",
+      "environment": "vitest-pool-workers with a local D1 (no deployed environment)",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "docs/audit/BACKEND_QA_MATRIX.md"
+      ]
+    },
+    {
+      "id": "QA-23",
+      "scenario": "Calendar files",
+      "pass_condition": "Fetch/parse and Apple/Google/Outlook imports show correct date, local starts, venue and stable identifiers.",
+      "status": "partially_passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "File-level checks pass (test \"QA-23\"). Apple/Google/Outlook imports not run."
+      ]
+    },
+    {
+      "id": "QA-24",
+      "scenario": "Maps and accommodation links",
+      "pass_condition": "Approved entrance and booking destination open on target devices; general booking/block labels are accurate.",
+      "status": "not_run",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Maps links point at the mailing addresses; confirmed entrances pending (docs/DECISION_REGISTER.md row 5). Device tests not run."
+      ]
+    },
+    {
+      "id": "QA-25",
+      "scenario": "Public/private and preview exposure",
+      "pass_condition": "Actual HTML/assets/APIs match approved visibility; tokens/guest data absent from public metadata and logs.",
+      "status": "partially_passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Deployed build excludes previews and synthetic households (SITE_PREVIEW=0); no tokens in metadata; noindex retained. Visibility decision pending (row 2)."
+      ]
+    },
+    {
+      "id": "QA-26",
+      "scenario": "Access, RSVP and dialogs with assistive technology",
+      "pass_condition": "Keyboard, VoiceOver and NVDA tasks complete; visible focus, errors and announcements work.",
+      "status": "not_run",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "VoiceOver/NVDA sessions not run; keyboard-only checks passed in lab."
+      ]
+    },
+    {
+      "id": "QA-27",
+      "scenario": "Zoom, reduced motion and mobile keyboard",
+      "pass_condition": "No lost information, obscured required controls, forced effects or horizontal compression.",
+      "status": "partially_passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "200% text and reduced-motion proofs pass; 400% reflow and mobile-keyboard tests not run."
+      ]
+    },
+    {
+      "id": "QA-28",
+      "scenario": "Performance and loading failure",
+      "pass_condition": "Five documented cold-cache runs; image/font errors have usable fallbacks; no invented field metrics.",
+      "status": "passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Five cold-cache lab runs per route within budgets (docs/evidence/PERFORMANCE.md); font/image failure fallbacks: system serif and alt text."
+      ]
+    },
+    {
+      "id": "QA-29",
+      "scenario": "Shared configuration regression",
+      "pass_condition": "Change one synthetic event time/deadline; website, form, email and calendar remain consistent.",
+      "status": "passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Tests AT-02 and \"IMP-02/07\": one configuration change moves invitation, cards, RSVP labels, FAQ, calendar together; e-mail templates read the same values in backend/src/mail."
+      ]
+    },
+    {
+      "id": "QA-30",
+      "scenario": "Backup/restore and retention",
+      "pass_condition": "Restore works; deletion rules reapply; restricted notes do not reappear after restoration.",
+      "status": "not_run",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Backup/restore drill needs a deployed D1 database (backend/README.md, docs/RUNBOOK.md §7)."
+      ]
+    },
+    {
+      "id": "QA-31",
+      "scenario": "Legacy routes and production-safe smoke test",
+      "pass_condition": "Existing public URLs and anchors work; no unintended real submission or email is generated.",
+      "status": "passed_lab",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Test \"QA-31\": routes, anchors, calendar files, CNAME; no real submission possible in coming-soon mode."
+      ]
+    },
+    {
+      "id": "QA-32",
+      "scenario": "Six-person guest pilot and coordinator handover",
+      "pass_condition": "At least five of six find ceremony details within 15 seconds and finish a household response within 3 minutes; coordinator can reconcile/export.",
+      "status": "not_run",
+      "environment": "Node 22 + headless Chromium in the repository CI/local environment",
+      "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
+      "evidence": [
+        "Pilot needs a staging service and real participants."
+      ]
+    }
+  ]
+}

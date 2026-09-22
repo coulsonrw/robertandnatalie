@@ -1,5 +1,5 @@
 import { esc, linesWithBreaks } from '../lib/html.mjs';
-import { shell, header, footer, icon } from './layout.mjs';
+import { shell, header, footer, icon, page } from './layout.mjs';
 
 
 // The invitation card: live text, one DOM node that the entry script moves between the
@@ -84,6 +84,7 @@ function heroSection(view) {
       ${view.postEvent ? `<a class="btn btn-primary" href="#thank-you">${esc(view.postEvent.heading)}</a>` : `<a class="btn btn-primary" href="${p}/rsvp.html">RSVP</a>`}
       <a class="btn btn-secondary" href="#wedding-day">View Wedding Day</a>
     </div>
+    ${view.rsvp.mode === 'coming-soon' && !view.postEvent ? `<p class="hero-note">Responses are not open yet${view.rsvp.opensAtLabel ? `; they open on ${esc(view.rsvp.opensAtLabel)}` : ''}.</p>` : ''}
     <p class="hero-keepsake js-only"><button class="text-button" type="button" data-action="view-invitation">View the invitation</button></p>
   </div>
 </section>`;
@@ -121,6 +122,62 @@ function eventCard(view, ev) {
   </div>
   <p class="card-links"><a href="${esc(ev.maps.apple)}" rel="noopener">Open in Apple Maps</a>${ev.website ? ` <span class="dot" aria-hidden="true">·</span> <a href="${esc(ev.website)}" rel="noopener">Venue website</a>` : ''}</p>
 </article>`;
+}
+
+// Our Story (audit IMP-12/13). Rendered only when story.published (approved, public, rights recorded)
+// or, on the protected preview page, from the synthetic fixture. Captions never depend on hover;
+// no carousel, no lightbox, no autoplay.
+function storyImage(im, { eager = false, sizes = '(min-width: 900px) 45vw, 100vw' } = {}) {
+  const pos = `${Math.round((im.focal?.x ?? 0.5) * 100)}% ${Math.round((im.focal?.y ?? 0.5) * 100)}%`;
+  const attrs = `width="${im.width}" height="${im.height}" alt="${esc(im.alt)}" decoding="async"${eager ? '' : ' loading="lazy"'} style="object-position: ${pos}"`;
+  if (im.sizes.length === 1 && im.sizes[0].src) return `<img src="${im.sizes[0].src}" ${attrs}>`;
+  const largest = im.sizes[im.sizes.length - 1];
+  return `<picture>
+      <source type="image/webp" srcset="${im.sizes.map((s) => `${esc(s.webp)} ${s.w}w`).join(', ')}" sizes="${sizes}">
+      <img src="${esc(largest.jpg)}" srcset="${im.sizes.map((s) => `${esc(s.jpg)} ${s.w}w`).join(', ')}" sizes="${sizes}" ${attrs}>
+    </picture>`;
+}
+
+function storyFigure(im, opts) {
+  const credit = im.photographer ? `<span class="credit">Photograph: ${esc(im.photographer)}</span>` : '';
+  return `<figure class="story-figure">${storyImage(im, opts)}${im.caption || credit ? `<figcaption>${im.caption ? esc(im.caption) : ''}${im.caption && credit ? ' ' : ''}${credit}</figcaption>` : ''}</figure>`;
+}
+
+function storySection(view) {
+  const s = view.story;
+  if (!s || (!s.published && !s.fixture)) return '';
+  const lead = s.images.find((i) => i.role === 'lead');
+  const supporting = s.images.filter((i) => i.role === 'supporting');
+  const milestones = s.milestones || [];
+  return `<section id="our-story" class="section story" aria-labelledby="story-title">
+  <div class="container">
+    <header class="section-head">
+      <h2 id="story-title">${esc(s.heading)}</h2>
+      <svg class="ornament" aria-hidden="true" focusable="false"><use href="#ornament-rule"/></svg>
+    </header>
+    <div class="story-lead">
+      ${lead ? storyFigure(lead, { eager: true }) : ''}
+      <div class="story-narrative">
+        ${s.paragraphs.map((x) => `<p>${esc(x)}</p>`).join('\n        ')}
+      </div>
+    </div>
+    ${supporting.length ? `<div class="story-grid${supporting.length >= 3 ? ' cols-3' : ''}">
+      ${supporting.map((im) => storyFigure(im, { sizes: '(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw' })).join('\n      ')}
+    </div>` : ''}
+    ${milestones.length ? `<ol class="story-milestones" aria-label="Milestones">
+      ${milestones.map((m) => `<li>${m.when || m.place ? `<p class="when">${[m.when, m.place].filter(Boolean).map(esc).join(' <span class="dot" aria-hidden="true">·</span> ')}</p>` : ''}<h3>${esc(m.title)}</h3><p>${esc(m.description)}</p>${m.image ? storyFigure(m.image, { sizes: '(min-width: 900px) 40vw, 100vw' }) : ''}</li>`).join('\n      ')}
+    </ol>` : ''}
+  </div>
+</section>`;
+}
+
+export function renderStoryPreview(view, fixture) {
+  const v = { ...view, story: fixture };
+  const main = `<main id="main" class="page-story-preview">
+  <div class="container"><div class="notice preview-notice" role="note">${icon('i-info')}<span><strong>Protected preview.</strong> This is a synthetic layout fixture: the pictures are labelled placeholder graphics and the text is placeholder copy supplied by the build, not the couple's story or photographs. The page exists only in local and CI builds and is never part of the deployed site (audit IMP-12, QA-06). Publishing steps: docs/OUR_STORY_INTAKE.md.</span></div></div>
+${storySection(v)}
+</main>`;
+  return page({ view: v, currentPage: 'story-preview', title: 'Our Story (layout preview)', description: 'Layout preview with synthetic fixtures; not published.', main, bodyClass: 'story-preview' });
 }
 
 function weddingDaySection(view) {
@@ -167,7 +224,7 @@ function travelSection(view) {
         <p class="kicker">Getting there</p>
         <h3 id="getting-there-title">Getting to ${esc(view.wedding.destinationShort)}</h3>
         ${t.gettingThere.paragraphs.map((x) => `<p>${esc(x)}</p>`).join('\n        ')}
-        ${t.gettingThere.airports.length ? `<ul class="plain-list">${t.gettingThere.airports.map((a) => `<li>Nearest named airport: ${esc(a.name)}${a.code ? ` (${esc(a.code)})` : ''}</li>`).join('')}</ul>` : ''}
+        ${t.gettingThere.airports.length ? `<h3 class="h4">Airports</h3><ul class="airport-list">${t.gettingThere.airports.map((a) => `<li><strong>${esc(a.name)}</strong> (${esc(a.code)})${a.website ? ` <span class="dot" aria-hidden="true">·</span> <a href="${esc(a.website)}" rel="noopener">Official site</a>` : ''}${a.note ? `<br><span class="muted">${esc(a.note)}</span>` : ''}</li>`).join('')}</ul>${t.gettingThere.airportsNote ? `<p class="muted">${esc(t.gettingThere.airportsNote)}</p>` : ''}` : ''}
         <p><a class="standalone-link" href="${esc(hotel.links.gettingHere)}" rel="noopener">${esc(hotel.name)}: Getting Here</a></p>
         ${t.betweenVenues ? `<h3 class="h4">Between the venues</h3><p>${esc(t.betweenVenues)}</p>` : ''}
       </article>
@@ -220,6 +277,7 @@ ${header({ view, currentPage })}
 </section>
 ${heroSection(view)}
 ${thankYouSection(view)}
+${storySection(view)}
 ${weddingDaySection(view)}
 ${travelSection(view)}
 ${questionsSection(view)}
@@ -237,7 +295,7 @@ ${footer({ view })}
     <div class="dialog-slot" id="dialog-slot" tabindex="0" role="region" aria-label="Invitation, scrollable"></div>
   </div>
 </dialog>`;
-  return shell({ view, title: null, bodyClass: 'home', bodyAttrs: `data-start="${start}"`, body });
+  return shell({ view, title: null, bodyClass: 'home', bodyAttrs: `data-start="${start}"`, body, canonicalPath: '/' });
 }
 
 export function renderIndex(view) { return renderHome(view, { start: 'closed' }); }

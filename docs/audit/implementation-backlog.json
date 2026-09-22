@@ -1,0 +1,333 @@
+{
+  "document_version": "1.0",
+  "audit_date": "2026-09-22",
+  "baseline": "PRD v1.1",
+  "tasks": [
+    {
+      "id": "IMP-01",
+      "title": "Establish the working baseline",
+      "priority_and_evidence": "P0 / Verify",
+      "implementation_and_acceptance": "Identify repository, deployed commit, build commands, asset sources, configuration and hosting. Capture current desktop/mobile states and route inventory. Record tested vs untested findings before editing.",
+      "dependencies": "Repository / deployment access",
+      "status": "done",
+      "owner": "implementation team",
+      "evidence": [
+        "docs/audit/LIVE_SITE_AUDIT_RESPONSE.md §1 (repository, deployed commit, build, hosting, route inventory, local capture with the handoff tool); docs/proofs/ and docs/evidence/ for rendered states at 320/390/768/1440"
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-02",
+      "title": "Make RSVP status truthful",
+      "priority_and_evidence": "P0 / Observed F01",
+      "implementation_and_acceptance": "Replace ad hoc status text with configured preopen/open/closed/unavailable states. Align all calls to action. No apparent working form while the backend is unavailable.",
+      "dependencies": "IMP-01; operating decision",
+      "status": "done",
+      "owner": "implementation team",
+      "evidence": [
+        "Configured states: rsvp.mode coming-soon|live|closed (+ post-event), rsvp.opensAt (optional, shown only when set); hero and RSVP page say responses are not open; client shows an explicit unavailable/error state with nothing lost (src/js/rsvp.js MESSAGES). Tests: scripts/test.mjs \"IMP-02/07\""
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-03",
+      "title": "Approve privacy and architecture",
+      "priority_and_evidence": "P0 / Site-stated F06",
+      "implementation_and_acceptance": "Record public-info/private-RSVP versus invitation-only choice. Select supported hosting and auth boundary without an unnecessary front-end rewrite.",
+      "dependencies": "Owner decision; IMP-01",
+      "status": "blocked_on_owner",
+      "owner": "Robert / Natalie",
+      "evidence": [
+        "Proposal recorded in docs/audit/LIVE_SITE_AUDIT_RESPONSE.md §3 (public information site + private household RSVP service on Cloudflare Workers/D1). docs/DECISION_REGISTER.md rows 2 and 14. No decision is recorded."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-04",
+      "title": "Implement household access",
+      "priority_and_evidence": "P0 / Backend not inspected",
+      "implementation_and_acceptance": "Private links/code entry; random scoped credentials; rate limits; revocation; secure session; no public guest lookup. Prove household isolation in staging.",
+      "dependencies": "IMP-03; synthetic roster",
+      "status": "implemented_not_deployed",
+      "owner": "technical lead / owners",
+      "evidence": [
+        "backend/ (sessions with digest-only credentials, deny-by-default, revocation); see docs/audit/BACKEND_QA_MATRIX.md. Household isolation proven by the vitest suite against a local D1, not in staging."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-05",
+      "title": "Implement response form and review",
+      "priority_and_evidence": "P0 / Public form unavailable",
+      "implementation_and_acceptance": "Named guests, allowed events, explicit attendance, authorized plus-ones, conditional details, meaningful labels, review and correction.",
+      "dependencies": "IMP-04; policies",
+      "status": "implemented_not_deployed",
+      "owner": "technical lead",
+      "evidence": [
+        "src/js/rsvp.js wizard (named guests, per-guest per-event answers, plus-one names, conditional meals, review) + backend validation; synthetic preview at /rsvp.html?preview=1 in local/CI builds"
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-06",
+      "title": "Persist, confirm and reconcile",
+      "priority_and_evidence": "P0 / Backend not inspected",
+      "implementation_and_acceptance": "Atomic/idempotent saves, revision conflicts, email outbox/retries, saved-result confirmation, deadline-enforced edits.",
+      "dependencies": "IMP-05; mail service",
+      "status": "implemented_not_deployed",
+      "owner": "technical lead",
+      "evidence": [
+        "backend: requestId idempotency, revision conflicts (409), outbox in the same transaction, cutoff enforcement; docs/audit/BACKEND_QA_MATRIX.md"
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-07",
+      "title": "Add deadline and actionable support",
+      "priority_and_evidence": "P0 / Observed F02–03",
+      "implementation_and_acceptance": "Approved cutoff and contact route in shared content, FAQ, RSVP states and privacy. Never fabricate dates or email addresses.",
+      "dependencies": "Owner values",
+      "status": "partially_done_blocked_on_owner",
+      "owner": "Robert / Natalie",
+      "evidence": [
+        "Single source: rsvp.cutoffAt and contact.* flow to the FAQ (answerWithCutoff), the RSVP page, the client and the privacy notice as soon as they are set (test \"IMP-02/07\"). The values themselves are owner inputs and remain null; nothing is fabricated. docs/DECISION_REGISTER.md rows 4 and 20."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-08",
+      "title": "Deliver coordinator operations",
+      "priority_and_evidence": "P0 / Not inspected",
+      "implementation_and_acceptance": "Authenticated staff roles/MFA, safe import, event counts, exceptions, restricted exports, revoke/reissue and audited corrections.",
+      "dependencies": "IMP-04–06",
+      "status": "implemented_not_deployed",
+      "owner": "coordinator / technical lead",
+      "evidence": [
+        "backend/src/admin/* (import preview and apply, counts, exports without restricted notes, credential issue/revoke, corrections with origin) behind Cloudflare Access (staff accounts and MFA are Access policy, not code); docs/audit/BACKEND_QA_MATRIX.md"
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-09",
+      "title": "Reconcile privacy notice and retention",
+      "priority_and_evidence": "P0 / Observed/site-stated F06",
+      "implementation_and_acceptance": "Name actual providers; align data use, backups, access and keepsake decisions with implemented behaviour. Test deletion/restore procedures.",
+      "dependencies": "IMP-03; IMP-06; owner sign-off",
+      "status": "blocked_on_owner",
+      "owner": "Robert / Natalie",
+      "evidence": [
+        "privacy.rsvpProvider is null and the notice says so truthfully; retention 90 days and the memories exception are drafted for approval (docs/DECISION_REGISTER.md rows 11 and 24). Deletion/restore procedure: backend/README.md, docs/RUNBOOK.md §7."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-10",
+      "title": "Refine opening and navigation",
+      "priority_and_evidence": "P1 / Structural risk F07–08",
+      "implementation_and_acceptance": "Preserve optional reveal and current shortcuts; direct/deep links bypass the opening; accessible trigger, menu and modal; no repeated forced animation.",
+      "dependencies": "IMP-01; targeted visual proof",
+      "status": "done",
+      "owner": "implementation team",
+      "evidence": [
+        "Seal is a <button aria-label=\"Open the invitation\">; skip and RSVP shortcuts on the entry bar; deep links, /celebration.html and same-session returns bypass the envelope; native <dialog> with focus containment/restore; sessionStorage flag is a preference only. Proofs: entry-*, keyboard-*, reduced-motion captures."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-11",
+      "title": "Validate visual hierarchy and reflow",
+      "priority_and_evidence": "P1 / Verify",
+      "implementation_and_acceptance": "Approved crest, script and charcoal text; correct closing-line size; restrained framing; no clipping at target widths. Freeze accepted screenshots.",
+      "dependencies": "IMP-10; original assets",
+      "status": "done_pending_owner_signoff",
+      "owner": "Robert / Natalie",
+      "evidence": [
+        "Card face is the approved artwork with live text at its coordinates (22 Sep 2026); proofs at four widths; G2 visual sign-off still to be recorded (docs/DECISION_RECORD.md)."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-12",
+      "title": "Build Our Story",
+      "priority_and_evidence": "P1 / Observed F04; newly requested",
+      "implementation_and_acceptance": "Narrative, lead photo, optional milestones/grid; conditional navigation; responsive reading order; no fabricated biography or empty public placeholders.",
+      "dependencies": "Approved copy/assets for publication",
+      "status": "built_switched_off",
+      "owner": "Robert / Natalie for content",
+      "evidence": [
+        "Section, conditional navigation, responsive order and build gating implemented; synthetic-fixture preview at /story-preview.html (local/CI only). Publishes only with approved copy and images: docs/OUR_STORY_INTAKE.md. Tests QA-06/07/08 in scripts/test.mjs. Owner decision: docs/DECISION_REGISTER.md rows 10 and 22."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-13",
+      "title": "Add approved image pipeline",
+      "priority_and_evidence": "P1 / Required improvement",
+      "implementation_and_acceptance": "Derivatives, captions, alt text, dimensions, focal points, lazy loading, metadata removal and rights/visibility manifest.",
+      "dependencies": "IMP-12; owner originals",
+      "status": "built_awaiting_originals",
+      "owner": "Robert / Natalie",
+      "evidence": [
+        "npm run images (scripts/images.mjs): derivatives at 480/800/1200/1600 without upscaling, metadata stripped, manifest with dimensions, focal point → object-position, lazy loading of non-lead pictures, rights/visibility recorded per image. Test \"IMP-13\"."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-14",
+      "title": "Complete venue-day logistics",
+      "priority_and_evidence": "P0 / Observed F05",
+      "implementation_and_acceptance": "Verify booked space, reception room/entrance, arrival, transport, parking and accessibility; synchronize all destinations.",
+      "dependencies": "Coordinator / venues",
+      "status": "blocked_on_coordinator",
+      "owner": "coordinator / venues",
+      "evidence": [
+        "events[].venue.entrance/arrival/parking/accessibility and travel.betweenVenues stay null and omitted; docs/DECISION_REGISTER.md rows 5 and 7."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-15",
+      "title": "Expand verified travel guidance",
+      "priority_and_evidence": "P1 / Observed F05",
+      "implementation_and_acceptance": "Airport options with official links and dated checks; remove unsupported proximity wording; retain uncertainty for December service.",
+      "dependencies": "IMP-14; current verification",
+      "status": "partially_done_blocked_on_coordinator",
+      "owner": "coordinator",
+      "evidence": [
+        "Proximity wording removed (\"Nearest named airport\" no longer rendered); airports carry their own approvals with official sites; PNS and JKA prefilled from the audit register but unpublished until verified for December 2026. Test \"IMP-15\". Coordinator decision: docs/DECISION_REGISTER.md row 23."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-16",
+      "title": "Resolve accommodation treatment",
+      "priority_and_evidence": "P1 / Owner input",
+      "implementation_and_acceptance": "Keep general reservations or add actual contracted block terms. Add alternatives only if approved. No invented discount or booking guarantee.",
+      "dependencies": "Couple / hotel",
+      "status": "done_as_general_reservations",
+      "owner": "Robert / Natalie / hotel",
+      "evidence": [
+        "General reservations retained and labelled; room block published only with its own approved terms (build-enforced)."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-17",
+      "title": "Complete Questions and help",
+      "priority_and_evidence": "P0 / Observed F02–05",
+      "implementation_and_acceptance": "Explicit approved cutoff, invitee rules, attire, transfer and support. Optional arrangements remain omitted until confirmed.",
+      "dependencies": "IMP-07; IMP-14; policies",
+      "status": "partially_done_blocked_on_owner",
+      "owner": "Robert / Natalie",
+      "evidence": [
+        "Deadline FAQ no longer defers to the paper invitation; attire, parking and contact FAQs stay pending and unpublished until supplied (docs/DECISION_REGISTER.md rows 4, 5, 7 and 20)."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-18",
+      "title": "Validate maps and calendars",
+      "priority_and_evidence": "P0 validation / Untested",
+      "implementation_and_acceptance": "Actual file fetch/parse/import; correct CST starts, stable identifiers, confirmed entrances, no made-up duration. Report real results.",
+      "dependencies": "IMP-14; IMP-23",
+      "status": "partially_done",
+      "owner": "coordinator / testers",
+      "evidence": [
+        "File-level validation automated (test \"QA-23\": CRLF, folding, VTIMEZONE, starts at 20:00Z/22:00Z, stable UIDs, no DTEND). Apple/Google/Outlook imports and entrance confirmation remain not run."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-19",
+      "title": "Complete accessibility coverage",
+      "priority_and_evidence": "P0 validation / Untested",
+      "implementation_and_acceptance": "Keyboard, screen readers, modal/menu, form errors, zoom/reflow, contrast, reduced motion, and mobile keyboard tests pass.",
+      "dependencies": "IMP-05; IMP-10–13",
+      "status": "partially_done",
+      "owner": "testers",
+      "evidence": [
+        "axe-core 0 violations across all states at four widths, keyboard proofs, reduced motion, 200% text (docs/evidence/ACCESSIBILITY.md, docs/proofs/). VoiceOver/NVDA sessions and mobile-keyboard tests not run."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-20",
+      "title": "Control page and media weight",
+      "priority_and_evidence": "P1 / Untested",
+      "implementation_and_acceptance": "Measure budgets and five mobile lab runs; optimize without destroying imagery; keep nonessential tracking off.",
+      "dependencies": "IMP-11–13; chosen build",
+      "status": "done_lab_only",
+      "owner": "implementation team",
+      "evidence": [
+        "Five lab runs per route within PRD budgets (docs/evidence/PERFORMANCE.md); no tracking; field data does not exist."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-21",
+      "title": "Align metadata and legacy routes",
+      "priority_and_evidence": "P1 / Verify",
+      "implementation_and_acceptance": "Approved social preview/indexing, correct titles, functioning existing `.html` and anchor links; no credential leakage.",
+      "dependencies": "IMP-03; IMP-10",
+      "status": "partially_done_blocked_on_owner",
+      "owner": "Robert / Natalie",
+      "evidence": [
+        "Canonical links added; titles/description from config; noindex retained pending the visibility decision; legacy routes /, /rsvp.html, /privacy.html, /#wedding-day, calendar files verified by test \"QA-31\". Social preview image awaits the visibility decision."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-22",
+      "title": "Release with rollback evidence",
+      "priority_and_evidence": "P0 / Required",
+      "implementation_and_acceptance": "Staging acceptance, owner approval, backup/restore check, route smoke test, operator runbook, and controlled production rollout.",
+      "dependencies": "Applicable tasks passed",
+      "status": "blocked_on_owner",
+      "owner": "Robert / Natalie",
+      "evidence": [
+        "Rollback: docs/RUNBOOK.md §9; deploy is a redeploy of any commit. Release authorization (G3, site.launchApproved) not recorded; strict build refuses release while blockers remain."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-23",
+      "title": "Centralize approved content",
+      "priority_and_evidence": "P0 / Verify",
+      "implementation_and_acceptance": "Single event/cutoff/contact source drives UI, confirmations and calendars. Validate content states and reject public placeholders.",
+      "dependencies": "IMP-01; owner inputs",
+      "status": "done",
+      "owner": "implementation team",
+      "evidence": [
+        "content/site.config.json is the single source for events, cutoff, opening date, contact, story and travel; validation rejects pending placeholders and inconsistent dates (scripts/build.mjs; tests AT-02, IMP-02/07)."
+      ],
+      "updated": "2026-09-22"
+    },
+    {
+      "id": "IMP-24",
+      "title": "Rehearse guest and coordinator use",
+      "priority_and_evidence": "P0 validation / Untested",
+      "implementation_and_acceptance": "Six-person pilot plus coordinator reconciliation; verify real tasks, manually log remaining issues, and retest fixes.",
+      "dependencies": "IMP-06–09; IMP-14–21; IMP-23",
+      "status": "not_started_blocked",
+      "owner": "owners / coordinator",
+      "evidence": [
+        "Six-person pilot and coordinator reconciliation need a deployed staging service."
+      ],
+      "updated": "2026-09-22"
+    }
+  ],
+  "status_vocabulary": {
+    "done": "implemented and verified in this repository",
+    "done_lab_only": "verified in a laboratory environment only",
+    "done_pending_owner_signoff": "implemented; owner approval still to be recorded",
+    "built_switched_off": "implemented but excluded from the public build until approved content exists",
+    "built_awaiting_originals": "pipeline implemented and tested with synthetic input; no owner originals supplied",
+    "implemented_not_deployed": "code and automated tests exist; not deployed to any environment",
+    "partially_done": "part implemented; remaining part listed in evidence",
+    "partially_done_blocked_on_owner": "implementation ready; needs owner values",
+    "partially_done_blocked_on_coordinator": "implementation ready; needs coordinator verification",
+    "blocked_on_owner": "cannot proceed without an owner decision",
+    "blocked_on_coordinator": "cannot proceed without coordinator input",
+    "not_started_blocked": "not started; prerequisites missing"
+  }
+}

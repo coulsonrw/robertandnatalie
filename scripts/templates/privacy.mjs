@@ -40,5 +40,5 @@ export function renderPrivacy(view) {
     <p class="back-link"><a href="${view.basePath}/">Back to the invitation</a></p>
   </div>
 </main>`;
-  return page({ view, currentPage: 'privacy', title: 'Privacy', description: `How the wedding website of ${view.couple.displayName} handles guest information.`, main, bodyClass: 'privacy' });
+  return page({ view, currentPage: 'privacy', title: 'Privacy', description: `How the wedding website of ${view.couple.displayName} handles guest information.`, main, bodyClass: 'privacy', canonicalPath: '/privacy.html' });
 }
