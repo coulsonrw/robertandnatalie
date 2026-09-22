@@ -2,8 +2,7 @@ name: Validate content and build
 
 on:
   pull_request:
-  push:
-    branches-ignore: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -12,8 +11,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Validate configuration
@@ -30,7 +29,8 @@ jobs:
           node scripts/linkcheck.mjs | tee linkcheck.log
           { echo '## External link check'; echo; echo '```'; cat linkcheck.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Review build for collaborators (synthetic preview enabled)
-        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        uses: actions/upload-artifact@v5
         with:
           name: site-review-build
           path: dist
@@ -55,8 +55,8 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
