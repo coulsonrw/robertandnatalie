@@ -241,7 +241,7 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
   await page.goto(base + '/celebration.html', { waitUntil: 'networkidle' });
-  await page.addStyleTag({ content: 'html{font-size:200%}' });
+  await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; }); // CSSOM change, allowed by the CSP
   await settle(page);
   const overflow = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }));
   results.overflow.push({ page: 'invitation @ 200% text', width: 1440, ok: overflow.scrollWidth <= overflow.innerWidth, ...overflow });

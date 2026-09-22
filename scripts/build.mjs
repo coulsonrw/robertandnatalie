@@ -15,7 +15,8 @@ import { renderPrivacy } from './templates/privacy.mjs';
 import { renderNotFound } from './templates/notfound.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const DIST = path.join(ROOT, 'dist');
+const DIST = process.env.DIST_DIR ? path.resolve(process.env.DIST_DIR) : path.join(ROOT, 'dist');
+const CONFIG_PATH = process.env.SITE_CONFIG ? path.resolve(process.env.SITE_CONFIG) : path.join(ROOT, 'content', 'site.config.json');
 const args = new Set(process.argv.slice(2));
 const CHECK_ONLY = args.has('--check');
 const WRITE_REGISTER = args.has('--register');
@@ -70,7 +71,10 @@ function validate(c) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(wedding?.date ?? '')) fail('wedding.date must be YYYY-MM-DD');
   if (!validTimeZone(wedding?.timezone)) fail(`wedding.timezone is not a valid IANA zone: ${wedding?.timezone}`);
   if (!Array.isArray(wedding?.closingLine) || wedding.closingLine.length < 2) fail('wedding.closingLine must be an array of at least two lines');
-  else if (wedding.closingLine.join(' ') !== CANONICAL_CLOSING_LINE) warn(`wedding.closingLine differs from the approved wording: "${CANONICAL_CLOSING_LINE}"`);
+  else if (wedding.closingLine.join(' ') !== CANONICAL_CLOSING_LINE) {
+    if (wedding.closingLineChangeApproved === true) warn(`wedding.closingLine differs from the PRD wording and the change is marked approved: "${wedding.closingLine.join(' ')}"`);
+    else fail(`wedding.closingLine differs from the approved wording ("${CANONICAL_CLOSING_LINE}"); set wedding.closingLineChangeApproved to true only with owner approval`);
+  }
   if (!Array.isArray(c.invitation?.requestLines) || !c.invitation.requestLines.length) fail('invitation.requestLines is required');
   else {
     const joined = c.invitation.requestLines.join(' ').replace(/\s+/g, ' ').trim();
@@ -153,13 +157,29 @@ function validate(c) {
   if (!Number.isInteger(c.privacy?.retentionDaysAfterWedding)) fail('privacy.retentionDaysAfterWedding must be an integer');
   if (c.travel?.hotel?.roomBlock) {
     const rb = c.travel.hotel.roomBlock;
-    if (!rb.url || !Array.isArray(rb.details) || !rb.details.length) fail('travel.hotel.roomBlock needs url and details[]');
+    if (!rb.url || !/^https?:\/\//.test(rb.url)) fail('travel.hotel.roomBlock.url must be an absolute URL');
+    if (rb.approval?.state !== 'approved') fail('travel.hotel.roomBlock requires its own approval.state "approved" before it is published (CONTENT-03)');
+    for (const k of ['code', 'rate', 'cutoffDate', 'cancellation']) if (rb[k] != null && typeof rb[k] !== 'string') fail(`travel.hotel.roomBlock.${k} must be a string or null`);
+    if (rb.cutoffDate && !/^\d{4}-\d{2}-\d{2}$/.test(rb.cutoffDate)) fail('travel.hotel.roomBlock.cutoffDate must be YYYY-MM-DD');
+    if (rb.inclusions != null && (!Array.isArray(rb.inclusions) || rb.inclusions.some((x) => typeof x !== 'string'))) fail('travel.hotel.roomBlock.inclusions must be an array of strings');
+    if (!rb.code && !rb.rate && !rb.cutoffDate && !(rb.inclusions ?? []).length && !rb.cancellation) fail('travel.hotel.roomBlock needs at least one supplied term (code, rate, cutoffDate, inclusions, cancellation)');
   }
   collectApprovals(c);
 }
 
 function isPublished(block) {
   return block && block.approval && block.approval.state !== 'pending';
+}
+
+function roomBlockView(rb) {
+  if (!rb || rb.approval?.state !== 'approved') return null;
+  const rows = [];
+  if (rb.code) rows.push({ label: 'Booking code', value: rb.code });
+  if (rb.rate) rows.push({ label: 'Rate', value: rb.rate });
+  if (rb.cutoffDate) rows.push({ label: 'Book by', value: longDate(zonedParts(`${rb.cutoffDate}T12:00:00Z`, 'UTC')) });
+  for (const inc of rb.inclusions ?? []) rows.push({ label: 'Included', value: inc });
+  if (rb.cancellation) rows.push({ label: 'Cancellation', value: rb.cancellation });
+  return { url: rb.url, rows };
 }
 
 function buildView(c) {
@@ -214,13 +234,15 @@ function buildView(c) {
     events,
     weddingDay: { intro: sub(c.weddingDay.intro), venueChangeNote: isPublished(c.weddingDay) ? c.weddingDay.venueChangeNote : null },
     travel: {
-      hotel: { ...c.travel.hotel, roomBlock: c.travel.hotel.roomBlock ?? null },
+      hotel: { ...c.travel.hotel, roomBlock: roomBlockView(c.travel.hotel.roomBlock) },
       gettingThere: { paragraphs: c.travel.gettingThere.paragraphs, airports: c.travel.gettingThere.airports ?? [] },
       betweenVenues,
     },
     faqs,
     contact: contactPublished ? { email: c.contact.email, phone: c.contact.phone, phoneDisplay: c.contact.phoneDisplay, note: c.contact.note } : null,
-    rsvp: postEvent ? { ...c.rsvp, mode: 'closed', allowPreview: false, closedText: c.postEvent.message } : c.rsvp,
+    // The synthetic preview is disabled in deployed review builds (SITE_PREVIEW=0, set by deploy.yml) so that
+    // review previews stay out of the public domain (PRD TPL-09); local builds keep it.
+    rsvp: postEvent ? { ...c.rsvp, mode: 'closed', allowPreview: false, closedText: c.postEvent.message } : (process.env.SITE_PREVIEW === '0' ? { ...c.rsvp, allowPreview: false } : c.rsvp),
     privacy: c.privacy,
     lastReviewedLabel: reviewed.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
     crestAlt: `The family crest: two silver dolphins with gold collars joined by a gold chain around the ${c.couple.monogram} monogram above blue waves, with the motto “Je mourrai pour ceux que j’aime”.`,
@@ -281,7 +303,9 @@ function readiness(c) {
   if (!c.privacy.rsvpProvider) add('blocker', 'RSVP provider not named in the privacy notice', 'privacy.rsvpProvider is null (PRD SEC-04).');
   for (const ev of c.events) {
     for (const k of ['entrance', 'parking']) if (ev.venue[k] == null) add(launching && k === 'entrance' ? 'blocker' : 'review', `${ev.name}: ${k} unconfirmed`, `events[${ev.id}].venue.${k} is null; omitted from the page (PRD CONTENT-02, §16).${launching && k === 'entrance' ? ' Essential for guest launch (PRD §15 risk controls).' : ''}`);
+    if (launching && ['carried-forward', 'publisher-claim', 'draft'].includes(ev.approval?.state)) add('blocker', `${ev.name}: venue details not confirmed`, `events[${ev.id}].approval.state is "${ev.approval.state}"; the coordinator must confirm the address before RSVP goes live (PRD §15 risk controls, §16).`);
   }
+  if (process.env.SITE_PREVIEW === '0') add('info', 'Synthetic preview disabled for this build', 'SITE_PREVIEW=0: /rsvp.html?preview=1 is off in the deployed build; use npm run build && npm run serve locally to review the RSVP flow.');
   if (c.site.phase === 'post-event') add('info', 'Site is in post-event phase', 'RSVP calls to action are replaced by the thank-you content and online responses are closed (OPS-03).');
   if (!c.banner?.active) add('info', 'Urgent logistics banner is off', 'Set banner.active with an approved message to publish wedding-day logistics above every page (ADMIN-04, OPS-02).');
   if (c.rsvp.allowPreview) add('review', 'Synthetic RSVP preview is enabled', 'rsvp.allowPreview is true, so /rsvp.html?preview=1 shows the labeled synthetic household. Set it to false before guest launch (PRD RELEASE-01).');
@@ -335,7 +359,7 @@ A **blocker** prevents guest launch (PRD RELEASE-01). A **review** item is publi
 }
 
 // ---- main ----
-const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'content', 'site.config.json'), 'utf8'));
+const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
 validate(config);
 for (const w of warnings) console.warn(`warning: ${w}`);
 if (errors.length) {

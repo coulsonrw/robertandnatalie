@@ -2,7 +2,7 @@
 
 This directory is a reference backend for the RSVP contract in `../docs/RSVP_API_CONTRACT.md`, written against PRD v1.1 Sections 08–12. The static site on GitHub Pages calls it from `src/js/rsvp.js`; nothing in the static site stores guest data.
 
-**Status (21 September 2026):** built and tested locally in the Workers runtime with a local D1 database (44 tests, see "Tests"). It has **not** been deployed to any Cloudflare account, no domain has been attached, no Access application exists, and no mail provider is connected. Everything about Cloudflare's hosted behaviour below is labelled *publisher claim* or *not verified* unless it was observed here.
+**Status (21 September 2026):** built and tested locally in the Workers runtime with a local D1 database (52 tests, see "Tests"). It has **not** been deployed to any Cloudflare account, no domain has been attached, no Access application exists, and no mail provider is connected. Everything about Cloudflare's hosted behaviour below is labelled *publisher claim* or *not verified* unless it was observed here.
 
 ## Layout
 
@@ -36,8 +36,8 @@ npm test               # vitest inside workerd with a local D1; migrations appli
 Observed test run (Node 22.22.2, npm 10.9.7, vitest 4.1.11, @cloudflare/vitest-pool-workers 0.22.0, wrangler 4.124.0, miniflare 5.20260815.0-alpha, workerd 2026-08-15):
 
 ```
- Test Files  4 passed (4)
-      Tests  44 passed (44)
+ Test Files  5 passed (5)
+      Tests  52 passed (52)
 ```
 
 To run the Worker locally against a local D1 file:
@@ -89,14 +89,14 @@ All admin calls need an Access login (or the local bypass) and, for anything oth
 
 | Task | How |
 |---|---|
-| Import or re-import the roster | `POST /admin/import/preview` with the CSV body → review `errors`, `warnings`, counts → `POST /admin/import/commit {"batchId"}`. Columns: `household_id, household_label, household_contact_email, guest_id, guest_kind (named\|plus-one), guest_name, host_guest_id, events (ids separated by \|)`. IDs are immutable; a guest id cannot move household; re-import never resets responses; an entitlement missing from the file is revoked (response retained, hidden from the guest); a guest missing from the file is left unchanged and listed in `warnings`. |
+| Import or re-import the roster | `POST /admin/import/preview` with the CSV body → review `errors`, `warnings`, counts → `POST /admin/import/commit {"batchId"}`. Columns: `household_id, household_label, household_contact_email, guest_id, guest_kind (named\|plus-one), guest_name, host_guest_id, events (ids separated by \|)`. IDs are immutable; a guest id cannot move household; re-import never resets responses; an entitlement missing from the file is revoked (response retained, hidden from the guest); a guest missing from the file is left unchanged and listed in `warnings`; a revoked household or guest that reappears in the file is reinstated on commit and listed in `warnings` first. |
 | Issue access | `POST /admin/households/{id}/credentials {"kind":"link"}` returns the personal link (`…/rsvp.html#t=<token>`, 256-bit token) **once**; `{"kind":"code"}` returns a 12-symbol fallback code (about 59 bits, rate-limited on entry). Only digests are stored. |
 | Revoke / reissue | `POST /admin/credentials/{id}/revoke` (also ends its sessions), then issue a new one. `POST /admin/households/{id}/revoke` blocks the whole household; `/reinstate` reverses it. |
 | Outstanding responses | `GET /admin/report/households?status=no_response,incomplete` (ADMIN-04 follow-up list). |
 | Counts by event and person | `GET /admin/report/events`, `GET /admin/report/people`. |
 | Safe export | `GET /admin/export/general.csv` — attendance, plus-one names, meal values, contact email; no notes; formula cells neutralised; timestamped and audited with the exporter. |
 | Restricted notes | `GET /admin/export/restricted.csv` — owner only, audited (SEC-05). Release only to the named recipients recorded in `allowed_recipients`. |
-| Record a phone/email response | `PUT /admin/households/{id}/response {"origin":"coordinator-phone","reason":"…","responses":[…],"contactEmail":"…"}`. Partial answers allowed. |
+| Record a phone/email response | `PUT /admin/households/{id}/response {"origin":"coordinator-phone","reason":"…","responses":[…],"contactEmail":"…"}`. Partial answers allowed: pairs, `contactEmail` and meal choices that are omitted keep their stored values; send `"contactEmail":""` to clear the address. |
 | Correct after the cutoff | Same endpoint with `"origin":"owner-correction"` (owner). Each change is written to `response_history` and the audit trail with before/after statuses; the household revision increments so a guest with an open page sees a conflict instead of overwriting. |
 | Urgent logistics banner | `PUT /admin/content/urgent-banner {"body":{"active":true,"message":"…","linkUrl":"https://…","linkLabel":"…"},"note":"…"}`; every save is a new version. `GET /admin/content/urgent-banner` shows history; `POST /admin/content/urgent-banner/rollback {"version":n}`. Public read: `GET /content/urgent-banner` (cacheable 60 s). |
 | Change the cutoff / close editing | `PUT /admin/content/rsvp-settings {"body":{"cutoffAt":"2026-11-20T23:59:59-06:00","open":true}}`; after the wedding set `"open":false` (OPS-03). Mirror the cutoff in `content/site.config.json`. |
@@ -154,7 +154,7 @@ Legend: **met** (implemented and covered by a test here), **partly** (implemente
 | SEC-03 | met | HTTPS (Cloudflare), `HttpOnly; Secure; SameSite=Lax` cookie, Origin check on state-changing requests, JSON content type forcing preflight, `X-Requested-With` on admin mutations, rate limits, validated inputs, restrictive headers, per-request authorisation. |
 | SEC-04 | met | No tracking; diagnostics omit names, emails, credentials and free text (tested). |
 | SEC-05 | met | Notes stored only in `restricted_guest_needs`, absent from snapshots to admins, general export, mail and audit; restricted export is owner-only and audited. |
-| SEC-06 | partly | Retention job deletes response/contact data and notes after `RETENTION_DAYS_AFTER_WEDDING` (90) days, is idempotent for re-application after restores, and raises an alert. Owner approval of the period and the backup ageing arrangement are still required. |
+| SEC-06 | partly | Retention job deletes response/contact data, notes and stored import plans (which hold the CSV's names and emails) after `RETENTION_DAYS_AFTER_WEDDING` (90) days, is idempotent for re-application after restores, and raises an alert. Owner approval of the period and the backup ageing arrangement are still required. |
 | SEC-07 | partly | Backup/restore procedure above; restore test and encryption confirmation to be performed by the owners before launch. |
 
 Other PRD items touched: OPS-02 (banner), OPS-03 (`rsvp-settings.open=false`), NFR "RSVP service p95 ≤ 1.5 s at 50 concurrent sessions" — **not measured**; run a load test against the deployed Worker before launch.

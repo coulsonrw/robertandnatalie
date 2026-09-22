@@ -13,6 +13,8 @@ This is a small static site generated from one configuration file. There is no f
 
 Deep links such as `/#wedding-day`, the `/celebration.html` route and a return within the same browser session skip the envelope. `/?envelope=1` forces it. Reduced-motion users get the same states without animation; without JavaScript the invitation simply sits at the top of the page.
 
+Event details (venues, start times) come from the owners' instructions in the PRD and are confirmed by the coordinator before guest launch; nothing on the site claims to have verified a booking.
+
 ## How it is organized
 
 | Path | Purpose |
@@ -22,7 +24,9 @@ Deep links such as `/#wedding-day`, the `/celebration.html` route and a return w
 | `scripts/templates/` | HTML templates for the home page (envelope entry, invitation, site), the `/celebration.html` direct route, RSVP, privacy and 404. |
 | `src/styles`, `src/js`, `src/img`, `src/fonts` | Stylesheet, progressive-enhancement scripts, crest renditions, self-hosted fonts. |
 | `assets/` | Original artwork (A1 crest, A2 invitation) and the asset manifest. Photos of unconfirmed provenance sit in `assets/review/` and are not published. |
-| `docs/` | Decision record, RSVP API contract, content approval register, font licenses and visual proofs. |
+| `docs/` | PRD, decision record and register, gap analysis and traceability, delivery plan, acceptance tests and results log, runbook, changelog, sources, RSVP API contract, content approval register, selection package, evidence, proofs and font licences. |
+| `AGENT_START_HERE.md` | Reading order, stop rules and commands for anyone picking the work up. |
+| `backend/` | RSVP service reference implementation (Cloudflare Workers + D1) with tests; not deployed. |
 | `.github/workflows/` | `ci.yml` validates and builds on pull requests; `deploy.yml` builds and publishes `main` to GitHub Pages. |
 
 ## Editing content
@@ -30,6 +34,8 @@ Deep links such as `/#wedding-day`, the `/celebration.html` route and a return w
 1. Edit `content/site.config.json`. Every block carries an `approval` object (`state`, `owner`, `source`, `reviewed`, `note`). Use `pending` for anything not yet supplied or approved: pending blocks are never published.
 2. Run `npm run check` to validate, or `npm run build` to build. The build refuses inconsistent data (for example an event that is not on the wedding date or whose UTC offset is wrong for `America/Chicago`) and prints what still blocks guest launch.
 3. Run `npm run register` to refresh `docs/CONTENT_APPROVAL_REGISTER.md`, then commit both files.
+
+`content/site.config.json` is the PRD's `content-config.example.json`: schema 1.0, document version 1.1, synthetic guests only, no credentials, and not launch-ready until the pending blocks are approved.
 
 Three owner-controlled switches live in the same file:
 

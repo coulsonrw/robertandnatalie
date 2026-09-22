@@ -17,7 +17,7 @@ function invitationCard(view) {
         <source srcset="${p}/img/crest-360.webp 360w, ${p}/img/crest-720.webp 720w" sizes="(min-width: 760px) 168px, 116px" type="image/webp">
         <img src="${p}/img/crest-360.png" width="360" height="556" alt="${esc(view.crestAlt)}" fetchpriority="high" decoding="async">
       </picture>
-      <h2 class="names" id="invitation-title"><span class="name">${esc(name1)}</span><span class="conj">${esc(view.couple.conjunction)}</span><span class="name">${esc(name2)}</span></h2>
+      <h2 class="names" id="invitation-title" role="heading" aria-level="1"><span class="name">${esc(name1)}</span><span class="conj">${esc(view.couple.conjunction)}</span><span class="name">${esc(name2)}</span></h2>
       <p class="formal request">${linesWithBreaks(view.invitation.requestLines)}</p>
       <p class="formal date">${linesWithBreaks(view.formalDateLines, 'always-break')}</p>
       ${view.events.map((ev) => `<p class="venue-script">${esc(ev.name)}</p>
@@ -46,7 +46,10 @@ function entryStage(view) {
         <div class="envelope-pocket"></div>
         <div class="envelope-flap"></div>
         <button class="seal" id="seal" type="button" aria-label="Open the invitation" aria-describedby="entry-hint">
-          <span class="seal-monogram" aria-hidden="true">${esc(view.couple.monogram)}</span>
+          <picture class="seal-crest" aria-hidden="true">
+            <source srcset="${p}/img/crest-120.webp" type="image/webp">
+            <img src="${p}/img/crest-64.png" width="34" height="52" alt="" decoding="async">
+          </picture>
         </button>
       </div>
       <p class="entry-hint" id="entry-hint">Tap the seal to open your invitation.</p>
@@ -160,7 +163,7 @@ function travelSection(view) {
           <a class="btn btn-secondary" href="${esc(hotel.links.website)}" rel="noopener">View hotel &amp; general reservations</a>
           ${roomBlock ? `<a class="btn btn-primary" href="${esc(roomBlock.url)}" rel="noopener">Book our wedding room block</a>` : ''}
         </div>
-        ${roomBlock ? `<div class="room-block"><p class="kicker">Wedding room block</p><ul class="plain-list">${roomBlock.details.map((d) => `<li>${esc(d)}</li>`).join('')}</ul></div>` : ''}
+        ${roomBlock ? `<div class="room-block"><p class="kicker">Wedding room block</p><dl class="room-block-terms">${roomBlock.rows.map((r) => `<div><dt>${esc(r.label)}</dt><dd>${esc(r.value)}</dd></div>`).join('')}</dl></div>` : ''}
       </article>
       <article class="card" aria-labelledby="getting-there-title">
         <p class="kicker">Getting there</p>

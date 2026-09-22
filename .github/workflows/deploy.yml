@@ -23,8 +23,11 @@ jobs:
         with:
           node-version: 22
       - name: Build site from content/site.config.json
+        env:
+          SITE_PREVIEW: '0'
         run: |
-          npm run build | tee build.log
+          # Strict mode refuses to build while launch blockers remain once the owners have recorded G3.
+          if node -e "process.exit(JSON.parse(require('fs').readFileSync('content/site.config.json','utf8')).site.launchApproved ? 0 : 1)"; then npm run build -- --strict | tee build.log; else npm run build | tee build.log; fi
           { echo '## Launch readiness (this deploy is a review build until G3 is recorded)'; echo; echo '```'; sed -n '/Launch readiness/,$p' build.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/configure-pages@v5
         with:

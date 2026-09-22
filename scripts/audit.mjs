@@ -299,7 +299,7 @@ async function runAccessibility() {
   const states = [];
   for (const vp of A11Y_VIEWPORTS) {
     for (const st of A11Y_STATES) {
-      const context = await browser.newContext({ viewport: vp, deviceScaleFactor: 1 });
+      const context = await browser.newContext({ bypassCSP: true,  viewport: vp, deviceScaleFactor: 1 });
       const page = await context.newPage();
       const consoleErrors = [];
       page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text().slice(0, 200)); });
@@ -352,7 +352,7 @@ async function runAccessibility() {
   // Reduced-motion emulation (NFR-01 Motion; HOME-03): the invitation must be readable and reachable with no animation.
   const reduced = [];
   for (const vp of A11Y_VIEWPORTS) {
-    const context = await browser.newContext({ viewport: vp, reducedMotion: 'reduce' });
+    const context = await browser.newContext({ bypassCSP: true,  viewport: vp, reducedMotion: 'reduce' });
     const page = await context.newPage();
     const rec = { viewport: vp.width, steps: [] };
     const probe = (label) => page.evaluate((label) => {
@@ -446,7 +446,7 @@ async function measureInteraction(page, label, action) {
 }
 
 async function coldLoad(pageDef, runIndex) {
-  const context = await browser.newContext({ viewport: PROFILE.viewport, deviceScaleFactor: PROFILE.deviceScaleFactor, isMobile: PROFILE.isMobile, hasTouch: PROFILE.hasTouch });
+  const context = await browser.newContext({ bypassCSP: true,  viewport: PROFILE.viewport, deviceScaleFactor: PROFILE.deviceScaleFactor, isMobile: PROFILE.isMobile, hasTouch: PROFILE.hasTouch });
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
   const requests = new Map();

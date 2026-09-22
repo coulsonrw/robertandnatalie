@@ -214,6 +214,10 @@ a:hover { color: var(--ink); }
 address { font-style: normal; margin: 0.6em 0 1em; }
 .plain-list { padding-left: 1.2em; margin: 0.4em 0 1em; }
 .room-block { margin-top: 1.2em; padding-top: 1em; border-top: 1px solid var(--gold-rule); }
+.room-block-terms { margin: 0; display: grid; gap: 6px; }
+.room-block-terms > div { display: flex; gap: 12px; }
+.room-block-terms dt { flex: 0 0 9em; font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.06em; font-size: 0.95rem; color: var(--gold-text); }
+.room-block-terms dd { margin: 0; }
 
 /* FAQ */
 .faq-list { max-width: 780px; margin: 0 auto 40px; border-top: 1px solid var(--gold-rule); }
@@ -259,7 +263,7 @@ address { font-style: normal; margin: 0.6em 0 1em; }
 .stepper li[aria-current="step"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .stepper li.is-done { border-color: var(--gold); color: var(--gold-deep); }
 .rsvp-step h2 { font-size: clamp(1.7rem, 3vw, 2.1rem); margin-bottom: 0.3em; color: var(--gold-text); }
-.rsvp-step h2:focus { outline: none; }
+.rsvp-step h2:focus:not(:focus-visible) { outline: none; }
 .field { margin-bottom: 20px; }
 .field > label, legend { display: block; font-weight: 600; font-size: 1.1rem; margin-bottom: 6px; }
 .input {
@@ -329,8 +333,14 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 
 /* ---------- Print ---------- */
 @media print {
-  .site-header, .site-footer, .actions, .card-actions, .skip-link, .btn { display: none !important; }
-  .invitation-card { box-shadow: none; }
+  .site-header, .site-footer, .actions, .card-actions, .skip-link, .btn, .entry-bar, .entry-hint, .keepsake-btn, .keepsake-caption, .hero-keepsake { display: none !important; }
+  .invitation-card { box-shadow: none; animation: none; }
+  /* Print the docked invitation at full size wherever it currently lives. */
+  .keepsake { position: static; width: auto !important; height: auto !important; margin: 0 0 24px; }
+  .keepsake-scale { transform: none !important; width: auto; }
+  .invitation-dialog { position: static; display: block; width: auto; }
+  .invitation-dialog::backdrop { display: none; }
+  .envelope { display: none; }
 }
 
 /* ---------- Entry: sealed envelope → opened invitation → site (HOME-03) ---------- */
@@ -346,7 +356,7 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .entry-bar { display: flex; align-items: center; gap: 12px; min-height: var(--header-h); padding: 0 var(--gutter); border-bottom: 1px solid var(--gold-rule); }
 .entry-brand { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.1em; font-size: 1.1rem; margin-right: auto; }
 .entry-bar-actions { display: flex; align-items: center; gap: 14px; }
-.entry-skip { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.08em; font-size: 0.98rem; color: var(--ink); display: inline-flex; align-items: center; min-height: 44px; }
+.entry-skip { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.08em; font-size: 1rem; color: var(--ink); display: inline-flex; align-items: center; min-height: 44px; }
 .entry-stage { flex: 1; display: grid; min-width: 0; }
 .entry-stage > * { min-width: 0; }
 .entry-scene, .entry-open { grid-area: 1 / 1; }
@@ -358,7 +368,7 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .entry-open .entry-hint { margin: 22px 0 16px; }
 .entry-card-slot { width: 100%; max-width: 760px; }
 .entry-card-slot .invitation-card { cursor: pointer; }
-@media (max-width: 479.98px) { .entry-brand { display: none; } .entry-skip { font-size: 0.9rem; } }
+@media (max-width: 479.98px) { .entry-brand { display: none; } .entry-skip { letter-spacing: 0.04em; } }
 
 /* Envelope */
 .envelope { position: relative; width: min(calc(100vw - 2 * var(--gutter)), 560px); aspect-ratio: 1.5; perspective: 1400px; filter: drop-shadow(0 18px 28px rgba(41, 42, 40, 0.22)); }
@@ -376,11 +386,12 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .seal { position: absolute; z-index: 5; left: 50%; top: 58%; transform: translate(-50%, -50%); width: 84px; height: 84px; border-radius: 50%; border: 0; cursor: pointer; background: radial-gradient(circle at 38% 32%, #D9B968 0, #B38A39 55%, #8E6A24 100%); box-shadow: 0 6px 14px rgba(41, 42, 40, 0.35), inset 0 0 0 4px rgba(255, 255, 255, 0.18), inset 0 0 0 5px rgba(133, 97, 25, 0.5); transition: transform 0.25s, opacity 0.4s; }
 .seal:hover { transform: translate(-50%, -50%) scale(1.05); }
 .seal:focus-visible { outline: 3px solid var(--navy); outline-offset: 4px; }
-.seal-monogram { font-family: var(--font-script); font-size: 2.1rem; color: #FBF5E6; line-height: 1; text-shadow: 0 1px 1px rgba(80, 55, 10, 0.5); }
+.seal-crest img { display: block; width: auto; height: 54px; margin: 0 auto; filter: drop-shadow(0 1px 1px rgba(80, 55, 10, 0.45)); }
 .envelope.is-open .seal { opacity: 0; pointer-events: none; }
 
 /* Keepsake (docked invitation, bottom-left) and dialog */
 .keepsake { position: fixed; left: 12px; bottom: 12px; z-index: 40; width: 110px; }
+@media (max-width: 479.98px) { .keepsake { left: 6px; bottom: 8px; } .keepsake-caption { font-size: 0.72rem; letter-spacing: 0.06em; margin-top: 4px; } }
 .keepsake-scale { transform-origin: top left; width: min(760px, calc(100vw - 40px)); pointer-events: none; }
 .keepsake-scale .invitation-card { box-shadow: 0 12px 30px rgba(41, 42, 40, 0.35); }
 .keepsake-btn { position: absolute; inset: 0; background: transparent; border: 2px solid transparent; border-radius: 4px; cursor: pointer; padding: 0; }

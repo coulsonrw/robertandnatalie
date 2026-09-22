@@ -53,7 +53,9 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
       const meal = typeof r.meal === 'string' ? r.meal.trim() : '';
       if (meal && !options.includes(meal)) throw new HttpError(400, 'validation', 'That meal choice is not one of the options.');
       if (!meal && !partial) throw new HttpError(400, 'validation', 'Please choose a meal for each guest attending.');
-      meals.set(key, meal || null);
+      // A partial (admin) correction that names no meal keeps the stored choice (commitResponse
+      // falls back to the existing value for attending guests) instead of clearing it.
+      if (meal || !partial) meals.set(key, meal || null);
     } else {
       if (r.meal && !options) throw new HttpError(400, 'validation', 'Meal choices are not collected for that event.');
       meals.set(key, null);
@@ -93,7 +95,11 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
     }
   }
 
-  let contactEmail = payload.contactEmail === undefined || payload.contactEmail === null ? '' : payload.contactEmail;
+  // A partial (admin) correction that omits contactEmail keeps the household's stored address;
+  // only an explicit value (including '') changes it (RSVP-04: no silent overwrite).
+  let contactEmail = payload.contactEmail === undefined || payload.contactEmail === null
+    ? (partial ? (loaded.household.contact_email || '') : '')
+    : payload.contactEmail;
   if (typeof contactEmail !== 'string') throw new HttpError(400, 'validation', 'contactEmail must be text.');
   contactEmail = contactEmail.trim();
   if (contactEmail.length > 254 || (contactEmail && !EMAIL_RE.test(contactEmail))) {

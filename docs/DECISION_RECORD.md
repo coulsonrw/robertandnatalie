@@ -40,6 +40,36 @@ At the owner's request (21 September 2026) the landing page is a sealed envelope
 | ARCH-04 private cache policy | Not applicable to public pages; applies to the future API. | Documented in the API contract. |
 | NFR-04 self-hosted fonts | Met. | Fonts in `src/fonts/`, licenses in `docs/licenses/`. |
 
+## Screening gates for the custom composition (TPL-05, TPL-06)
+
+The custom composition ("CUSTOM-01") was screened against all six mandatory gates. "Custom" is not a waiver.
+
+| Gate | Result | Evidence |
+|---|---|---|
+| Editable source and ownership | pass — all source in this owner-controlled repository; no proprietary hosting or visual builder; deploys with GitHub Actions | `README.md`, `.github/workflows/deploy.yml` |
+| Template, font and media rights | pass — no template; three OFL typefaces with licence texts; crest and invitation are owner-supplied; unverified photos excluded; vendored axe-core is MPL-2.0 (tooling only) | `assets/ASSET_MANIFEST.md`, `docs/licenses/` |
+| Technical viability | pass — clean build reproduced with `npm run build` (Node 22.22.2, no runtime dependencies); external requests from the pages: none; form handlers: the RSVP page posts only to the configured API origin | "Build validation" below, `docs/evidence/PERFORMANCE.md` resource list |
+| Visual adaptability | pass — original crest, live invitation text, type hierarchy, charcoal copy, matching-size closing line, responsive layouts | `docs/proofs/CHECKLIST.md` |
+| Guest-system integration | pending verification — contract and tested reference implementation exist (`backend/`); household context and server-side RSVP are not proven until the service is deployed | `docs/RSVP_API_CONTRACT.md`, `backend/README.md` |
+| Accessible and performant path | pass (lab) — axe clean, budgets met; manual screen-reader and cross-browser runs outstanding | `docs/evidence/` |
+
+## Build validation (TPL-06)
+
+- Revision: the pull request head at the time of G2 review (record the commit hash here at sign-off).
+- Runtime: Node 22.22.2; `npm run check`, `npm test`, `npm run build`, `npm run register`; Playwright 1.56.1 with Chromium 141 for `npm run proofs` and `npm run audit` (development tooling only, not shipped).
+- Dependencies shipped to guests: none. Development dependencies: `playwright` (root), `wrangler`, `vitest`, `@cloudflare/vitest-pool-workers` (backend).
+- External requests made by the built pages: none (self-hosted fonts and images; map, hotel and chapel links open on the guest's action).
+- Acquisition, purchase and post-acquisition revalidation: not applicable (nothing acquired).
+
+## Recorded deviations and notes
+
+- **HOME-02 / AT-03 with the envelope landing.** On a first visit the full page is two actions away (open the seal, continue). Mitigations kept: date, destination and both start times are visible under the sealed envelope; "Skip to the wedding details" and RSVP are always in the entry bar; deep links, `/celebration.html` and same-session returns bypass the envelope; reduced motion shows the invitation immediately. This is the owner-directed composition (21 September 2026) and is treated as an approved deviation once the owners sign the approvals table. The envelope remains P1 (HOME-03) in PRD terms.
+- **Contrast records (HOME-04, §13).** Ink #292A28 on paper #F7F3EA 13.0:1; text gold #856119 on paper 5.1:1; deep gold #6E4F12 on paper 6.8:1 and on card #FBF8F1 about 7.4:1 (tertiary buttons, menu border, links); paper on ink (primary buttons) 13.0:1. Decorative gold #B38A39 (2.9:1) is used only for ornament, never for text or control borders.
+- **Public review builds.** Until G3, `main` deploys to the public domain as a review build with `noindex` and the synthetic RSVP preview disabled (`SITE_PREVIEW=0` in `deploy.yml`); collaborators get a preview-enabled build as a CI artifact. If the owners want no public review builds, switch `deploy.yml` to `workflow_dispatch` only; that is a decision recorded in `docs/DECISION_REGISTER.md`.
+- **Hosting reliability (§13).** GitHub Pages publishes no availability SLA; the PRD's 99.9% target applies to the RSVP service and is to be validated after deployment with an external uptime check (see `docs/RUNBOOK.md`).
+- **Field performance data (NFR-02).** Lab runs are the evidence; the site has no analytics or RUM by design (SEC-04), so 75th-percentile field INP will not be collected.
+- **Remaining effort at owner direction.** Keep/adapt/replace for external templates was not costed before the build. Remaining implementation work is estimated in `docs/DELIVERY_PLAN.md` as a single "custom" line.
+
 ## Approvals (to be completed by the owners)
 
 | Gate | Approver | Date | Decision / notes |
@@ -59,4 +89,4 @@ At the owner's request (21 September 2026) the landing page is a sealed envelope
 
 ## Change control
 
-A later change to the foundation, hosting approach, crest, typefaces or approved composition requires an impact note, updated proofs and renewed approval at the affected gate (TPL-12). Routine defect fixes need regression evidence (re-run `npm run proofs`) but not a new selection.
+A later change to the foundation, hosting approach, crest, typefaces or approved composition requires an impact note in `docs/CHANGELOG.md`, updated proofs and renewed approval at the affected gate (TPL-12); it also reopens AT-17 to AT-22. Anything acquired later (a template, component or paid asset) must be validated after acquisition with the scorecard and proof re-run before G2 is renewed (TPL-06). Routine defect fixes need regression evidence (re-run `npm run proofs` and `npm run audit`) but not a new selection. The envelope, keepsake and dialog composition of 21 September 2026 is recorded retroactively in the change log.

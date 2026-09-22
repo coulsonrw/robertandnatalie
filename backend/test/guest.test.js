@@ -262,6 +262,22 @@ describe('PUT /response (RSVP-02..07, ARCH-03)', () => {
     expect(no.status).toBe(400);
   });
 
+  it('an admin correction that omits contactEmail keeps the stored address; an explicit empty value clears it (RSVP-04)', async () => {
+    expect((await guest(s.cookie, 'PUT', '/response', fullAnswer(s.snapshot))).status).toBe(200);
+    const fix = await admin(OWNER, 'PUT', '/admin/households/hh_example/response', {
+      body: { origin: 'owner-correction', reason: 'Guest telephoned', responses: [{ guestId: 'g_jordan', eventId: 'reception', status: 'declining' }] },
+    });
+    expect(fix.status).toBe(200);
+    expect((await fix.json()).household.contactEmail).toBe('alex@example.invalid');
+    const row = await env.DB.prepare("SELECT contact_email FROM household WHERE id = 'hh_example'").first();
+    expect(row.contact_email).toBe('alex@example.invalid');
+    const clear = await admin(OWNER, 'PUT', '/admin/households/hh_example/response', {
+      body: { origin: 'owner-correction', reason: 'Guest asked for no email', responses: [], contactEmail: '' },
+    });
+    expect(clear.status).toBe(200);
+    expect((await clear.json()).household.contactEmail).toBe('');
+  });
+
   it('requires a session and rejects malformed bodies', async () => {
     const noCookie = await SELF.fetch(`${BASE}/response`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: '{}' });
     expect(noCookie.status).toBe(401);

@@ -1,4 +1,26 @@
+import { createHash } from 'node:crypto';
 import { esc } from '../lib/html.mjs';
+
+// The only inline script: swaps the no-js class. Its hash is allowed by the CSP below.
+const NOJS_SCRIPT = "document.documentElement.className = document.documentElement.className.replace('no-js', 'js');";
+const NOJS_HASH = 'sha256-' + createHash('sha256').update(NOJS_SCRIPT).digest('base64');
+
+export function contentSecurityPolicy(view) {
+  const connect = ["'self'"];
+  if (view.rsvp && view.rsvp.apiBaseUrl) connect.push(view.rsvp.apiBaseUrl.replace(/\/$/, ''));
+  return [
+    "default-src 'self'",
+    `script-src 'self' '${NOJS_HASH}'`,
+    "style-src 'self'",
+    "img-src 'self' data:",
+    "font-src 'self'",
+    `connect-src ${connect.join(' ')}`,
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "upgrade-insecure-requests",
+  ].join('; ');
+}
 
 // Inline SVG sprite: functional icons plus the two decorative ornaments.
 export const SVG_SPRITE = `<svg xmlns="http://www.w3.org/2000/svg" class="svg-defs" aria-hidden="true" focusable="false">
@@ -87,8 +109,10 @@ export function shell({ view, title, description, bodyClass = '', bodyAttrs = ''
   return `<!DOCTYPE html>
 <html lang="en" class="no-js">
 <head>
-<script>document.documentElement.className = document.documentElement.className.replace('no-js', 'js');</script>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy(view)}">
+<meta name="referrer" content="${view.referrerPolicy || 'strict-origin-when-cross-origin'}">
+<script>${NOJS_SCRIPT}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(fullTitle)}</title>
 <meta name="description" content="${esc(description ?? view.site.description)}">

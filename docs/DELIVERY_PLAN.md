@@ -13,6 +13,21 @@ PRD v1.1 Section 15 proposes a 25-working-day baseline from approval of scope an
 | QA and pilot (20–23) | Product and selection evidence complete; accessibility/security review, recovery test, six-person usability pilot pass | **Lab evidence done; pilot and manual tests open.** axe clean, budgets met, keyboard and reduced-motion proofs; no VoiceOver/NVDA sessions, no cross-browser device runs, no recovery test, no usability pilot. | `docs/evidence/`, `docs/ACCEPTANCE_TESTS.md` |
 | Guest launch and handover (24–25) | G3 approval; production smoke test; monitoring, access and handover package in place | **Open.** `site.launchApproved` is false and the build reports the blockers. Runbook drafted; access register blank. | `docs/RUNBOOK.md`, `npm run build` |
 
+## Milestones and remaining effort
+
+Effort is the implementation team's working time; waiting time is the owners', coordinator's or a provider's and is not counted (PRD §15). Estimates are planning figures, not commitments.
+
+| Milestone | Depends on | Implementation effort (base) | Waiting on |
+|---|---|---|---|
+| G1 concept decision | Selection package review | 0.5 day to walk the owners through `docs/selection/` | Owners |
+| G2 production-build authorisation | Owner visual sign-off, technical-lead validation, gate table | 0.5 day to record and pin the baseline | Owners, technical lead |
+| RSVP service deployed and verified | Owners' Cloudflare account, mail provider, cutoff, roster | 2–3 days: deploy, Access policy, mail provider, AT-04 to AT-13, load test, restore drill | Owners (accounts, decisions), coordinator (roster) |
+| Content complete | Venue entrances/parking, room block decision, dress code, transport, contact route, retention approval | 1 day to enter, register and re-prove | Coordinator, owners, hotel |
+| QA and pilot | Deployed service, complete content | 2 days: usability pilot, VoiceOver/NVDA, cross-browser, security review write-up | Six testers |
+| G3 guest release | All of the above | 0.5 day: smoke test, `site.launchApproved`, `rsvp.mode` live, deploy | Owners |
+
+Total remaining implementation effort: about 6.5–7.5 working days, against the PRD's 25-day baseline of which roughly 10 days of equivalent scope are already delivered (design, build, proofs, service implementation, documentation). Calendar time depends on the waiting-on column.
+
 ## Critical path from here
 
 1. Owners: decisions 1–7 and 11 in `docs/DECISION_REGISTER.md` (accounts, visibility, roster, cutoff, venue details, room block, dress code and transport, retention).

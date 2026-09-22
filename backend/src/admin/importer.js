@@ -94,7 +94,10 @@ export async function buildImportPlan(db, csvText) {
       const changes = [];
       if (ex.label !== h.label) changes.push('label');
       if ((ex.contact_email || null) !== contactEmail) changes.push('contactEmail');
-      if (ex.state !== 'active') changes.push('state');
+      if (ex.state !== 'active') {
+        changes.push('state');
+        warnings.push({ line: h.line, message: `Household "${h.id}" is revoked and would be reinstated by this import.` });
+      }
       if (changes.length) householdOps.push({ op: 'update', ...h, contactEmail, changes });
       else householdOps.push({ op: 'unchanged', id: h.id });
     } else householdOps.push({ op: 'unchanged', id: h.id });
@@ -109,7 +112,10 @@ export async function buildImportPlan(db, csvText) {
     if (ex.kind !== g.kind) changes.push('kind');
     if ((ex.display_name || null) !== (g.name || null)) changes.push('name');
     if ((ex.host_guest_id || null) !== (g.hostGuestId || null)) changes.push('hostGuestId');
-    if (ex.state !== 'active') changes.push('state');
+    if (ex.state !== 'active') {
+      changes.push('state');
+      warnings.push({ line: g.line, message: `Guest "${g.id}" is revoked and would be reinstated by this import.` });
+    }
     guestOps.push(changes.length ? { op: 'update', ...g, changes } : { op: 'unchanged', id: g.id });
   }
   const missingGuests = [...existingGuests.values()].filter((g) => !guests.has(g.id) && g.state === 'active').map((g) => g.id);

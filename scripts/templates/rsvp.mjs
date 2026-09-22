@@ -45,5 +45,5 @@ export function renderRsvp(view) {
     <p class="back-link"><a href="${view.basePath}/#wedding-day">Back to the wedding details</a></p>
   </div>
 </main>`;
-  return page({ view, currentPage: 'rsvp', title: 'RSVP', description: `RSVP for the wedding of ${view.couple.displayName}.`, main, bodyClass: 'rsvp', scripts: ['/js/rsvp.js'] });
+  return page({ view: { ...view, referrerPolicy: 'no-referrer' }, currentPage: 'rsvp', title: 'RSVP', description: `RSVP for the wedding of ${view.couple.displayName}.`, main, bodyClass: 'rsvp', scripts: ['/js/rsvp.js'] });
 }

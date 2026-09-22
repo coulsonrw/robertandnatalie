@@ -82,6 +82,10 @@ export default {
     const cfg = readConfig(env);
     const mail = await processOutbox(env, cfg);
     const retention = await applyRetention(env, cfg);
+    // Rate-limit counters are only read for the current window; drop windows that ended more than
+    // two window lengths ago so the table does not grow without bound.
+    const staleBefore = new Date(Date.now() - 2 * cfg.rateLimit.windowSeconds * 1000).toISOString();
+    await env.DB.prepare('DELETE FROM rate_limit WHERE window_start < ?').bind(staleBefore).run();
     // eslint-disable-next-line no-console
     console.log(JSON.stringify({ t: new Date().toISOString(), cron: controller.cron, mail, retention: { applied: retention.applied, dueAt: retention.dueAt } }));
     return { mail, retention };

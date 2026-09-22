@@ -67,7 +67,13 @@ If the RSVP service is unavailable, guests see the network-error state with thei
 4. Retention: the RSVP service deletes responses, contact details and notes `privacy.retentionDaysAfterWedding` days after the wedding (proposed 90; owner approval recorded in the decision register). Confirm the provider's backups age out within the further 30 days, or revise the notice first (SEC-06).
 5. Keepsake export: `npm run build` with `site.phase` set to `post-event` produces a static, guest-data-free copy of the site in `dist/`; archive that folder.
 
-## 11. Access register (fill in at handover)
+## 11. Monitoring and incident contact (NFR-01 reliability row)
+
+- Website: GitHub Pages status at githubstatus.com; there is no SLA. Configure an external uptime check (any free monitor) on `https://robertandnatalie.wedding/` and, once deployed, on the RSVP service health endpoint described in `backend/README.md`, alerting the incident contact below.
+- RSVP service: Cloudflare Workers analytics and the `coordinator_alert` table (mail failures) are the first places to look; the runbook sections 4–8 cover corrections and the manual fallback.
+- Incident contact (fill in at handover): name, telephone, email, and the second person who can act if the first is unavailable.
+
+## 12. Access register (fill in at handover)
 
 | System | Account owner | Second person with access | MFA |
 |---|---|---|---|

@@ -10,4 +10,17 @@
 | F3 | `src/fonts/cormorant-sc-500.woff2`, `cormorant-sc-600.woff2` | Small-caps invitation copy and labels | Google Fonts, Cormorant SC v19, latin subset | Licence: `docs/licenses/OFL-Cormorant-SC.txt` |
 | R1–R4 | `assets/review/photos-unverified/*.jpg` | None | Present in the previous version of the site; rights and origin unknown | **Not published.** See the README in that folder. |
 
-Typeface approval (DES-02) is an owner decision recorded in `docs/DECISION_RECORD.md`. All three fonts are under the SIL Open Font License 1.1, which permits web embedding and self-hosting; the licence texts are retained beside the site.
+## Rights and obligations (TPL-05 rights gate)
+
+| Asset | Licence | Licence holder / owner | Permitted use and transfer | Attribution | Recurring obligations |
+|---|---|---|---|---|---|
+| A1 crest, A2 invitation | Owner-supplied artwork | Robert and Natalie | Use on this website and derived renditions; transfer stays with the owners | None required | None |
+| Crest renditions in `src/img/` | Derived from A1 | Robert and Natalie | As A1 | None | None |
+| Pinyon Script, Cormorant Garamond, Cormorant SC | SIL Open Font License 1.1 | Font authors (see licence texts) | Embedding, self-hosting, bundling and transfer permitted; may not be sold by itself | Copyright notice retained in `docs/licenses/` | None |
+| Inline SVG icons, ornament rule, corner flourishes, envelope and seal drawing (`scripts/templates/layout.mjs`, `src/styles/site.css`) | Original work created for this site | Robert and Natalie (delivered with the repository) | Unrestricted within the site | None | None |
+| Paper-texture SVG noise (data URI in `src/styles/site.css`) | Original | Robert and Natalie | Unrestricted | None | None |
+| axe-core (`scripts/vendor/axe.min.js`) | MPL-2.0 | Deque Systems | Development tooling only; never served to guests | Notice retained in `scripts/vendor/` | None |
+| Playwright (root dev dependency), wrangler, vitest, @cloudflare/vitest-pool-workers (backend dev dependencies) | Apache-2.0 / MIT (per package) | Respective authors | Development tooling only | Package licences in `node_modules` on install | None |
+| Photographs in `assets/review/photos-unverified/` | Unknown | Unknown | **Not permitted to publish** | — | — |
+
+Typeface approval (DES-02) is an owner decision recorded in `docs/DECISION_RECORD.md`. All three fonts are under the SIL Open Font License 1.1, which permits web embedding and self-hosting; the licence texts are retained beside the site. No paid template, plugin, stock media or subscription is used, so there are no recurring licence costs.

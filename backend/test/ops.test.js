@@ -26,6 +26,17 @@ describe('mail outbox worker (RSVP-07, ARCH-03, AT-11)', () => {
     expect(second.attempted).toBe(0);
   });
 
+  it('the cron handler prunes rate-limit windows that have expired and keeps the current one', async () => {
+    await env.DB.prepare("INSERT INTO rate_limit (bucket, window_start, count) VALUES ('ip:old', '2000-01-01T00:00:00.000Z', 5)").run();
+    const before = await count('SELECT COUNT(*) AS n FROM rate_limit'); // includes the session-open bumps from beforeEach
+    expect(before).toBeGreaterThan(1);
+    const ctx = createExecutionContext();
+    await worker.scheduled(createScheduledController({ cron: '*/5 * * * *' }), env, ctx);
+    await waitOnExecutionContext(ctx);
+    expect(await count("SELECT COUNT(*) AS n FROM rate_limit WHERE bucket = 'ip:old'")).toBe(0);
+    expect(await count('SELECT COUNT(*) AS n FROM rate_limit')).toBe(before - 1);
+  });
+
   it('retries with backoff, then abandons after MAIL_MAX_ATTEMPTS and raises a coordinator alert', async () => {
     const failing = { name: 'failing', async send() { throw new Error('provider down: token=abcdefghijklmnopqrstuvwxyz0123456789 to bob@example.invalid'); } };
     const cfg = readConfig(env);
@@ -89,7 +100,8 @@ describe('retention (SEC-06)', () => {
     expect(run.status).toBe(200);
     const result = await run.json();
     expect(result.applied).toBe(true);
-    expect(result.deleted).toEqual({ responses: 15, notes: 1, contacts: 1, plusOneNames: 1 });
+    expect(result.deleted).toEqual({ responses: 15, notes: 1, contacts: 1, plusOneNames: 1, importBatches: 1 });
+    expect(await count('SELECT COUNT(*) AS n FROM import_batch')).toBe(0); // CSV plans hold names and emails
     expect(await count('SELECT COUNT(*) AS n FROM response')).toBe(0);
     expect(await count('SELECT COUNT(*) AS n FROM restricted_guest_needs')).toBe(0);
     expect(await count("SELECT COUNT(*) AS n FROM mail_outbox WHERE kind = 'confirmation'")).toBe(0);
@@ -103,7 +115,7 @@ describe('retention (SEC-06)', () => {
     expect((await guest(s.cookie, 'GET', '/session')).status).toBe(401);
     // Second run: nothing to delete, no second alert.
     const again = await (await admin(OWNER, 'POST', '/admin/retention/run', { body: { force: true } })).json();
-    expect(again.deleted).toEqual({ responses: 0, notes: 0, contacts: 0, plusOneNames: 0 });
+    expect(again.deleted).toEqual({ responses: 0, notes: 0, contacts: 0, plusOneNames: 0, importBatches: 0 });
     expect(await count("SELECT COUNT(*) AS n FROM coordinator_alert WHERE kind = 'retention-applied'")).toBe(1);
   });
 });

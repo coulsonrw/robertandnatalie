@@ -67,6 +67,19 @@ describe('meal choices', () => {
     expect(after.meal_value).toBeNull();
   });
 
+  it('an admin correction that names no meal keeps the stored choice for an attending guest', async () => {
+    const { cookie, snapshot } = await session();
+    const payload = withMeals(fullAnswer(snapshot, 'attending', { plusOneNames: {}, contactEmail: 'taylor@example.invalid', notes: '' }), () => 'Roast chicken');
+    expect((await guest(cookie, 'PUT', '/response', payload)).status).toBe(200);
+    const fix = await admin(OWNER, 'PUT', '/admin/households/hh_solo/response', {
+      body: { origin: 'owner-correction', reason: 'Confirmed by phone', responses: [{ guestId: 'g_taylor', eventId: 'reception', status: 'attending' }] },
+    });
+    expect(fix.status).toBe(200);
+    expect((await fix.json()).responses.find((r) => r.eventId === 'reception').meal).toBe('Roast chicken');
+    const row = await env.DB.prepare("SELECT r.meal_value FROM response r JOIN invitation_entitlement ie ON ie.id = r.entitlement_id WHERE ie.guest_id = 'g_taylor' AND ie.event_id = 'reception'").first();
+    expect(row.meal_value).toBe('Roast chicken');
+  });
+
   it('is exported with attendance and appears in the audit trail only as a field name', async () => {
     const { cookie, snapshot } = await session();
     const payload = withMeals(fullAnswer(snapshot, 'attending', { plusOneNames: {}, contactEmail: 'taylor@example.invalid', notes: 'No nuts, please.' }), () => 'Gulf fish');

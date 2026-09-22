@@ -16,4 +16,20 @@ Owner and coordinator decisions the PRD (v1.1, Section 16) says are still requir
 | 10 | Typeface proof, usable artwork, photography permissions, optional story | Couple / designer | G2 or optional-module approval | **Open.** Pinyon Script, Cormorant Garamond and Cormorant SC in use as the proof; no photography rights recorded; Our Story not supplied (omitted). | `assets/ASSET_MANIFEST.md`, `assets/review/photos-unverified/` | |
 | 11 | Data recipients, retention, support ownership and post-event plan | Couple / operator | Guest launch | **Open.** Privacy notice proposes 90 days after the wedding; RSVP provider unnamed; support owner unnamed. Post-event phase switch exists (`site.phase`). | `privacy.*`, `site.phase`, `postEvent` | |
 
+## Further decisions surfaced by the gap audit (21 September 2026)
+
+| # | Decision | Owner | Required by | Status | Where it lands |
+|---|---|---|---|---|---|
+| 12 | Approve the sealed-envelope landing, docked keepsake and dialog as the HOME-03 composition and the two-action path to the full page (HOME-02/AT-03 deviation) | Robert / Natalie | G2 | Open (owner-directed on 21 Sep 2026; signature pending) | `docs/DECISION_RECORD.md` recorded deviations |
+| 13 | Confirm the title-case invitation lines from the approved artwork versus the PRD's lower-case text | Robert / Natalie | G2 | Open | `content/site.config.json` → `invitation.approval` |
+| 14 | Public review builds on the live domain until G3, or manual-only deployment | Robert / Natalie | Now | Open (currently public, noindex, preview off) | `.github/workflows/deploy.yml` |
+| 15 | Expected guest count (planning envelope 1,000 guests / 50 sessions) | Robert / Natalie | Kickoff | Open | `docs/DELIVERY_PLAN.md` |
+| 16 | Guest-launch date and invitation-distribution date, agreed with the RSVP cutoff | Robert / Natalie / coordinator | Before launch | Open | `docs/DELIVERY_PLAN.md` |
+| 17 | Approve the draft content blocks (venue-change note, FAQs, hotel, getting there, privacy) | Robert / Natalie | Content publication | Open (published as drafts, flagged in the register) | `docs/CONTENT_APPROVAL_REGISTER.md` |
+| 18 | Verify the hotel telephone and travel guidance against the hotel's pages (network policy blocked this here) | Coordinator | Travel publication | Open | `content/site.config.json` → `travel.hotel`, `travel.gettingThere` |
+| 19 | Supply PRD v1.0 and the Word PRD for the archive, or record that they are held elsewhere | Robert / Natalie | Handover | Open | `AGENT_START_HERE.md` |
+| 20 | Name the day-to-day operator, support owner and incident contact | Robert / Natalie | Guest launch | Open | `docs/RUNBOOK.md` §11 and §12 |
+
+Waiting since 21 September 2026 for every open row.
+
 Established and not reopened: the names, date, venue names, stated start times, closing phrase, original-color crest, and the charcoal/gold/ivory direction.

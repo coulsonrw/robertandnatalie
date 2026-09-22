@@ -13,7 +13,12 @@
     "register": "node scripts/build.mjs --register",
     "serve": "node scripts/serve.mjs",
     "proofs": "node scripts/proofs.mjs",
-    "audit": "node scripts/audit.mjs"
+    "audit": "node scripts/audit.mjs",
+    "test": "node --test scripts/test.mjs",
+    "linkcheck": "node scripts/linkcheck.mjs"
   },
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  }
 }

@@ -1,8 +1,8 @@
 # Performance evidence (lab, NFR-02)
 
-Build audited: dist/ written 2026-09-21T23:16:19.398Z, repository HEAD c5ba819 with 7 uncommitted source file(s); hashes in results.json.
+Build audited: dist/ written 2026-09-21T23:51:20.248Z, repository HEAD 1fd1aa3 with 6 uncommitted source file(s); hashes in results.json.
 
-Generated 2026-09-21T23:16:30.182Z by `node scripts/audit.mjs`. Chromium 141.0.7390.37 (headless) via Playwright 1.56.1, Node v22.22.2. Host: Intel(R) Xeon(R) Processor @ 2.80GHz (4 cores), linux 6.18.44-fc-v37. CPU throttling is relative to this host, so absolute timings are not comparable with a phone; they are comparable run to run.
+Generated 2026-09-21T23:56:45.648Z by `node scripts/audit.mjs`. Chromium 141.0.7390.37 (headless) via Playwright 1.56.1, Node v22.22.2. Host: Intel(R) Xeon(R) Processor @ 2.80GHz (4 cores), linux 6.18.44-fc-v37. CPU throttling is relative to this host, so absolute timings are not comparable with a phone; they are comparable run to run.
 
 **Scope and honesty note.** Lab measurements in headless Chromium only. No Safari, Firefox, Edge, iOS or Android runs; no screen-reader (VoiceOver/NVDA) sessions; no field (RUM) data. PRD NFR-01 sets LCP/INP/CLS at the 75th percentile of field data; there is no field data yet, so per NFR-02 this file records lab runs only and lab interaction tests stand in for INP. The site is not on a production host during this run: assets are served uncompressed by scripts/serve.mjs, so transfer bytes are an upper bound and compressed sizes are computed locally with node:zlib. Whether the production host (GitHub Pages) compresses these files was not verified here.
 
@@ -23,37 +23,37 @@ LCP ≤ 2500 ms · CLS ≤ 0.1 · INP ≤ 200 ms · initial transfer ≤ 1.50 MB
 
 | Metric | Median | Worst | Best | Budget | Median pass | Worst pass |
 |---|---|---|---|---|---|---|
-| LCP | 1484 ms | 1508 ms | 1476 ms | 2500 ms | yes | yes |
+| LCP | 1496 ms | 1548 ms | 1476 ms | 2500 ms | yes | yes |
 | CLS | 0.000 | 0.000 | 0.000 | 0.100 | yes | yes |
-| Interaction latency (lab INP proxy) | 64 ms | 72 ms | 56 ms | 200 ms | yes | yes |
-| TTFB (responseStart; local server, see note) | 3 ms | 3 ms | 2 ms | — | — | — |
-| HTML document fully received (responseEnd) | 250 ms | 250 ms | 243 ms | — | — | — |
-| FCP | 1424 ms | 1508 ms | 1420 ms | — | — | — |
-| DOMContentLoaded | 1346 ms | 1421 ms | 1338 ms | — | — | — |
-| load | 1628 ms | 1643 ms | 1622 ms | — | — | — |
-| Transfer (uncompressed, local server) | 267.0 kB | 267.0 kB | 267.0 kB | 1.50 MB | yes | yes |
-| Transfer, estimated with gzip for HTML/CSS/JS | 222.3 kB | | | 1.50 MB | yes | |
-| JavaScript loaded by this page, gzip | 3.5 kB | | | 200.0 kB | yes | |
+| Interaction latency (lab INP proxy) | 64 ms | 88 ms | 56 ms | 200 ms | yes | yes |
+| TTFB (responseStart; local server, see note) | 3 ms | 4 ms | 2 ms | — | — | — |
+| HTML document fully received (responseEnd) | 251 ms | 251 ms | 250 ms | — | — | — |
+| FCP | 1452 ms | 1532 ms | 1436 ms | — | — | — |
+| DOMContentLoaded | 1373 ms | 1404 ms | 1360 ms | — | — | — |
+| load | 1638 ms | 1643 ms | 1636 ms | — | — | — |
+| Transfer (uncompressed, local server) | 268.9 kB | 268.9 kB | 268.9 kB | 1.50 MB | yes | yes |
+| Transfer, estimated with gzip for HTML/CSS/JS | 222.8 kB | | | 1.50 MB | yes | |
+| JavaScript loaded by this page, gzip | 3.6 kB | | | 200.0 kB | yes | |
 
 ### Runs
 
 | Run | LCP | LCP element | CLS | Shifts | Interaction max | TTFB | FCP | DCL | load | Transfer | Requests | Errors |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | 1504 ms | `img` | 0.000 | 0 | 64 ms | 3 ms | 1492 ms | 1395 ms | 1629 ms | 267.0 kB | 9 | 0 |
-| 2 | 1480 ms | `img` | 0.000 | 0 | 72 ms | 3 ms | 1424 ms | 1344 ms | 1628 ms | 267.0 kB | 9 | 0 |
-| 3 | 1508 ms | `img` | 0.000 | 0 | 56 ms | 3 ms | 1508 ms | 1421 ms | 1643 ms | 267.0 kB | 9 | 0 |
-| 4 | 1484 ms | `img` | 0.000 | 0 | 64 ms | 2 ms | 1424 ms | 1346 ms | 1622 ms | 267.0 kB | 9 | 0 |
-| 5 | 1476 ms | `img` | 0.000 | 0 | 64 ms | 3 ms | 1420 ms | 1338 ms | 1627 ms | 267.0 kB | 9 | 0 |
+| 1 | 1496 ms | `img` | 0.000 | 0 | 56 ms | 4 ms | 1436 ms | 1362 ms | 1637 ms | 268.9 kB | 9 | 0 |
+| 2 | 1476 ms | `img` | 0.000 | 0 | 72 ms | 2 ms | 1452 ms | 1373 ms | 1638 ms | 268.9 kB | 9 | 0 |
+| 3 | 1548 ms | `img` | 0.000 | 0 | 64 ms | 2 ms | 1532 ms | 1404 ms | 1636 ms | 268.9 kB | 9 | 0 |
+| 4 | 1500 ms | `img` | 0.000 | 0 | 64 ms | 3 ms | 1440 ms | 1360 ms | 1642 ms | 268.9 kB | 9 | 0 |
+| 5 | 1492 ms | `img` | 0.000 | 0 | 88 ms | 3 ms | 1484 ms | 1399 ms | 1643 ms | 268.9 kB | 9 | 0 |
 
 ### Interactions (per run, longest event duration)
 
 | Run | tap "Menu" (opens the mobile navigation) | tap "View the invitation" (opens the invitation dialog) |
 |---|---|---|
-| 1 | 24 ms (click→paint approx 17 ms) | 64 ms (click→paint approx 48 ms) |
-| 2 | 40 ms (click→paint approx 33 ms) | 72 ms (click→paint approx 50 ms) |
-| 3 | 16 ms (click→paint approx 4 ms) | 56 ms (click→paint approx 42 ms) |
-| 4 | 24 ms (click→paint approx 16 ms) | 64 ms (click→paint approx 46 ms) |
-| 5 | 24 ms (click→paint approx 14 ms) | 64 ms (click→paint approx 46 ms) |
+| 1 | 24 ms (click→paint approx 20 ms) | 56 ms (click→paint approx 56 ms) |
+| 2 | 24 ms (click→paint approx 17 ms) | 72 ms (click→paint approx 50 ms) |
+| 3 | 24 ms (click→paint approx 21 ms) | 64 ms (click→paint approx 51 ms) |
+| 4 | 24 ms (click→paint approx 18 ms) | 64 ms (click→paint approx 49 ms) |
+| 5 | 24 ms (click→paint approx 17 ms) | 88 ms (click→paint approx 85 ms) |
 
 ### Bytes by resource type (median-transfer run, uncompressed)
 
@@ -61,22 +61,22 @@ LCP ≤ 2500 ms · CLS ≤ 0.1 · INP ≤ 200 ms · initial transfer ≤ 1.50 MB
 |---|---|
 | Font | 137.7 kB |
 | Image | 68.6 kB |
-| Stylesheet | 29.8 kB |
-| Document | 18.5 kB |
-| Script | 12.5 kB |
+| Stylesheet | 31.0 kB |
+| Document | 19.0 kB |
+| Script | 12.7 kB |
 
 <details><summary>Resources (median run)</summary>
 
 | Resource | Type | Bytes | Status |
 |---|---|---|---|
-| /celebration.html | Document | 18.5 kB | 200 |
+| /celebration.html | Document | 19.0 kB | 200 |
 | /fonts/pinyon-script-400.woff2 | Font | 39.2 kB | 200 |
 | /fonts/cormorant-sc-600.woff2 | Font | 21.1 kB | 200 |
 | /fonts/cormorant-garamond-variable.woff2 | Font | 37.8 kB | 200 |
-| /styles/site.css | Stylesheet | 29.8 kB | 200 |
+| /styles/site.css | Stylesheet | 31.0 kB | 200 |
 | /img/crest-120.webp | Image | 10.9 kB | 200 |
 | /img/crest-360.webp | Image | 57.7 kB | 200 |
-| /js/site.js | Script | 12.5 kB | 200 |
+| /js/site.js | Script | 12.7 kB | 200 |
 | /fonts/cormorant-garamond-variable-italic.woff2 | Font | 39.5 kB | 200 |
 
 </details>
@@ -85,59 +85,59 @@ LCP ≤ 2500 ms · CLS ≤ 0.1 · INP ≤ 200 ms · initial transfer ≤ 1.50 MB
 
 | Metric | Median | Worst | Best | Budget | Median pass | Worst pass |
 |---|---|---|---|---|---|---|
-| LCP | 1204 ms | 1212 ms | 1192 ms | 2500 ms | yes | yes |
+| LCP | 1244 ms | 1260 ms | 1228 ms | 2500 ms | yes | yes |
 | CLS | 0.000 | 0.000 | 0.000 | 0.100 | yes | yes |
-| Interaction latency (lab INP proxy) | 48 ms | 56 ms | 40 ms | 200 ms | yes | yes |
-| TTFB (responseStart; local server, see note) | 2 ms | 2 ms | 2 ms | — | — | — |
-| HTML document fully received (responseEnd) | 198 ms | 199 ms | 190 ms | — | — | — |
-| FCP | 1204 ms | 1212 ms | 1192 ms | — | — | — |
-| DOMContentLoaded | 1327 ms | 1330 ms | 1320 ms | — | — | — |
-| load | 1330 ms | 1332 ms | 1324 ms | — | — | — |
-| Transfer (uncompressed, local server) | 196.1 kB | 196.1 kB | 196.1 kB | 1.50 MB | yes | yes |
-| Transfer, estimated with gzip for HTML/CSS/JS | 133.0 kB | | | 1.50 MB | yes | |
-| JavaScript loaded by this page, gzip | 13.2 kB | | | 200.0 kB | yes | |
+| Interaction latency (lab INP proxy) | 48 ms | 48 ms | 40 ms | 200 ms | yes | yes |
+| TTFB (responseStart; local server, see note) | 2 ms | 3 ms | 2 ms | — | — | — |
+| HTML document fully received (responseEnd) | 191 ms | 198 ms | 190 ms | — | — | — |
+| FCP | 1244 ms | 1260 ms | 1228 ms | — | — | — |
+| DOMContentLoaded | 1330 ms | 1343 ms | 1328 ms | — | — | — |
+| load | 1333 ms | 1347 ms | 1331 ms | — | — | — |
+| Transfer (uncompressed, local server) | 197.8 kB | 197.8 kB | 197.8 kB | 1.50 MB | yes | yes |
+| Transfer, estimated with gzip for HTML/CSS/JS | 133.4 kB | | | 1.50 MB | yes | |
+| JavaScript loaded by this page, gzip | 13.3 kB | | | 200.0 kB | yes | |
 
 ### Runs
 
 | Run | LCP | LCP element | CLS | Shifts | Interaction max | TTFB | FCP | DCL | load | Transfer | Requests | Errors |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | 1204 ms | `p.lede` | 0.000 | 0 | 48 ms | 2 ms | 1204 ms | 1320 ms | 1324 ms | 196.1 kB | 8 | 0 |
-| 2 | 1212 ms | `p.lede` | 0.000 | 0 | 48 ms | 2 ms | 1212 ms | 1329 ms | 1332 ms | 196.1 kB | 8 | 0 |
-| 3 | 1204 ms | `p.lede` | 0.000 | 0 | 56 ms | 2 ms | 1204 ms | 1323 ms | 1324 ms | 196.1 kB | 8 | 0 |
-| 4 | 1196 ms | `p.lede` | 0.000 | 0 | 48 ms | 2 ms | 1196 ms | 1330 ms | 1332 ms | 196.1 kB | 8 | 0 |
-| 5 | 1192 ms | `p.lede` | 0.000 | 0 | 40 ms | 2 ms | 1192 ms | 1327 ms | 1330 ms | 196.1 kB | 8 | 0 |
+| 1 | 1232 ms | `p.lede` | 0.000 | 0 | 48 ms | 2 ms | 1232 ms | 1328 ms | 1331 ms | 197.8 kB | 8 | 0 |
+| 2 | 1244 ms | `p.lede` | 0.000 | 0 | 40 ms | 3 ms | 1244 ms | 1343 ms | 1346 ms | 197.8 kB | 8 | 0 |
+| 3 | 1228 ms | `p.lede` | 0.000 | 0 | 48 ms | 2 ms | 1228 ms | 1328 ms | 1332 ms | 197.8 kB | 8 | 0 |
+| 4 | 1256 ms | `p.lede` | 0.000 | 0 | 48 ms | 2 ms | 1256 ms | 1343 ms | 1347 ms | 197.8 kB | 8 | 0 |
+| 5 | 1260 ms | `p.lede` | 0.000 | 0 | 40 ms | 2 ms | 1260 ms | 1330 ms | 1333 ms | 197.8 kB | 8 | 0 |
 
 ### Interactions (per run, longest event duration)
 
 | Run | tap the invitation-code field (focus) | tap "Find my invitation" (submits the code; re-renders the busy state) | tap "These are correct — continue" (renders the attendance step) |
 |---|---|---|---|
-| 1 | 16 ms (click→paint approx 13 ms) | 32 ms (click→paint approx 20 ms) | 48 ms (click→paint approx 44 ms) |
-| 2 | 16 ms (click→paint approx 12 ms) | 24 ms (click→paint approx 19 ms) | 48 ms (click→paint approx 40 ms) |
-| 3 | 16 ms (click→paint approx 12 ms) | 24 ms (click→paint approx 21 ms) | 56 ms (click→paint approx 49 ms) |
-| 4 | 16 ms (click→paint approx 11 ms) | 24 ms (click→paint approx 20 ms) | 48 ms (click→paint approx 41 ms) |
-| 5 | 16 ms (click→paint approx 13 ms) | 24 ms (click→paint approx 20 ms) | 40 ms (click→paint approx 38 ms) |
+| 1 | 16 ms (click→paint approx 15 ms) | 24 ms (click→paint approx 19 ms) | 48 ms (click→paint approx 45 ms) |
+| 2 | 16 ms (click→paint approx 12 ms) | 24 ms (click→paint approx 20 ms) | 40 ms (click→paint approx 41 ms) |
+| 3 | 16 ms (click→paint approx 12 ms) | 24 ms (click→paint approx 17 ms) | 48 ms (click→paint approx 48 ms) |
+| 4 | 16 ms (click→paint approx 12 ms) | 24 ms (click→paint approx 23 ms) | 48 ms (click→paint approx 43 ms) |
+| 5 | 16 ms (click→paint approx 14 ms) | 24 ms (click→paint approx 21 ms) | 40 ms (click→paint approx 39 ms) |
 
 ### Bytes by resource type (median-transfer run, uncompressed)
 
 | Type | Bytes |
 |---|---|
 | Font | 98.2 kB |
-| Script | 49.2 kB |
-| Stylesheet | 29.8 kB |
+| Script | 49.3 kB |
+| Stylesheet | 31.0 kB |
 | Image | 10.9 kB |
-| Document | 8.0 kB |
+| Document | 8.4 kB |
 
 <details><summary>Resources (median run)</summary>
 
 | Resource | Type | Bytes | Status |
 |---|---|---|---|
-| /rsvp.html?preview=1 | Document | 8.0 kB | 200 |
+| /rsvp.html?preview=1 | Document | 8.4 kB | 200 |
 | /fonts/pinyon-script-400.woff2 | Font | 39.2 kB | 200 |
 | /fonts/cormorant-sc-600.woff2 | Font | 21.1 kB | 200 |
 | /fonts/cormorant-garamond-variable.woff2 | Font | 37.8 kB | 200 |
-| /styles/site.css | Stylesheet | 29.8 kB | 200 |
+| /styles/site.css | Stylesheet | 31.0 kB | 200 |
 | /img/crest-120.webp | Image | 10.9 kB | 200 |
-| /js/site.js | Script | 12.5 kB | 200 |
+| /js/site.js | Script | 12.7 kB | 200 |
 | /js/rsvp.js | Script | 36.7 kB | 200 |
 
 </details>
@@ -149,15 +149,15 @@ node:zlib gzipSync level 6 (also level 9 and brotli default for reference). The 
 | File | Raw | gzip -6 | gzip -9 | brotli |
 |---|---|---|---|---|
 | dist/js/rsvp.js | 36.5 kB | 9.7 kB | 9.7 kB | 8.5 kB |
-| dist/js/site.js | 12.3 kB | 3.5 kB | 3.5 kB | 3.0 kB |
-| dist/styles/site.css | 29.6 kB | 7.1 kB | 7.1 kB | 6.1 kB |
-| dist/404.html | 5.1 kB | 1.9 kB | 1.9 kB | 1.5 kB |
-| dist/celebration.html | 18.2 kB | 4.9 kB | 4.9 kB | 4.0 kB |
-| dist/index.html | 18.3 kB | 4.9 kB | 4.9 kB | 4.0 kB |
-| dist/privacy.html | 7.5 kB | 2.9 kB | 2.9 kB | 2.3 kB |
-| dist/rsvp.html | 7.8 kB | 2.7 kB | 2.7 kB | 2.2 kB |
+| dist/js/site.js | 12.5 kB | 3.6 kB | 3.6 kB | 3.1 kB |
+| dist/styles/site.css | 30.8 kB | 7.3 kB | 7.3 kB | 6.3 kB |
+| dist/404.html | 5.4 kB | 2.1 kB | 2.1 kB | 1.6 kB |
+| dist/celebration.html | 18.8 kB | 5.1 kB | 5.1 kB | 4.2 kB |
+| dist/index.html | 18.8 kB | 5.1 kB | 5.1 kB | 4.2 kB |
+| dist/privacy.html | 7.8 kB | 3.1 kB | 3.1 kB | 2.4 kB |
+| dist/rsvp.html | 8.1 kB | 2.9 kB | 2.9 kB | 2.3 kB |
 
-All JavaScript in dist/js, gzip -6: **13.2 kB** (budget 200.0 kB). Per page: celebration.html 3.5 kB, index.html 3.5 kB, rsvp.html 13.2 kB, privacy.html 3.5 kB, 404.html 3.5 kB.
+All JavaScript in dist/js, gzip -6: **13.3 kB** (budget 200.0 kB). Per page: celebration.html 3.6 kB, index.html 3.6 kB, rsvp.html 13.3 kB, privacy.html 3.6 kB, 404.html 3.6 kB.
 
 ## Result
 

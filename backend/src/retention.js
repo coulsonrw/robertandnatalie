@@ -3,6 +3,7 @@
 // data and restricted notes from the live system. Idempotent, so it can be re-run after a
 // restore ("reapply deletion rules after restores"). Keeps: household/guest ids and labels,
 // events, content versions, audit events (which carry no personal data) and the retention record.
+// Also removes stored import plans, which hold the CSV's names and contact emails verbatim.
 
 import { one, stmt, batch, audit, nowIso } from './db.js';
 import { raiseAlert } from './mail/outbox.js';
@@ -24,8 +25,9 @@ export async function applyRetention(env, cfg, { force = false, actor = { kind: 
     notes: (await one(db, 'SELECT COUNT(*) AS n FROM restricted_guest_needs'))?.n ?? 0,
     contacts: (await one(db, 'SELECT COUNT(*) AS n FROM household WHERE contact_email IS NOT NULL'))?.n ?? 0,
     plusOneNames: (await one(db, 'SELECT COUNT(*) AS n FROM guest WHERE plus_one_name IS NOT NULL'))?.n ?? 0,
+    importBatches: (await one(db, 'SELECT COUNT(*) AS n FROM import_batch'))?.n ?? 0,
   };
-  const alreadyClean = !before.responses && !before.notes && !before.contacts && !before.plusOneNames;
+  const alreadyClean = !before.responses && !before.notes && !before.contacts && !before.plusOneNames && !before.importBatches;
 
   await batch(db, [
     stmt(db, 'DELETE FROM restricted_guest_needs'),
@@ -34,6 +36,8 @@ export async function applyRetention(env, cfg, { force = false, actor = { kind: 
     stmt(db, 'DELETE FROM idempotency_record'),
     stmt(db, 'DELETE FROM mail_outbox'),
     stmt(db, 'DELETE FROM session'),
+    // Import previews store the reviewed CSV plan verbatim (names, contact emails): personal data.
+    stmt(db, 'DELETE FROM import_batch'),
     stmt(db, 'UPDATE access_credential SET revoked_at = COALESCE(revoked_at, ?)', now),
     stmt(db, 'UPDATE guest SET plus_one_name = NULL, updated_at = ? WHERE plus_one_name IS NOT NULL', now),
     stmt(db, 'UPDATE household SET contact_email = NULL, updated_at = ? WHERE contact_email IS NOT NULL', now),

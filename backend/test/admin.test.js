@@ -90,6 +90,15 @@ describe('CSV import (ADMIN-02)', () => {
     expect(bad.canCommit).toBe(false);
     expect(bad.errors[0].message).toMatch(/already belongs to a different household/);
   });
+
+  it('warns before a re-import reinstates a revoked household', async () => {
+    await importRoster();
+    expect((await admin(OWNER, 'POST', '/admin/households/hh_solo/revoke', { body: {} })).status).toBe(200);
+    const preview = await (await admin(OWNER, 'POST', '/admin/import/preview', { body: ROSTER_CSV, contentType: 'text/csv' })).json();
+    expect(preview.canCommit).toBe(true);
+    expect(preview.warnings.map((w) => w.message).join('\n')).toMatch(/Household "hh_solo" is revoked and would be reinstated/);
+    expect(preview.households.find((h) => h.id === 'hh_solo')).toMatchObject({ op: 'update', changes: ['state'] });
+  });
 });
 
 describe('reporting and exports (ADMIN-03, SEC-05)', () => {

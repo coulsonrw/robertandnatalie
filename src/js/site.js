@@ -122,7 +122,7 @@
     var height = card.offsetHeight;
     if (!width || !height) return;
     var small = window.innerWidth < 480;
-    var k = Math.min((small ? 72 : 110) / width, (small ? 108 : 160) / height);
+    var k = Math.min((small ? 34 : 110) / width, (small ? 92 : 160) / height);
     scale.style.transform = 'scale(' + k + ')';
     keepsake.style.width = Math.round(width * k) + 'px';
     keepsake.style.height = Math.round(height * k) + 'px';
@@ -150,7 +150,7 @@
     // While the site is hidden, the global skip link enters the site instead of pointing at hidden content,
     // and the invitation heading is the page's level-one heading.
     if (skipLink) { if (inEntry) skipLink.setAttribute('data-action', 'enter'); else skipLink.removeAttribute('data-action'); }
-    if (namesHeading) { if (inEntry) { namesHeading.setAttribute('role', 'heading'); namesHeading.setAttribute('aria-level', '1'); } else { namesHeading.removeAttribute('role'); namesHeading.removeAttribute('aria-level'); } }
+    if (namesHeading) { namesHeading.setAttribute('role', 'heading'); namesHeading.setAttribute('aria-level', inEntry ? '1' : '2'); }
   }
 
   function dock(animate) {
@@ -259,7 +259,8 @@
   if (start === 'site') {
     showSite();
     dock(false);
-    if (hashTarget) { hashTarget.scrollIntoView(); }
+    if (window.location.hash === '#invitation') { setTimeout(openDialog, 0); }
+    else if (hashTarget) { hashTarget.scrollIntoView(); }
   } else if (!motion()) {
     // Reduced motion: skip the sealed envelope and show the invitation directly (equivalent static rendering).
     document.body.classList.add('is-entry');
@@ -277,6 +278,8 @@
   }
 
   document.addEventListener('click', function (e) {
+    var inv = e.target.closest('a[href="#invitation"], a[href$="#invitation"]');
+    if (inv && state === 'site') { e.preventDefault(); openDialog(); return; }
     var t = e.target.closest('[data-action], #seal, #invitation-card');
     if (!t) return;
     if (t.id === 'seal') { openEnvelope(); return; }
