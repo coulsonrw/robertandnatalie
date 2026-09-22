@@ -1,27 +1,25 @@
 import { esc, linesWithBreaks } from '../lib/html.mjs';
 import { shell, header, footer, icon } from './layout.mjs';
 
-function corner(pos) {
-  return `<svg class="corner corner-${pos}" aria-hidden="true" focusable="false"><use href="#corner-flourish"/></svg>`;
-}
 
 // The invitation card: live text, one DOM node that the entry script moves between the
 // envelope, the opened stage, the bottom-left keepsake and the dialog (HOME-01, HOME-03).
 function invitationCard(view) {
   const p = view.basePath;
   const [name1, name2] = view.couple.names;
+  // The card face is the approved artwork (A2) with its wording removed; every line of text is
+  // live and positioned over it at the artwork's own coordinates (HOME-01, DES-01, DES-03).
   return `<article class="invitation-card" id="invitation-card" aria-labelledby="invitation-title">
-    ${corner('tl')}${corner('tr')}${corner('bl')}${corner('br')}
+    <picture class="frame">
+      <source type="image/webp" srcset="${p}/img/invitation-frame-560.webp 560w, ${p}/img/invitation-frame-800.webp 800w, ${p}/img/invitation-frame-1122.webp 1122w" sizes="(min-width: 800px) 760px, 100vw">
+      <img src="${p}/img/invitation-frame-800.jpg" width="1122" height="1402" alt="${esc(view.crestAlt)}" fetchpriority="high" decoding="async">
+    </picture>
     <div class="invitation-body">
-      <picture class="crest">
-        <source srcset="${p}/img/crest-360.webp 360w, ${p}/img/crest-720.webp 720w" sizes="(min-width: 760px) 168px, 116px" type="image/webp">
-        <img src="${p}/img/crest-360.png" width="360" height="556" alt="${esc(view.crestAlt)}" fetchpriority="high" decoding="async">
-      </picture>
       <h2 class="names" id="invitation-title" role="heading" aria-level="1"><span class="name">${esc(name1)}</span><span class="conj">${esc(view.couple.conjunction)}</span><span class="name">${esc(name2)}</span></h2>
       <p class="formal request">${linesWithBreaks(view.invitation.requestLines)}</p>
       <p class="formal date">${linesWithBreaks(view.formalDateLines, 'always-break')}</p>
-      ${view.events.map((ev) => `<p class="venue-script">${esc(ev.name)}</p>
-      <p class="formal">${esc(ev.formalLine)}</p>`).join('\n      ')}
+      ${view.events.map((ev, i) => `<p class="venue-script venue-${i + 1}">${esc(ev.name)}</p>
+      <p class="formal time-${i + 1}">${esc(ev.formalLine)}</p>`).join('\n      ')}
       <p class="formal closing">${linesWithBreaks(view.wedding.closingLine)}</p>
     </div>
   </article>`;

@@ -1,8 +1,8 @@
 # Accessibility evidence (lab, automated)
 
-Generated 2026-09-22T00:07:33.879Z by `node scripts/audit.mjs`. Chromium 141.0.7390.37 (headless) via Playwright 1.56.1, axe-core 4.10.2 (MPL-2.0, vendored at scripts/vendor/axe.min.js), Node v22.22.2.
+Generated 2026-09-22T13:05:51.079Z by `node scripts/audit.mjs`. Chromium 141.0.7390.37 (headless) via Playwright 1.56.1, axe-core 4.10.2 (MPL-2.0, vendored at scripts/vendor/axe.min.js), Node v22.22.2.
 
-Build audited: dist/ written 2026-09-21T23:51:20.248Z, repository HEAD dc25b7f. File hashes (sha256, first 12): index.html b4909cebe7bb, celebration.html abe9d10301b3, rsvp.html 77a078d3f6d3, privacy.html ed14978e3899, 404.html 37e3fb8f4f49, js/site.js 14a56d4baeb3, js/rsvp.js 69f27c2269d4, styles/site.css 6632a89a82fc.
+Build audited: dist/ written 2026-09-22T13:05:31.832Z, repository HEAD 9d6927a with 7 uncommitted source file(s) (the build under test is the working tree, not the commit). File hashes (sha256, first 12): index.html 8d650c2253cb, celebration.html 229e85a930d7, rsvp.html 9cffb38fc274, privacy.html c975d5dc9886, 404.html 9709118cc86b, js/site.js 14a56d4baeb3, js/rsvp.js 69f27c2269d4, styles/site.css ad85c294e8e5.
 
 **Scope and honesty note.** Lab measurements in headless Chromium only. No Safari, Firefox, Edge, iOS or Android runs; no screen-reader (VoiceOver/NVDA) sessions; no field (RUM) data. Browser contexts use Playwright's bypassCSP so that axe-core and the measurement probes can be injected; whether the pages behave correctly under their own Content-Security-Policy is not verified by this run. These automated checks cover only the part of WCAG 2.2 AA that tools can detect. PRD NFR-01/NFR-03 and AT-15 additionally require manual testing (keyboard-only completion of the RSVP flow, VoiceOver on iOS/macOS, NVDA on Windows, 200 % zoom and 400 % reflow, real reduced-motion devices) and browser coverage that this script does not provide. Those remain open.
 
@@ -29,7 +29,7 @@ Serious/critical total: **0**.
 | home-sealed | 320 | none (33 rules passed) | 1 | yes | all 1 | 0/0 | yes | yes (5 stops) | 3 ok | yes |
 | home-open | 320 | none (34 rules passed) | 1 | yes | all 1 | 0/0 | n/a | yes (6 stops) | 4 ok | yes |
 | home-entered | 320 | none (42 rules passed) | 1 | yes | all 2 | 0/0 | n/a | yes (8 stops) | 14 ok | yes |
-| home-dialog | 320 | none (25 rules passed) | 1 | yes | all 3 | 0/0 | n/a | yes (3 stops) | 14 ok | yes |
+| home-dialog | 320 | none (24 rules passed) | 1 | yes | all 3 | 0/0 | n/a | yes (3 stops) | 14 ok | yes |
 | celebration | 320 | none (41 rules passed) | 1 | yes | all 2 | 0/0 | yes | yes (5 stops) | 14 ok | yes |
 | rsvp-coming-soon | 320 | none (35 rules passed) | 1 | yes | all 1 | 0/0 | yes | yes (7 stops) | 1 ok | yes |
 | rsvp-access | 320 | none (44 rules passed) | 1 | yes | all 1 | 1/1 | n/a | yes (9 stops) | 3 ok | yes |
@@ -43,7 +43,7 @@ Serious/critical total: **0**.
 | home-sealed | 390 | none (33 rules passed) | 1 | yes | all 1 | 0/0 | yes | yes (5 stops) | 3 ok | yes |
 | home-open | 390 | none (34 rules passed) | 1 | yes | all 1 | 0/0 | n/a | yes (6 stops) | 4 ok | yes |
 | home-entered | 390 | none (42 rules passed) | 1 | yes | all 2 | 0/0 | n/a | yes (8 stops) | 14 ok | yes |
-| home-dialog | 390 | none (25 rules passed) | 1 | yes | all 3 | 0/0 | n/a | yes (3 stops) | 14 ok | yes |
+| home-dialog | 390 | none (24 rules passed) | 1 | yes | all 3 | 0/0 | n/a | yes (3 stops) | 14 ok | yes |
 | celebration | 390 | none (41 rules passed) | 1 | yes | all 2 | 0/0 | yes | yes (5 stops) | 14 ok | yes |
 | rsvp-coming-soon | 390 | none (35 rules passed) | 1 | yes | all 1 | 0/0 | yes | yes (7 stops) | 1 ok | yes |
 | rsvp-access | 390 | none (44 rules passed) | 1 | yes | all 1 | 1/1 | n/a | yes (9 stops) | 3 ok | yes |
@@ -57,7 +57,7 @@ Serious/critical total: **0**.
 | home-sealed | 768 | none (33 rules passed) | 1 | yes | all 1 | 0/0 | yes | yes (5 stops) | 3 ok | yes |
 | home-open | 768 | none (34 rules passed) | 1 | yes | all 1 | 0/0 | n/a | yes (6 stops) | 4 ok | yes |
 | home-entered | 768 | none (42 rules passed) | 1 | yes | all 2 | 0/0 | n/a | yes (8 stops) | 14 ok | yes |
-| home-dialog | 768 | none (25 rules passed) | 1 | yes | all 3 | 0/0 | n/a | yes (3 stops) | 14 ok | yes |
+| home-dialog | 768 | none (24 rules passed) | 1 | yes | all 3 | 0/0 | n/a | yes (3 stops) | 14 ok | yes |
 | celebration | 768 | none (41 rules passed) | 1 | yes | all 2 | 0/0 | yes | yes (7 stops) | 14 ok | yes |
 | rsvp-coming-soon | 768 | none (35 rules passed) | 1 | yes | all 1 | 0/0 | yes | yes (9 stops) | 1 ok | yes |
 | rsvp-access | 768 | none (46 rules passed) | 1 | yes | all 1 | 1/1 | n/a | yes (11 stops) | 3 ok | yes |
@@ -71,7 +71,7 @@ Serious/critical total: **0**.
 | home-sealed | 1440 | none (33 rules passed) | 1 | yes | all 1 | 0/0 | yes | yes (5 stops) | 3 ok | yes |
 | home-open | 1440 | none (34 rules passed) | 1 | yes | all 1 | 0/0 | n/a | yes (6 stops) | 4 ok | yes |
 | home-entered | 1440 | none (42 rules passed) | 1 | yes | all 2 | 0/0 | n/a | yes (8 stops) | 14 ok | yes |
-| home-dialog | 1440 | none (25 rules passed) | 1 | yes | all 3 | 0/0 | n/a | yes (3 stops) | 14 ok | yes |
+| home-dialog | 1440 | none (24 rules passed) | 1 | yes | all 3 | 0/0 | n/a | yes (3 stops) | 14 ok | yes |
 | celebration | 1440 | none (41 rules passed) | 1 | yes | all 2 | 0/0 | yes | yes (7 stops) | 14 ok | yes |
 | rsvp-coming-soon | 1440 | none (35 rules passed) | 1 | yes | all 1 | 0/0 | yes | yes (9 stops) | 1 ok | yes |
 | rsvp-access | 1440 | none (46 rules passed) | 1 | yes | all 1 | 1/1 | n/a | yes (11 stops) | 3 ok | yes |
@@ -93,10 +93,10 @@ These are checks axe could not decide automatically (typically colour contrast b
 
 | Rule | Impact | Nodes | States | Help |
 |---|---|---|---|---|
-| `color-contrast` | serious | 207 | home-sealed@320, home-open@320, home-entered@320, home-dialog@320, celebration@320, rsvp-details@320, home-sealed@390, home-open@390, home-entered@390, home-dialog@390, celebration@390, rsvp-details@390, home-sealed@768, home-open@768, home-entered@768, home-dialog@768, celebration@768, rsvp-details@768, home-sealed@1440, home-open@1440, home-entered@1440, home-dialog@1440, celebration@1440, rsvp-details@1440 | https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI |
+| `color-contrast` | serious | 211 | home-sealed@320, home-open@320, home-entered@320, home-dialog@320, celebration@320, rsvp-details@320, home-sealed@390, home-open@390, home-entered@390, home-dialog@390, celebration@390, rsvp-details@390, home-sealed@768, home-open@768, home-entered@768, home-dialog@768, celebration@768, rsvp-details@768, home-sealed@1440, home-open@1440, home-entered@1440, home-dialog@1440, celebration@1440, rsvp-details@1440 | https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI |
 | `skip-link` | moderate | 8 | home-sealed@320, home-open@320, home-sealed@390, home-open@390, home-sealed@768, home-open@768, home-sealed@1440, home-open@1440 | https://dequeuniversity.com/rules/axe/4.10/skip-link?application=axeAPI |
 
-- `color-contrast` — elements: `.entry-skip`, `.entry-bar-actions > .btn-rsvp.btn-primary[href$="rsvp.html"]`, `#entry-hint`, `#invitation-title > .name:nth-child(1)`, `#invitation-title > .conj`, `#invitation-title > .name:nth-child(3)`, `.request`, `.date`, `.venue-script:nth-child(5)`, `.formal:nth-child(6)`, `.venue-script:nth-child(7)`, `.formal:nth-child(8)`, `.closing`, `article[aria-labelledby="ev-ceremony-title"] > .card-links > .dot[aria-hidden="true"]`, `article[aria-labelledby="ev-reception-title"] > .card-links > .dot[aria-hidden="true"]`, `#notes`, `.entry-glance > span:nth-child(1)`, `.entry-glance > .dot[aria-hidden="true"]`, `.entry-glance > span:nth-child(3)`, `.glance-line > .dot[aria-hidden="true"]`, `.glance-times > .dot[aria-hidden="true"]:nth-child(2)`, `.dot[aria-hidden="true"]:nth-child(4)`, `.keepsake-caption`. axe reason(s): Element's background color could not be determined because it is overlapped by another element / Element's background color could not be determined due to a background image / Element content is too short to determine if it is actual text content / Element's background color could not be determined because it's partially obscured by another element.
+- `color-contrast` — elements: `.entry-skip`, `.entry-bar-actions > .btn-rsvp.btn-primary[href$="rsvp.html"]`, `#invitation-title > .name:nth-child(1)`, `#entry-hint`, `#invitation-title > .conj`, `#invitation-title > .name:nth-child(3)`, `.request`, `.date`, `.venue-1`, `.time-1`, `.venue-2`, `.time-2`, `.closing`, `article[aria-labelledby="ev-ceremony-title"] > .card-links > .dot[aria-hidden="true"]`, `article[aria-labelledby="ev-reception-title"] > .card-links > .dot[aria-hidden="true"]`, `#notes`, `.entry-glance > span:nth-child(1)`, `.entry-glance > .dot[aria-hidden="true"]`, `.entry-glance > span:nth-child(3)`, `.glance-line > .dot[aria-hidden="true"]`, `.glance-times > .dot[aria-hidden="true"]:nth-child(2)`, `.dot[aria-hidden="true"]:nth-child(4)`, `.keepsake-caption`. axe reason(s): Element's background color could not be determined because it is overlapped by another element / Element's background color could not be determined because element contains an image node / Element's background color could not be determined because it partially overlaps other elements / Element content is too short to determine if it is actual text content / Unable to determine contrast ratio / Element's background color could not be determined because it's partially obscured by another element.
 - `skip-link` — elements: `.skip-link`. axe reason(s): Skip link target should become visible on activation.
 
 ## Structural check findings
@@ -162,10 +162,10 @@ Names as Chromium computes them for the split-span headings and icon-only contro
 
 ## Reduced motion (emulated)
 
-- **320 px**: pass. Start state `open` (the page skips the sealed envelope under reduced motion and shows the invitation directly). initial: state=open, animations=0, readable text blocks 8/8, card 280×1059 at top 89, opacity 1, font 49.6 px; open: state=open, animations=0, readable text blocks 8/8, card 280×1059 at top 89, opacity 1, font 49.6 px; site (docked): state=site, animations=0, readable text blocks 8/8, card 24×92 at top 446, opacity 1, font 49.6 px; dialog: state=dialog, animations=0, readable text blocks 8/8, card 288×1023 at top 48, opacity 1, font 49.6 px.
-- **390 px**: pass. Start state `open` (the page skips the sealed envelope under reduced motion and shows the invitation directly). initial: state=open, animations=0, readable text blocks 8/8, card 350×965 at top 89, opacity 1, font 49.6 px; open: state=open, animations=0, readable text blocks 8/8, card 350×965 at top 89, opacity 1, font 49.6 px; site (docked): state=site, animations=0, readable text blocks 8/8, card 33×92 at top 722, opacity 1, font 49.6 px; dialog: state=dialog, animations=0, readable text blocks 8/8, card 358×937 at top 59, opacity 1, font 49.6 px.
-- **768 px**: pass. Start state `open` (the page skips the sealed envelope under reduced motion and shows the invitation directly). initial: state=open, animations=0, readable text blocks 8/8, card 707×1217 at top 124, opacity 1, font 84.48 px; open: state=open, animations=0, readable text blocks 8/8, card 707×1217 at top 124, opacity 1, font 84.48 px; site (docked): state=site, animations=0, readable text blocks 8/8, card 96×160 at top 830, opacity 1, font 84.48 px; dialog: state=dialog, animations=0, readable text blocks 8/8, card 736×1217 at top 64, opacity 1, font 84.48 px.
-- **1440 px**: pass. Start state `open` (the page skips the sealed envelope under reduced motion and shows the invitation directly). initial: state=open, animations=0, readable text blocks 8/8, card 760×1244 at top 117, opacity 1, font 86.4 px; open: state=open, animations=0, readable text blocks 8/8, card 760×1244 at top 117, opacity 1, font 86.4 px; site (docked): state=site, animations=0, readable text blocks 8/8, card 98×160 at top 706, opacity 1, font 86.4 px; dialog: state=dialog, animations=0, readable text blocks 8/8, card 760×1244 at top 63, opacity 1, font 86.4 px.
+- **320 px**: pass. Start state `open` (the page skips the sealed envelope under reduced motion and shows the invitation directly). initial: state=open, animations=0, readable text blocks 8/8, card 280×350 at top 89, opacity 1, font 32.48 px; open: state=open, animations=0, readable text blocks 8/8, card 280×350 at top 89, opacity 1, font 32.48 px; site (docked): state=site, animations=0, readable text blocks 8/8, card 34×42 at top 495, opacity 1, font 32.48 px; dialog: state=dialog, animations=0, readable text blocks 8/8, card 288×360 at top 116, opacity 1, font 33.408 px.
+- **390 px**: pass. Start state `open` (the page skips the sealed envelope under reduced motion and shows the invitation directly). initial: state=open, animations=0, readable text blocks 8/8, card 350×437 at top 89, opacity 1, font 40.6 px; open: state=open, animations=0, readable text blocks 8/8, card 350×437 at top 89, opacity 1, font 40.6 px; site (docked): state=site, animations=0, readable text blocks 8/8, card 34×42 at top 772, opacity 1, font 40.6 px; dialog: state=dialog, animations=0, readable text blocks 8/8, card 358×447 at top 216, opacity 1, font 41.528 px.
+- **768 px**: pass. Start state `open` (the page skips the sealed envelope under reduced motion and shows the invitation directly). initial: state=open, animations=0, readable text blocks 8/8, card 707×883 at top 124, opacity 1, font 81.9613 px; open: state=open, animations=0, readable text blocks 8/8, card 707×883 at top 124, opacity 1, font 81.9613 px; site (docked): state=site, animations=0, readable text blocks 8/8, card 110×137 at top 852, opacity 1, font 84.448 px; dialog: state=dialog, animations=0, readable text blocks 8/8, card 736×920 at top 72, opacity 1, font 85.376 px.
+- **1440 px**: pass. Start state `open` (the page skips the sealed envelope under reduced motion and shows the invitation directly). initial: state=open, animations=0, readable text blocks 8/8, card 760×950 at top 117, opacity 1, font 88.16 px; open: state=open, animations=0, readable text blocks 8/8, card 760×950 at top 117, opacity 1, font 88.16 px; site (docked): state=site, animations=0, readable text blocks 8/8, card 110×137 at top 728, opacity 1, font 88.16 px; dialog: state=dialog, animations=0, readable text blocks 8/8, card 643×804 at top 68, opacity 1, font 74.6097 px.
 
 ## Still open (not covered by this script)
 

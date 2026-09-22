@@ -1,6 +1,6 @@
 # Visual proofs
 
-Captured 2026-09-21T23:55:32.947Z with Chromium 141.0.7390.37 on Node v22.22.2 using `npm run proofs` (Playwright, headless).
+Captured 2026-09-22T13:04:47.546Z with Chromium 141.0.7390.37 on Node v22.22.2 using `npm run proofs` (Playwright, headless).
 Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adapter; nothing is saved.
 
 ## Horizontal overflow check (must be none)
@@ -43,8 +43,8 @@ Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adap
 
 ## Entry flow (sealed envelope → invitation → site with keepsake → dialog)
 
-- 390px: after opening, state=open focus=invitation-card; after entering, state=site focus=hero-title entry hidden=true keepsake=33×92 at (6, 722); dialog modal=true focus=dialog-close; after Escape state=site focus=keepsake-btn; deep link /#wedding-day skips the envelope=true scrolled=true; page errors=0.
-- 1440px: after opening, state=open focus=invitation-card; after entering, state=site focus=hero-title entry hidden=true keepsake=98×160 at (12, 706); dialog modal=true focus=dialog-close; after Escape state=site focus=keepsake-btn; deep link /#wedding-day skips the envelope=true scrolled=true; page errors=0.
+- 390px: after opening, state=open focus=invitation-card; after entering, state=site focus=hero-title entry hidden=true keepsake=34×42 at (6, 772); dialog modal=true focus=dialog-close; after Escape state=site focus=keepsake-btn; deep link /#wedding-day skips the envelope=true scrolled=true; page errors=0.
+- 1440px: after opening, state=open focus=invitation-card; after entering, state=site focus=hero-title entry hidden=true keepsake=110×138 at (12, 728); dialog modal=true focus=dialog-close; after Escape state=site focus=keepsake-btn; deep link /#wedding-day skips the envelope=true scrolled=true; page errors=0.
 
 ## Reduced motion, keyboard only (390)
 
@@ -52,7 +52,7 @@ Synthetic guests only (PRD DATA-03). The RSVP preview uses the in-page mock adap
 
 ## Decline-all household (AT-08, synthetic code SOLO, 390)
 
-- Details step skipped when everyone declines: true; decline saved with reference PREVIEW-3CC6A3 (2 guest/event rows).
+- Details step skipped when everyone declines: true; decline saved with reference PREVIEW-5ACE99 (2 guest/event rows).
 
 ## Private-link access (390)
 

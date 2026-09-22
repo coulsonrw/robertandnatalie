@@ -29,6 +29,40 @@ jobs:
           # Strict mode refuses to build while launch blockers remain once the owners have recorded G3.
           if node -e "process.exit(JSON.parse(require('fs').readFileSync('content/site.config.json','utf8')).site.launchApproved ? 0 : 1)"; then npm run build -- --strict | tee build.log; else npm run build | tee build.log; fi
           { echo '## Launch readiness (this deploy is a review build until G3 is recorded)'; echo; echo '```'; sed -n '/Launch readiness/,$p' build.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Ensure the Pages source is GitHub Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The previous site was published from the branch root. While the Pages source is still
+          # "Deploy from a branch", GitHub also runs its own build of the repository root (which no
+          # longer holds a site) and that build overwrites this deployment. Switch the source to
+          # workflow deployments; the change is skipped once it has been made.
+          summary() {
+            gh api "repos/$GITHUB_REPOSITORY/pages" 2>/dev/null | jq -r '"build_type=\(.build_type) source=\(.source.branch // "-")\(.source.path // "") cname=\(.cname) html_url=\(.html_url) https_enforced=\(.https_enforced) certificate=\(.https_certificate.state // "-") (\(.https_certificate.description // "-")) status=\(.status)"' \
+              || echo "no Pages site readable with this token"
+          }
+          before=$(summary)
+          echo "Pages before: $before"
+          case "$before" in
+            build_type=workflow*) echo "Source is already GitHub Actions." ;;
+            *)
+              if gh api --method PUT "repos/$GITHUB_REPOSITORY/pages" -f build_type=workflow >/dev/null; then
+                echo "Switched the Pages source to GitHub Actions."
+              else
+                echo "::warning title=Pages source::GITHUB_TOKEN could not change the Pages source. Set Settings → Pages → Build and deployment → Source to 'GitHub Actions' once; until then GitHub's branch build overwrites this deployment."
+              fi ;;
+          esac
+          case "$before" in
+            *"https_enforced=false"*"certificate=approved"*)
+              if gh api --method PUT "repos/$GITHUB_REPOSITORY/pages" -F https_enforced=true >/dev/null; then
+                echo "Enabled Enforce HTTPS."
+              else
+                echo "::warning title=HTTPS::Could not enable Enforce HTTPS; enable it under Settings → Pages once the certificate is ready."
+              fi ;;
+          esac
+          after=$(summary)
+          echo "Pages after: $after"
+          { echo; echo "## GitHub Pages"; echo; echo "- Before: \`$before\`"; echo "- After: \`$after\`"; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/configure-pages@v5
         with:
           enablement: true

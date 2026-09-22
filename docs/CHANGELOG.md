@@ -12,6 +12,13 @@
 
 Unchanged in v1.1: wedding date, venues and start times, invitation copy, original-colour crest, ivory/gold/charcoal identity, household RSVP requirements, privacy decision status, P1/P2 scope boundaries.
 
+## Repository changes (22 September 2026)
+
+| Change | Instruction or reason | Affected requirements | Approvals reopened |
+|---|---|---|---|
+| Invitation card face is now the approved artwork itself (A2) with its wording removed; names, request, date, venues, times and closing line are live text positioned at the artwork's coordinates; SVG corner flourishes retired | Owner: "Change the invitation with the attached file" (the file matched A2 pixel for pixel apart from JPEG re-encoding) | HOME-01, DES-01, DES-03, AT-01, NFR-02 (LCP element is now the frame image, 28–68 KB by width) | Owner approval of the composition to be recorded |
+| Deploy workflow reads the Pages settings each run, switches the source to GitHub Actions when the token is allowed to, and reports the state in the job summary | Custom domain served a 404 after the first merge: the Pages source was still the branch build, which overwrote the workflow deployment | RELEASE-01, OPS-01 | — |
+
 ## Repository changes (all 21 September 2026)
 
 | Change | Instruction or reason | Affected requirements | Approvals reopened |
