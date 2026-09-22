@@ -7,7 +7,7 @@ This is a small static site generated from one configuration file. There is no f
 ## The guest experience
 
 1. **Sealed envelope** at `/`. A gold seal with the RN monogram; the entry bar carries "Skip to the wedding details" and RSVP so nobody is forced through the animation (PRD HOME-03).
-2. **Opened invitation.** The flap folds back, the invitation card rises out of the envelope and settles centred: live text, original crest, the approved wording. Tap the card, or use "Continue to the website".
+2. **Opened invitation.** The flap folds back, the invitation card rises out of the envelope and settles centred: the approved artwork's own frame, flourishes, paper and crest, with the wording as live text laid over it at the artwork's positions. Tap the card, or use "Continue to the website".
 3. **The website.** The card glides to the bottom-left corner as a keepsake; the site opens on a compact hero (crest, names, date, destination, both start times, RSVP and Wedding Day actions), then Wedding Day, Travel & Stay and Questions.
 4. **Bring the invitation back.** Tap the keepsake (or "View the invitation" in the hero) and the card returns to the centre in a modal dialog; Escape, the close button or the backdrop sends it back to the corner.
 

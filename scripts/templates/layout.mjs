@@ -33,15 +33,6 @@ export const SVG_SPRITE = `<svg xmlns="http://www.w3.org/2000/svg" class="svg-de
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
   <symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
-  <symbol id="corner-flourish" viewBox="0 0 120 120">
-    <path d="M6 6C34 8 52 20 56 46c2 14-8 22-16 16-7-5-2-16 6-12" fill="none"/>
-    <path d="M6 6c2 28 14 46 40 50 14 2 22-8 16-16-5-7-16-2-12 6" fill="none"/>
-    <path d="M6 6c14 10 20 20 24 34" fill="none"/>
-    <path d="M22 11c7-5 14-2 16 5-7 3-14 2-16-5z" fill="currentColor" stroke="none"/>
-    <path d="M11 22c-5 7-2 14 5 16 3-7 2-14-5-16z" fill="currentColor" stroke="none"/>
-    <path d="m30 40 4 4-4 4-4-4z" fill="currentColor" stroke="none"/>
-    <path d="M62 8c10 0 18 2 24 6M8 62c0 10 2 18 6 24" fill="none" opacity=".7"/>
-  </symbol>
   <symbol id="ornament-rule" viewBox="0 0 200 16">
     <path d="M0 8h78M122 8h78" fill="none"/>
     <path d="m100 2 6 6-6 6-6-6z" fill="currentColor" stroke="none"/>
