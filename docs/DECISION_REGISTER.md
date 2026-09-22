@@ -1,6 +1,6 @@
 # Decision register
 
-Owner and coordinator decisions the PRD (v1.1, Section 16) says are still required, with their current status in this repository. Approver and date are recorded only when a decision is actually made; the implementation team does not fill them in.
+Owner and coordinator decisions the PRD (v1.2, Section 16) says are still required, with their current status in this repository. Approver and date are recorded only when a decision is actually made; the implementation team does not fill them in.
 
 | # | Decision | Owner (PRD) | Required by (PRD) | Status on 21 Sep 2026 | Where it lands in the build | Approver / date |
 |---|---|---|---|---|---|---|
@@ -38,8 +38,11 @@ Owner and coordinator decisions the PRD (v1.1, Section 16) says are still requir
 | 22 | Our Story: whether to publish it at all, the approved copy and voice, the selected photographs with rights and subject approval, captions, and public visibility | Robert / Natalie | Optional-module approval (audit IMP-12/13) | Open (module built and switched off; synthetic preview only) | `story.*`; `docs/OUR_STORY_INTAKE.md` |
 | 23 | Verify December 2026 air service and approve the prefilled Pensacola (PNS) and Gulf Shores (JKA) entries, and reconfirm Mobile (MOB) | Coordinator | Travel publication (audit IMP-15) | Open (MOB published as carried-forward; PNS and JKA unpublished) | `travel.gettingThere.airports[]` |
 | 24 | Attendance keepsake exception: whether a minimal who-attended record may be kept after the 90-day deletion, and which fields | Robert / Natalie | Privacy notice before responses open (audit §05) | Open (notice says "may keep a simple record"; no fields defined) | `scripts/templates/privacy.mjs`; `privacy.*` |
+| 25 | Gallery (PRD v1.2 GALLERY-01–05, ARCH-07): visibility (public or invitation-only, SEC-01), storage in the RSVP service (Workers + R2/D1) or an owner-approved provider named in the privacy notice, upload opening and closing dates, per-file and per-household limits, who moderates, keepsake retention of approved uploads (SEC-06), and the photographer's licence for post-wedding pictures | Robert / Natalie; coordinator for moderation | Before uploads open; before post-wedding publication | Open (nothing built; `/gallery` does not exist) | New `gallery` block in `content/site.config.json`; `backend/` upload and moderation routes; `assets/ASSET_MANIFEST.md` | |
+| 26 | Charity in lieu of gifts (PRD v1.2 CONTENT-07): whether to publish, charity name (one, two at most), official donation link, approved wording, any suggested amount, and the verification date (official domain; IRS Tax Exempt Organization Search for a US charity) | Robert / Natalie | Gifts publication | Open (no charity named; nothing rendered) | New `gifts` block in `content/site.config.json`; "Gifts" card after Travel & Stay and FAQ | |
+| 27 | Chapel-to-reception route (PRD v1.2 CONTENT-08): passenger drop-off point at The Grand Hotel (entrance or porte-cochère, valet or attended drop-off), guest parking (self or valet, location, charge, accessible spaces), walking route and reception room name with accessible route, the map destination address for each, and whether any shuttle runs | Coordinator / The Grand Hotel | Directions and guest launch | Open (reception card carries no route, drop-off, parking or room instruction) | `wedding.events[reception]` directions fields; "getting between venues" FAQ; `calendar/reception.ics` description | |
 
-Waiting since 22 September 2026 for rows 21–24.
+Waiting since 22 September 2026 for rows 21–27.
 
 Waiting since 21 September 2026 for every open row.
 

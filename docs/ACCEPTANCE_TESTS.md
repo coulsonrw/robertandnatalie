@@ -1,6 +1,6 @@
 # Acceptance-test matrix — status
 
-PRD v1.1 Section 14. Synthetic fixtures only (`content/site.config.json` → `rsvp.preview.households`: PREVIEW, SOLO, FAMILY). "Lab" means headless Chromium 141 through Playwright on this repository's build; no production data, no other browsers, no field data. A fixed defect requires a re-run of the affected cases.
+PRD v1.2 Section 14 (AT-01–22 unchanged from v1.1; AT-23–25 added on 22 September 2026). Synthetic fixtures only (`content/site.config.json` → `rsvp.preview.households`: PREVIEW, SOLO, FAMILY). "Lab" means headless Chromium 141 through Playwright on this repository's build; no production data, no other browsers, no field data. A fixed defect requires a re-run of the affected cases.
 
 | Test | Scenario (PRD) | Status | Evidence | Still required |
 |---|---|---|---|---|
@@ -26,6 +26,9 @@ PRD v1.1 Section 14. Synthetic fixtures only (`content/site.config.json` → `rs
 | AT-20 | Three comparable branded proofs at 320/390/768/1440; original assets and exact copy; synthetic data | **Evidence complete; owner review pending** | `docs/proofs/` (custom, working build), `docs/selection/proofs/alt-a-editorial-heritage/`, `docs/selection/proofs/alt-b-couple-template/` (labelled concept mockups, independently re-captured) | Owner review at G1; G2 baseline freeze |
 | AT-21 | Cannot advance on concept approval alone; purchases need named approval; no self-approval | **Pass by construction** | `docs/DECISION_RECORD.md` approvals table blank; `site.launchApproved` false blocks release | — |
 | AT-22 | Decision record and a simulated foundation or typeface change reopen the affected approvals | **Documented** | `docs/DECISION_RECORD.md` change-control section | Owners to exercise once |
+| AT-23 | Gallery (v1.2): absent when no approved pictures and uploads closed; unauthenticated and over-limit uploads refused; metadata stripped; invisible until approved; neutral description; removal; no search or social exposure | **Not started** (no gallery, upload route or test exists) | — | Decision row 25, then GALLERY-01–05 and ARCH-07 implementation, then a build test and a service test with synthetic households |
+| AT-24 | Gifts (v1.2): nothing rendered before approval; approved wording on the card and FAQ; official charity link; no payment form or amount; verification date recorded | **Not started** (no gifts block or test exists) | — | Decision row 26, then CONTENT-07 implementation and a build test |
+| AT-25 | Chapel-to-reception directions (v1.2): nothing rendered before confirmation; reception card, FAQ and calendar description agree from one source; map links resolve; room name and accessible route stated; readable and printable at 320 px | **Not started** (no directions fields or test exist) | — | Decision row 27, then CONTENT-08 implementation, a build test, a 320 px proof and a print check |
 
 ## AT-02 variant run (recorded evidence)
 

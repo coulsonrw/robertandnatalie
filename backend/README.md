@@ -1,6 +1,6 @@
 # RSVP API — reference implementation (Cloudflare Workers + D1)
 
-This directory is a reference backend for the RSVP contract in `../docs/RSVP_API_CONTRACT.md`, written against PRD v1.1 Sections 08–12. The static site on GitHub Pages calls it from `src/js/rsvp.js`; nothing in the static site stores guest data.
+This directory is a reference backend for the RSVP contract in `../docs/RSVP_API_CONTRACT.md`, written against PRD v1.1 Sections 08–12 (unchanged in PRD v1.2). PRD v1.2 adds ARCH-07 and GALLERY-02/03/05 (guest uploads, moderation and retention through this service); none of that is implemented here yet. The static site on GitHub Pages calls it from `src/js/rsvp.js`; nothing in the static site stores guest data.
 
 **Status (22 September 2026):** built and tested locally in the Workers runtime with a local D1 database (71 tests, see "Tests"); verified against the external audit's acceptance scenarios QA-10..QA-22 in `../docs/audit/BACKEND_QA_MATRIX.md`. It has **not** been deployed to any Cloudflare account, no domain has been attached, no Access application exists, and no mail provider is connected. Everything about Cloudflare's hosted behaviour below is labelled *publisher claim* or *not verified* unless it was observed here.
 
