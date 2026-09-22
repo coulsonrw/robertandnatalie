@@ -59,7 +59,7 @@ Node 20 or newer; no `npm install` is required for the build.
 
 `deploy.yml` builds `dist/` and publishes it with the official Pages actions on every push to `main`.
 
-One-time setting: in the repository, open **Settings → Pages** and set **Build and deployment → Source** to **GitHub Actions** (the workflow also tries to enable this automatically). Keep the custom domain `robertandnatalie.wedding` and *Enforce HTTPS* enabled. The `CNAME` file is copied into the artifact for completeness.
+The workflow switches **Settings → Pages → Build and deployment → Source** to **GitHub Actions** through the API on its first run and enables *Enforce HTTPS* once the certificate is issued; each run prints the Pages state (source, custom domain, certificate) in its job summary. If the token is not allowed to change the setting, the run warns and the setting must be made once by hand; until then GitHub's own build of the branch root overwrites every deployment. Keep the custom domain `robertandnatalie.wedding`. The `CNAME` file is copied into the artifact for completeness.
 
 ## RSVP status
 
