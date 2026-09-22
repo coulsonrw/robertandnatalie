@@ -105,7 +105,7 @@ const results = {
   build: buildFingerprint(),
   tool: { script: 'scripts/audit.mjs', node: process.version, playwright: pwPkg.version, browser: `Chromium ${browser.version()}`, axeCore: axeVersion,
     host: { platform: `${os.platform()} ${os.release()}`, cpu: os.cpus()[0]?.model || 'unknown', cores: os.cpus().length, memoryGB: +(os.totalmem() / 1e9).toFixed(1) } },
-  scope: 'Lab measurements in headless Chromium only. No Safari, Firefox, Edge, iOS or Android runs; no screen-reader (VoiceOver/NVDA) sessions; no field (RUM) data.',
+  scope: 'Lab measurements in headless Chromium only. No Safari, Firefox, Edge, iOS or Android runs; no screen-reader (VoiceOver/NVDA) sessions; no field (RUM) data. Browser contexts use Playwright\'s bypassCSP so that axe-core and the measurement probes can be injected; whether the pages behave correctly under their own Content-Security-Policy is not verified by this run.',
   budgets: BUDGETS,
   accessibility: null,
   performance: null,
