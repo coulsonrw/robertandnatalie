@@ -2,7 +2,7 @@
 
 Orientation for anyone (person or agent) picking up this repository. Read in this order.
 
-1. `docs/PRD_v1_1.md` — the governing specification. Sections 01–05 and 16 first, then the rest. Its identifiers (IA-01, DES-02, RSVP-05, AT-09 …) are used everywhere below.
+1. `docs/PRD_v1_2.md` — the governing specification (reissued 22 September 2026; it adds the gallery and guest uploads, the charity note in lieu of gifts, and the chapel-to-reception directions). Sections 01–05 and 16 first, then the rest. Its identifiers (IA-01, DES-02, RSVP-05, AT-09, GALLERY-01 …) are used everywhere below. `docs/PRD_v1_1.md` is retained for reference only; every v1.1 identifier keeps its number and meaning in v1.2.
 2. `docs/DECISION_RECORD.md` — what was decided, by whom, and the gate status (G1, G2, G3). As of 21 September 2026 no gate is signed; the owner's instruction on that date was to start building the website on GitHub Pages, and that instruction is recorded as the authority for the work so far.
 3. `docs/PRD_GAP_ANALYSIS.md` and `docs/TRACEABILITY.md` — every requirement with its verified status and remaining action.
 4. `docs/DECISION_REGISTER.md` — the decisions still owed by the owners and coordinator.

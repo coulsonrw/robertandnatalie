@@ -35,7 +35,7 @@ Event details (venues, start times) come from the owners' instructions in the PR
 2. Run `npm run check` to validate, or `npm run build` to build. The build refuses inconsistent data (for example an event that is not on the wedding date or whose UTC offset is wrong for `America/Chicago`) and prints what still blocks guest launch.
 3. Run `npm run register` to refresh `docs/CONTENT_APPROVAL_REGISTER.md`, then commit both files.
 
-`content/site.config.json` is the PRD's `content-config.example.json`: schema 1.0, document version 1.1, synthetic guests only, no credentials, and not launch-ready until the pending blocks are approved.
+`content/site.config.json` is the PRD's `content-config.example.json`: schema 1.0, document version 1.2 (`docs/PRD_v1_2.md`), synthetic guests only, no credentials, and not launch-ready until the pending blocks are approved. The v1.2 modules (gallery and guest uploads, charity note in lieu of gifts, chapel-to-reception directions) are specified but not yet built; each waits on the owner and coordinator inputs listed in `docs/DECISION_REGISTER.md` rows 25–27.
 
 Three owner-controlled switches live in the same file:
 

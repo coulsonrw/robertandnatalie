@@ -1,6 +1,6 @@
 # Decision record — design foundation and hosting
 
-PRD reference: Robert and Natalie Wedding Website PRD v1.1 (21 September 2026), Section 05 (TPL-01 to TPL-12) and Section 16.
+PRD reference: Robert and Natalie Wedding Website PRD v1.2 (22 September 2026; Section 05 and its identifiers are unchanged from v1.1), Section 05 (TPL-01 to TPL-12) and Section 16.
 
 ## Status at a glance
 

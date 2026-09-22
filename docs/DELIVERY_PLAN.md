@@ -2,6 +2,8 @@
 
 PRD v1.1 Section 15 proposes a 25-working-day baseline from approval of scope and essential inputs, excluding owner and procurement waiting time. This page maps those stages to what exists in the repository as of 21 September 2026. The wedding is 19 December 2026; the guest-launch date must be agreed against invitation distribution and the still-unset RSVP cutoff.
 
+PRD v1.2 (22 September 2026) keeps that baseline and adds three modules outside it: the chapel-to-reception directions (CONTENT-08, P0) belong to the content and integration stage once the coordinator and the hotel confirm the route; the charity note (CONTENT-07, P1) is a small content block once the owners supply it; the gallery and guest uploads (GALLERY-01–05, ARCH-07, P1) are the largest addition and need the RSVP service deployed with object storage before uploads can open. None of the three is started; their inputs are `docs/DECISION_REGISTER.md` rows 25–27.
+
 | Stage (PRD days) | Exit condition (PRD) | Status | Evidence / where |
 |---|---|---|---|
 | Inputs and preliminary architecture (1–3) | Artwork, budget, accounts, privacy direction, guest model, essential inputs, evaluation authority confirmed | **Partly done.** Artwork A1/A2 in `assets/`; repository and domain exist. Budget, RSVP hosting account, privacy direction, guest roster and evaluation authority are open. | `assets/ASSET_MANIFEST.md`, `docs/DECISION_REGISTER.md` rows 1–3 |
