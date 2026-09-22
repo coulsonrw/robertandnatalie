@@ -117,7 +117,7 @@ address { font-style: normal; }
 @media (min-width: 640px) { .names .and { display: inline; font-size: .74em; margin: 0 .12em; } }
 .inv-line { font-size: 18px; line-height: 1.5; margin: 0; }
 .inv-group { margin: 16px 0; }
-.inv-sc { font-family: var(--sc); font-size: 18px; letter-spacing: .1em; text-transform: lowercase; }
+.inv-sc { font-family: var(--sc); font-size: 18px; letter-spacing: .1em; } /* no text-transform: the approved capitalisation is kept (capitals render as full caps in the SC face) */
 .venue { font-family: var(--script); font-weight: 400; color: var(--gold-text); font-size: 38px; line-height: 1.15; margin: 0 0 2px; }
 .hair { border: 0; border-top: 1px solid var(--rule); width: 64px; margin: 16px auto; }
 /* Closing line: SAME family, size, weight and colour as the informational lines (DES-04). */
@@ -346,8 +346,8 @@ dialog .invite { max-width: none; }
           <svg class="corner bl" viewBox="0 0 18 18" aria-hidden="true"><path d="M0 18V0h18" fill="none" stroke="currentColor" stroke-width="1"/><path d="M0 6h6V0" fill="none" stroke="currentColor" stroke-width="1"/></svg>
           <svg class="corner br" viewBox="0 0 18 18" aria-hidden="true"><path d="M0 18V0h18" fill="none" stroke="currentColor" stroke-width="1"/><path d="M0 6h6V0" fill="none" stroke="currentColor" stroke-width="1"/></svg>
 
-          <img class="crest" src="../../../../src/img/crest-360.png" width="360" height="360" alt="Family crest of Robert and Natalie: silver and charcoal dolphins with gold collars and chain on a navy shield, with monogram and ribbon.">
-          <h2 class="names" id="names-heading">Robert<span class="and">and</span>Natalie</h2>
+          <img class="crest" src="../../../../src/img/crest-360.png" width="360" height="556" alt="Family crest of Robert and Natalie: silver and charcoal dolphins with gold collars and chain on a navy shield, with monogram and ribbon.">
+          <h2 class="names" id="names-heading">Robert <span class="and">and</span> Natalie</h2>
           <div class="inv-group">
             <p class="inv-line">With Joy and Gratitude,</p>
             <p class="inv-line">request the pleasure of Your Company</p>
@@ -375,8 +375,8 @@ dialog .invite { max-width: none; }
 
       <div class="hero-summary">
         <div class="docked-only">
-          <img src="../../../../src/img/crest-360.png" width="360" height="360" alt="">
-          <p class="names" aria-hidden="true">Robert<span class="and">and</span>Natalie</p>
+          <img src="../../../../src/img/crest-360.png" width="360" height="556" alt="">
+          <p class="names" aria-hidden="true">Robert <span class="and">and</span> Natalie</p>
         </div>
         <h1 id="site-title" tabindex="-1">The wedding of Robert and Natalie</h1>
         <p class="date"><time datetime="2026-12-19">Saturday 19 December 2026</time></p>
@@ -466,7 +466,7 @@ dialog .invite { max-width: none; }
         <p>Point Clear sits on the Eastern Shore of Mobile Bay in Baldwin County, Alabama.</p>
         <p>For current driving directions and airport guidance, the hotel’s official Getting Here page is the best starting point.</p>
         <dl>
-          <dt>Nearest named airport</dt>
+          <dt>Airport</dt>
           <dd>Mobile Regional Airport (MOB)</dd>
           <dt>Directions and airports</dt>
           <dd><a href="https://www.grand1847.com/about/GettingHere-137.html" rel="noopener">The hotel’s Getting Here page</a></dd>
