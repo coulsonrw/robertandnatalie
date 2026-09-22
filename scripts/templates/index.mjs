@@ -143,16 +143,18 @@ function storyFigure(im, opts) {
   return `<figure class="story-figure">${storyImage(im, opts)}${im.caption || credit ? `<figcaption>${im.caption ? esc(im.caption) : ''}${im.caption && credit ? ' ' : ''}${credit}</figcaption>` : ''}</figure>`;
 }
 
-function storySection(view) {
+function storySection(view, { headingLevel = 2 } = {}) {
   const s = view.story;
   if (!s || (!s.published && !s.fixture)) return '';
+  const H = `h${headingLevel}`; // h2 under the home page's h1; h1 on the standalone preview page
+  const M = `h${headingLevel + 1}`; // milestone titles sit one level below the section heading
   const lead = s.images.find((i) => i.role === 'lead');
   const supporting = s.images.filter((i) => i.role === 'supporting');
   const milestones = s.milestones || [];
   return `<section id="our-story" class="section story" aria-labelledby="story-title">
   <div class="container">
     <header class="section-head">
-      <h2 id="story-title">${esc(s.heading)}</h2>
+      <${H} id="story-title">${esc(s.heading)}</${H}>
       <svg class="ornament" aria-hidden="true" focusable="false"><use href="#ornament-rule"/></svg>
     </header>
     <div class="story-lead">
@@ -165,7 +167,7 @@ function storySection(view) {
       ${supporting.map((im) => storyFigure(im, { sizes: '(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw' })).join('\n      ')}
     </div>` : ''}
     ${milestones.length ? `<ol class="story-milestones" aria-label="Milestones">
-      ${milestones.map((m) => `<li>${m.when || m.place ? `<p class="when">${[m.when, m.place].filter(Boolean).map(esc).join(' <span class="dot" aria-hidden="true">·</span> ')}</p>` : ''}<h3>${esc(m.title)}</h3><p>${esc(m.description)}</p>${m.image ? storyFigure(m.image, { sizes: '(min-width: 900px) 40vw, 100vw' }) : ''}</li>`).join('\n      ')}
+      ${milestones.map((m) => `<li>${m.when || m.place ? `<p class="when">${[m.when, m.place].filter(Boolean).map(esc).join(' <span class="dot" aria-hidden="true">·</span> ')}</p>` : ''}<${M}>${esc(m.title)}</${M}><p>${esc(m.description)}</p>${m.image ? storyFigure(m.image, { sizes: '(min-width: 900px) 40vw, 100vw' }) : ''}</li>`).join('\n      ')}
     </ol>` : ''}
   </div>
 </section>`;
@@ -175,7 +177,7 @@ export function renderStoryPreview(view, fixture) {
   const v = { ...view, story: fixture };
   const main = `<main id="main" class="page-story-preview">
   <div class="container"><div class="notice preview-notice" role="note">${icon('i-info')}<span><strong>Protected preview.</strong> This is a synthetic layout fixture: the pictures are labelled placeholder graphics and the text is placeholder copy supplied by the build, not the couple's story or photographs. The page exists only in local and CI builds and is never part of the deployed site (audit IMP-12, QA-06). Publishing steps: docs/OUR_STORY_INTAKE.md.</span></div></div>
-${storySection(v)}
+${storySection(v, { headingLevel: 1 })}
 </main>`;
   return page({ view: v, currentPage: 'story-preview', title: 'Our Story (layout preview)', description: 'Layout preview with synthetic fixtures; not published.', main, bodyClass: 'story-preview' });
 }
