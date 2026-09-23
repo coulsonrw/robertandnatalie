@@ -76,11 +76,21 @@ Prerequisites: a Cloudflare account owned by Robert / Natalie (not a developer's
 
 ### Deployment status
 
-**23 September 2026: not deployed. Stopped at step 1.** The session's API token for the owners' account failed `npx wrangler whoami` (`Invalid access token [code: 9109]`). The account-scoped check (`GET /accounts/{account_id}/tokens/verify`) showed why: the token is `active` but has a **Not before** date of `2026-12-31T00:00:00Z` and expires at `2026-12-31T23:59:59Z`. It cannot be used before 31 December 2026, which is after the wedding (19 December 2026), and it lasts only one day. User-scoped calls (`/user/tokens/verify`, `/accounts`, `/zones`) are refused, as they would be for any account-owned token that is not yet valid.
+**23 September 2026: not deployed. Stopped at step 2.** Nothing has been created or changed in the Cloudflare account: no D1 database, no migration, no event seed, no secrets, no Worker, no custom domain. `wrangler.toml` still reads `database_id = "REPLACE-WITH-D1-DATABASE-ID"`.
 
-Nothing was created or changed in the account: no D1 database, no migration, no event seed, no secrets, no Worker, no custom domain. `wrangler.toml` still reads `database_id = "REPLACE-WITH-D1-DATABASE-ID"`.
+1. First attempt: the account API token had a "Not before" date of 31 December 2026, so `wrangler whoami` was refused (`Invalid access token [code: 9109]`). The owners cleared the start date.
+2. Second attempt: step 1 passes. `wrangler whoami` reports an Account API Token for account `7548abd079e5adf9599165c4c5d632cf`. The `robertandnatalie.wedding` zone is `active` on Cloudflare nameservers (`kira`/`mario.ns.cloudflare.com`), and the account has no D1 databases, Workers or Workers custom domains yet. Step 2 (`wrangler d1 create rsvp`) failed with `Authentication error [code: 10000]`. The token's policies (read with the "Account API Tokens Read" permission it holds) contain only **Read** permission groups, like Cloudflare's "Read all resources" template, so it cannot create anything. It currently expires at `2026-12-31T23:59:59Z`.
 
-**To unblock:** in the owners' dashboard (Manage Account → Account API Tokens), edit the token or issue a new one. Clear the "Not before" date (or set it to today) and choose an expiry that lasts through the retention period. The token needs Workers Scripts Edit, D1 Edit, Workers Routes Edit and Zone Read / DNS Edit for `robertandnatalie.wedding`, so the custom domain can be attached. Then re-run steps 1–5 and 8–9. Steps 6 and 7 (the Access application, admin emails, mail provider and cutoff) and step 10 (front end) remain owner decisions. No guest data is imported by the deployment.
+**To unblock**, the token (or a new one) needs, for this account:
+
+| Scope | Permission | Used by |
+|---|---|---|
+| Account | D1 Edit | steps 2–4 (create, migrate, seed) |
+| Account | Workers Scripts Edit | steps 5 and 8 (secrets, deploy, cron trigger) |
+| Zone `robertandnatalie.wedding` | Workers Routes Edit | step 8 (custom domain `api.robertandnatalie.wedding`) |
+| Zone `robertandnatalie.wedding` | DNS Edit, Zone Read, SSL and Certificates Edit | step 8 (the custom domain creates its DNS record and certificate; *not verified* which of these Cloudflare requires) |
+
+Also set an expiry that covers the retention period, which ends 90 days after the wedding (about 19 March 2027). Then re-run steps 1–5 and 8–9. Steps 6 and 7 (the Access application, admin emails, mail provider and cutoff) and step 10 (front end) remain owner decisions. No guest data is imported by the deployment.
 
 ### Values that must stay identical in both places (DATA-01)
 
