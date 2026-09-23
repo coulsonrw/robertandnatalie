@@ -76,20 +76,23 @@ Prerequisites: a Cloudflare account owned by Robert / Natalie (not a developer's
 
 ### Deployment status
 
-**23 September 2026: partly deployed. The Worker is running in the owners' account but is not yet reachable. Step 8 is blocked at the custom domain.**
+**23 September 2026: deployed. Steps 1–5, 8 and 9 are done in the owners' account. `https://api.robertandnatalie.wedding/health` returns `{"ok":true,"environment":"production"}`.** Steps 6, 7 and 10 are owner decisions and are not done.
 
 | Step | Result |
 |---|---|
-| 1. Token | `wrangler whoami` reports an Account API Token for account `7548abd079e5adf9599165c4c5d632cf`. The zone `robertandnatalie.wedding` is `active` on Cloudflare nameservers. (Earlier attempts the same day were refused: first the token had a 31 December 2026 start date, then it was read-only. The owners fixed both.) |
-| 2. D1 | Database `rsvp` created in region ENAM. `database_id = "0f670edc-9378-4f4b-9fec-d65fe1a5e610"` is now in `wrangler.toml`. |
+| 1. Token | `wrangler whoami` reports an Account API Token for account `7548abd079e5adf9599165c4c5d632cf`. The zone `robertandnatalie.wedding` is `active` on Cloudflare nameservers. Earlier attempts the same day stopped on the token three times: its start date was 31 December 2026, it was read-only, and it had no zone edit permission. The owners fixed each one. |
+| 2. D1 | Database `rsvp` created in region ENAM. `database_id = "0f670edc-9378-4f4b-9fec-d65fe1a5e610"` is in `wrangler.toml`. |
 | 3. Migrations | `0001_init.sql` and `0002_meal_options.sql` applied remotely. |
 | 4. Events | `scripts/events-sync.mjs` output applied. The `event` table holds `ceremony` (14:00 −06:00, `carried-forward`) and `reception` (16:00 −06:00, `approved`). `household` and `guest` are empty: no guest data imported. |
-| 5. Secrets | `CREDENTIAL_PEPPER` and `SESSION_SECRET` were generated from 32 random bytes each and piped straight into `wrangler secret put`. They were never printed, stored or committed; `wrangler secret list` shows both. The first `secret put` returned 403 because the Worker did not exist yet, so the secrets were set just after the first upload. During those seconds the Worker was reachable at no hostname. |
-| 6–7. Access, admin emails, mail, cutoff | Not done: owner decisions. `MAIL_PROVIDER` stays `stub`; `RSVP_CUTOFF_AT`, `ACCESS_*`, `OWNER_EMAILS` and `COORDINATOR_EMAILS` are empty. `/admin` therefore refuses everyone (fail closed). |
-| 8. Deploy | Script `robertandnatalie-rsvp-api` uploaded. **Custom domain failed**: `PUT …/workers/scripts/robertandnatalie-rsvp-api/domains/records` returned "No access to the specified resource". The token's zone policy for `robertandnatalie.wedding` still holds only Read permissions. The script's `workers.dev` route is disabled, so the Worker has no public hostname yet, and `https://api.robertandnatalie.wedding/health` does not reach it. `/health` is **not verified**. |
-| 9. Cron | `*/5 * * * *` registered with the deploy ("Deployed … triggers: schedule: */5 * * * *"). |
+| 5. Secrets | `CREDENTIAL_PEPPER` and `SESSION_SECRET` were generated from 32 random bytes each and piped straight into `wrangler secret put`. They were never printed, stored or committed; `wrangler secret list` shows both. The first `secret put` returned 403 because the Worker did not exist yet, so the secrets were set just after the first upload. At that point the Worker had no public hostname (custom domain not yet attached, `workers.dev` disabled). |
+| 6–7. Access, admin emails, mail, cutoff | Not done: owner decisions. `MAIL_PROVIDER` stays `stub`; `RSVP_CUTOFF_AT`, `ACCESS_*`, `OWNER_EMAILS` and `COORDINATOR_EMAILS` are empty. `GET /admin/status` returns `401 unauthenticated` from the Worker (fail closed). Once the Access application exists, Access should block it before it reaches the Worker. |
+| 8. Deploy | Script `robertandnatalie-rsvp-api` deployed with custom domain `api.robertandnatalie.wedding`, version `8d42afbd-2983-4820-b8b0-c3bf679f18ee`. `/health` answers `200 {"ok":true,"environment":"production"}` with `Cache-Control: private, no-store` and `Referrer-Policy: no-referrer`. The script's `workers.dev` route is disabled. |
+| 9. Cron | `*/5 * * * *` registered at deploy ("schedule: */5 * * * *"). Not yet confirmed on the dashboard's Worker → Triggers page. |
 
-**To finish:** add **Workers Routes Edit** and **DNS Edit** for the zone `robertandnatalie.wedding` to the token (the account-level Workers and D1 edit permissions are already there). Then run `npm run deploy` again and check `https://api.robertandnatalie.wedding/health`. Also consider extending the token's expiry: it currently ends `2026-12-31T23:59:59Z`, before the retention period ends (90 days after the wedding, about 19 March 2027).
+**Owner follow-ups:**
+- The token expires `2026-12-31T23:59:59Z`, before the retention period ends (90 days after the wedding, about 19 March 2027). Extend it, or issue a new one when needed.
+- The token now also holds broad account permissions (for example Registrar Domains Admin and Pages Write). Consider narrowing it to D1 Edit, Workers Scripts Edit, and Zone Workers Routes Edit / DNS Edit.
+- Steps 6, 7 and 10, and the load and restore tests listed below, remain before launch.
 
 ### Values that must stay identical in both places (DATA-01)
 
