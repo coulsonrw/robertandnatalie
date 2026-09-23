@@ -76,21 +76,20 @@ Prerequisites: a Cloudflare account owned by Robert / Natalie (not a developer's
 
 ### Deployment status
 
-**23 September 2026: not deployed. Stopped at step 2.** Nothing has been created or changed in the Cloudflare account: no D1 database, no migration, no event seed, no secrets, no Worker, no custom domain. `wrangler.toml` still reads `database_id = "REPLACE-WITH-D1-DATABASE-ID"`.
+**23 September 2026: partly deployed. The Worker is running in the owners' account but is not yet reachable. Step 8 is blocked at the custom domain.**
 
-1. First attempt: the account API token had a "Not before" date of 31 December 2026, so `wrangler whoami` was refused (`Invalid access token [code: 9109]`). The owners cleared the start date.
-2. Second attempt: step 1 passes. `wrangler whoami` reports an Account API Token for account `7548abd079e5adf9599165c4c5d632cf`. The `robertandnatalie.wedding` zone is `active` on Cloudflare nameservers (`kira`/`mario.ns.cloudflare.com`), and the account has no D1 databases, Workers or Workers custom domains yet. Step 2 (`wrangler d1 create rsvp`) failed with `Authentication error [code: 10000]`. The token's policies (read with the "Account API Tokens Read" permission it holds) contain only **Read** permission groups, like Cloudflare's "Read all resources" template, so it cannot create anything. It currently expires at `2026-12-31T23:59:59Z`.
+| Step | Result |
+|---|---|
+| 1. Token | `wrangler whoami` reports an Account API Token for account `7548abd079e5adf9599165c4c5d632cf`. The zone `robertandnatalie.wedding` is `active` on Cloudflare nameservers. (Earlier attempts the same day were refused: first the token had a 31 December 2026 start date, then it was read-only. The owners fixed both.) |
+| 2. D1 | Database `rsvp` created in region ENAM. `database_id = "0f670edc-9378-4f4b-9fec-d65fe1a5e610"` is now in `wrangler.toml`. |
+| 3. Migrations | `0001_init.sql` and `0002_meal_options.sql` applied remotely. |
+| 4. Events | `scripts/events-sync.mjs` output applied. The `event` table holds `ceremony` (14:00 −06:00, `carried-forward`) and `reception` (16:00 −06:00, `approved`). `household` and `guest` are empty: no guest data imported. |
+| 5. Secrets | `CREDENTIAL_PEPPER` and `SESSION_SECRET` were generated from 32 random bytes each and piped straight into `wrangler secret put`. They were never printed, stored or committed; `wrangler secret list` shows both. The first `secret put` returned 403 because the Worker did not exist yet, so the secrets were set just after the first upload. During those seconds the Worker was reachable at no hostname. |
+| 6–7. Access, admin emails, mail, cutoff | Not done: owner decisions. `MAIL_PROVIDER` stays `stub`; `RSVP_CUTOFF_AT`, `ACCESS_*`, `OWNER_EMAILS` and `COORDINATOR_EMAILS` are empty. `/admin` therefore refuses everyone (fail closed). |
+| 8. Deploy | Script `robertandnatalie-rsvp-api` uploaded. **Custom domain failed**: `PUT …/workers/scripts/robertandnatalie-rsvp-api/domains/records` returned "No access to the specified resource". The token's zone policy for `robertandnatalie.wedding` still holds only Read permissions. The script's `workers.dev` route is disabled, so the Worker has no public hostname yet, and `https://api.robertandnatalie.wedding/health` does not reach it. `/health` is **not verified**. |
+| 9. Cron | `*/5 * * * *` registered with the deploy ("Deployed … triggers: schedule: */5 * * * *"). |
 
-**To unblock**, the token (or a new one) needs, for this account:
-
-| Scope | Permission | Used by |
-|---|---|---|
-| Account | D1 Edit | steps 2–4 (create, migrate, seed) |
-| Account | Workers Scripts Edit | steps 5 and 8 (secrets, deploy, cron trigger) |
-| Zone `robertandnatalie.wedding` | Workers Routes Edit | step 8 (custom domain `api.robertandnatalie.wedding`) |
-| Zone `robertandnatalie.wedding` | DNS Edit, Zone Read, SSL and Certificates Edit | step 8 (the custom domain creates its DNS record and certificate; *not verified* which of these Cloudflare requires) |
-
-Also set an expiry that covers the retention period, which ends 90 days after the wedding (about 19 March 2027). Then re-run steps 1–5 and 8–9. Steps 6 and 7 (the Access application, admin emails, mail provider and cutoff) and step 10 (front end) remain owner decisions. No guest data is imported by the deployment.
+**To finish:** add **Workers Routes Edit** and **DNS Edit** for the zone `robertandnatalie.wedding` to the token (the account-level Workers and D1 edit permissions are already there). Then run `npm run deploy` again and check `https://api.robertandnatalie.wedding/health`. Also consider extending the token's expiry: it currently ends `2026-12-31T23:59:59Z`, before the retention period ends (90 days after the wedding, about 19 March 2027).
 
 ### Values that must stay identical in both places (DATA-01)
 
