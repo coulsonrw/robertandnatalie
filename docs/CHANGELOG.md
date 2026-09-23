@@ -25,6 +25,12 @@ Nothing in this reissue is implemented yet: see the v1.2 addendum in `docs/TRACE
 
 Unchanged in v1.1: wedding date, venues and start times, invitation copy, original-colour crest, ivory/gold/charcoal identity, household RSVP requirements, privacy decision status, P1/P2 scope boundaries.
 
+## Repository changes (23 September 2026)
+
+| Change | Instruction or reason | Affected requirements | Approvals reopened |
+|---|---|---|---|
+| Deployed the RSVP service into the owners' Cloudflare account (backend README steps 1–5, 8, 9). D1 database `rsvp` created (its id is in `backend/wrangler.toml`), migrations 0001–0002 applied, `ceremony` and `reception` seeded from `content/site.config.json`, `CREDENTIAL_PEPPER` and `SESSION_SECRET` set (never printed), Worker deployed on `api.robertandnatalie.wedding`, 5-minute cron registered. `GET /health` returns `{"ok":true,"environment":"production"}`, and `/admin/status` is refused (401). Earlier attempts the same day were blocked by the token three times (future start date, read-only, no zone edit); the owners fixed each. `content/site.config.json` is unchanged; no guest data imported. | Owner: deploy the RSVP service following backend README steps 1–9. Do not create the Access application, set admin emails, mail provider or cutoff, or import guest data. | ARCH-06 (still partly met: Access, mail identity and cutoff remain) | None. Steps 6, 7 and 10 remain owner decisions. |
+
 ## Repository changes (22 September 2026)
 
 | Change | Instruction or reason | Affected requirements | Approvals reopened |

@@ -25,7 +25,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "rsvp"
-database_id = "REPLACE-WITH-D1-DATABASE-ID"
+database_id = "0f670edc-9378-4f4b-9fec-d65fe1a5e610"
 migrations_dir = "migrations"
 
 # Cron trigger for the background worker (ARCH-03, SEC-06): every five minutes it sends queued
