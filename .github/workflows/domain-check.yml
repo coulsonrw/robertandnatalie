@@ -41,6 +41,8 @@ jobs:
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: DNS answers from public resolvers
+        id: dns
+        continue-on-error: true
         run: |
           set -uo pipefail
           command -v dig > /dev/null || { sudo apt-get update -qq > /dev/null; sudo apt-get install -y -qq dnsutils > /dev/null; }
@@ -93,8 +95,12 @@ jobs:
           [ "$fail" -eq 0 ] || exit 1
 
       - name: HTTPS and certificate
+        id: https
+        if: always()
+        continue-on-error: true
         run: |
           set -uo pipefail
+          if [ -z "${DOMAIN:-}" ]; then echo "No custom domain to probe."; exit 0; fi
           http() { curl -sS -o /dev/null -m 20 -w '%{http_code} %{redirect_url}' "$1" 2>/dev/null | sed 's/ *$//' || echo "no response"; }
           hdr() { curl -sS -I -m 20 "$1" 2>/dev/null | tr -d '\r' | awk -F': ' 'tolower($1)=="server"{print $2; exit}'; }
           cert=$(echo | openssl s_client -servername "$DOMAIN" -connect "$DOMAIN:443" 2>/dev/null | openssl x509 -noout -issuer -enddate 2>/dev/null || true)
@@ -128,4 +134,12 @@ jobs:
           case "$plain" in 301*https://*) ;; *) echo "::warning::http://$DOMAIN/ does not redirect to HTTPS ('$plain'). Enforce HTTPS may be off or not yet active.";; esac
           case "$wwws" in 200*|301*|302*) ;; *) echo "::warning::https://$WWW/ answered '$wwws'.";; esac
           [ "$fail" -eq 0 ] || exit 1
+
+      - name: Verdict
+        if: always()
+        run: |
+          if [ "${{ steps.dns.outcome }}" = "failure" ] || [ "${{ steps.https.outcome }}" = "failure" ]; then
+            echo "::error::The custom domain check failed. See the job summary for the failing table."
+            exit 1
+          fi
           echo "Custom domain checks pass."
