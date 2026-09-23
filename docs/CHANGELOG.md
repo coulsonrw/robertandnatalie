@@ -25,6 +25,12 @@ Nothing in this reissue is implemented yet: see the v1.2 addendum in `docs/TRACE
 
 Unchanged in v1.1: wedding date, venues and start times, invitation copy, original-colour crest, ivory/gold/charcoal identity, household RSVP requirements, privacy decision status, P1/P2 scope boundaries.
 
+## Repository changes (23 September 2026)
+
+| Change | Instruction or reason | Affected requirements | Approvals reopened |
+|---|---|---|---|
+| Tried to deploy the RSVP service into the owners' Cloudflare account (backend README steps 1–9). **Blocked at step 1**: the account API token is active, but its "Not before" date is 31 December 2026 and it expires the same day, so `wrangler whoami` is refused. Nothing was created in the account. `wrangler.toml` and `content/site.config.json` are unchanged. The block and the steps to unblock are recorded under "Deployment status" in `backend/README.md`. | Owner: deploy the RSVP service following backend README steps 1–9. Do not create the Access application, set admin emails, mail provider or cutoff, or import guest data. | ARCH-06 (still partly met) | None. The token's validity window must be corrected by the owners. |
+
 ## Repository changes (22 September 2026)
 
 | Change | Instruction or reason | Affected requirements | Approvals reopened |

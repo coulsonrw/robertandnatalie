@@ -74,6 +74,14 @@ Prerequisites: a Cloudflare account owned by Robert / Natalie (not a developer's
 9. Cron: `[triggers] crons = ["*/5 * * * *"]` in `wrangler.toml` registers the outbox/retention job at deploy time; confirm it in the dashboard's Worker → Triggers page.
 10. Front end: in `content/site.config.json` set `rsvp.mode` to `live`, `rsvp.apiBaseUrl` to `https://api.robertandnatalie.wedding`, `rsvp.cutoffAt` to the same value as `RSVP_CUTOFF_AT`, and `privacy.rsvpProvider` to name Cloudflare; rebuild and deploy the site.
 
+### Deployment status
+
+**23 September 2026: not deployed. Stopped at step 1.** The session's API token for the owners' account failed `npx wrangler whoami` (`Invalid access token [code: 9109]`). The account-scoped check (`GET /accounts/{account_id}/tokens/verify`) showed why: the token is `active` but has a **Not before** date of `2026-12-31T00:00:00Z` and expires at `2026-12-31T23:59:59Z`. It cannot be used before 31 December 2026, which is after the wedding (19 December 2026), and it lasts only one day. User-scoped calls (`/user/tokens/verify`, `/accounts`, `/zones`) are refused, as they would be for any account-owned token that is not yet valid.
+
+Nothing was created or changed in the account: no D1 database, no migration, no event seed, no secrets, no Worker, no custom domain. `wrangler.toml` still reads `database_id = "REPLACE-WITH-D1-DATABASE-ID"`.
+
+**To unblock:** in the owners' dashboard (Manage Account → Account API Tokens), edit the token or issue a new one. Clear the "Not before" date (or set it to today) and choose an expiry that lasts through the retention period. The token needs Workers Scripts Edit, D1 Edit, Workers Routes Edit and Zone Read / DNS Edit for `robertandnatalie.wedding`, so the custom domain can be attached. Then re-run steps 1–5 and 8–9. Steps 6 and 7 (the Access application, admin emails, mail provider and cutoff) and step 10 (front end) remain owner decisions. No guest data is imported by the deployment.
+
 ### Values that must stay identical in both places (DATA-01)
 
 | `content/site.config.json` | `wrangler.toml` / API |
