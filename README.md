@@ -27,7 +27,7 @@ Event details (venues, start times) come from the owners' instructions in the PR
 | `docs/` | PRD, decision record and register, gap analysis and traceability, delivery plan, acceptance tests and results log, runbook, changelog, sources, RSVP API contract, content approval register, selection package, evidence, proofs and font licences. |
 | `AGENT_START_HERE.md` | Reading order, stop rules and commands for anyone picking the work up. |
 | `backend/` | RSVP service reference implementation (Cloudflare Workers + D1) with tests; not deployed. |
-| `.github/workflows/` | `ci.yml` validates and builds on pull requests; `deploy.yml` builds and publishes `main` to GitHub Pages; `domain-check.yml` (run by hand) reports the custom domain's DNS and HTTPS state as GitHub sees it. |
+| `.github/workflows/` | `ci.yml` validates and builds on pull requests; `deploy.yml` builds and publishes `main` to GitHub Pages; `domain-check.yml` (run by hand) reports the Pages settings and the custom domain's DNS answers, HTTPS behaviour and certificate as observed from a GitHub-hosted runner. |
 
 ## Editing content
 

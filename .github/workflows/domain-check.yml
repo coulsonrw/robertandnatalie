@@ -1,22 +1,27 @@
 name: Check the custom domain
 
-# Read-only check of the custom domain's DNS and HTTPS state as GitHub sees it (RUNBOOK §3 and §11).
+# Read-only check of the custom domain: the Pages settings as GitHub reports them, then the DNS
+# answers and the HTTPS behaviour observed from a GitHub-hosted runner (RUNBOOK §3 and §11).
 # Run it from Actions → "Check the custom domain" → Run workflow, before invitations go out, after
 # any DNS change (for example moving the nameservers), and in the week before the wedding.
 # It deploys nothing and changes no setting.
+#
+# GitHub's own Pages health-check endpoint needs repository-administrator rights, which the
+# workflow token cannot carry, so the checks below query public resolvers and the site directly.
 
 on:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write   # the Pages health endpoint needs Pages write permission on the token
+  pages: read
 
 jobs:
   check:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
+      OWNER: ${{ github.repository_owner }}
     steps:
       - name: Pages settings
         run: |
@@ -30,72 +35,113 @@ jobs:
               "- URL: \(.html_url // "n/a")",
               "- Enforce HTTPS: \(.https_enforced)",
               "- Certificate: \(.https_certificate.state // "n/a") — \(.https_certificate.description // "")",
-              "- Domain protection: \(.protected_domain_state // "n/a"); site status: \(.status // "n/a")"
+              "- Site status: \(.status // "n/a")"
             ' pages.json
             echo
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - name: DNS health check
+      - name: DNS answers from public resolvers
+        id: dns
+        continue-on-error: true
         run: |
-          # The first call starts an asynchronous check and answers 202 with no result; poll until
-          # the result arrives (GitHub documents the endpoint this way).
-          ready=""
-          for i in $(seq 1 18); do
-            gh api "repos/$GITHUB_REPOSITORY/pages/health" > health.json 2> health.err || true
-            if jq -e '.domain.host' health.json > /dev/null 2>&1; then ready=1; break; fi
-            sleep 10
-          done
-          if [ -z "$ready" ]; then
-            echo "::error::The DNS health check did not return a result within three minutes."
-            cat health.err health.json 2>/dev/null || true
-            exit 1
-          fi
+          set -uo pipefail
+          command -v dig > /dev/null || { sudo apt-get update -qq > /dev/null; sudo apt-get install -y -qq dnsutils > /dev/null; }
+          DOMAIN=$(jq -r '.cname // empty' pages.json)
+          if [ -z "$DOMAIN" ]; then echo "::error::No custom domain is configured for GitHub Pages."; exit 1; fi
+          WWW="www.$DOMAIN"
+          EXPECTED_A="185.199.108.153 185.199.109.153 185.199.110.153 185.199.111.153"
+          EXPECTED_CNAME="${OWNER,,}.github.io."
+          echo "DOMAIN=$DOMAIN" >> "$GITHUB_ENV"
+          echo "WWW=$WWW" >> "$GITHUB_ENV"
 
-          render() {
-            jq -r --arg label "$1" --arg key "$2" '
-              .[$key] as $d
-              | if $d == null then "### \($label)\n\n_No record to check._\n" else
-                "### \($label): `\($d.host)`\n\n| Check | Result |\n|---|---|\n" +
-                ([
-                  ["Resolves", $d.dns_resolves],
-                  ["Valid for GitHub Pages", $d.is_valid],
-                  ["Reason (if not valid)", ($d.reason // "—")],
-                  ["Apex domain", $d.is_apex_domain],
-                  ["Should be an A record", $d.should_be_a_record],
-                  ["A record present", $d.is_a_record],
-                  ["CNAME record present", $d.has_cname_record],
-                  ["CNAME to the GitHub user domain", $d.is_cname_to_github_user_domain],
-                  ["Points to the GitHub Pages IPs", $d.is_pointed_to_github_pages_ip],
-                  ["Old GitHub Pages IP present", $d.is_old_ip_address],
-                  ["Non-GitHub IP present", $d.is_non_github_pages_ip_present],
-                  ["Proxied (for example a Cloudflare orange cloud)", $d.is_proxied],
-                  ["Answers with a Cloudflare IP", $d.is_cloudflare_ip],
-                  ["Served by GitHub Pages", $d.is_served_by_pages],
-                  ["Responds to HTTPS", $d.responds_to_https],
-                  ["Enforces HTTPS", $d.enforces_https],
-                  ["HTTPS error", ($d.https_error_message // $d.https_error // "—")],
-                  ["CAA error", ($d.caa_error // "—")],
-                  ["MX records present", $d.has_mx_records_present],
-                  ["Nameservers", ($d.nameservers // "—")]
-                ] | map("| \(.[0]) | \(.[1]) |") | join("\n")) + "\n"
-              end' health.json
-          }
+          q() { dig +short +time=5 +tries=2 "$@" 2>/dev/null | sort | tr '\n' ' ' | sed 's/ *$//'; }
+          cell() { [ -n "$1" ] && printf '%s' "$1" | sed 's/ /<br>/g' || printf '—'; }
+
           {
-            echo "## DNS health check (as seen by GitHub)"
+            echo "## DNS answers"
             echo
-            render "Custom domain" domain
-            render "Alternate domain" alt_domain
+            echo "Expected for GitHub Pages: \`$DOMAIN\` A records $EXPECTED_A and nothing else; \`$WWW\` CNAME to \`$EXPECTED_CNAME\`; no proxy in front. The nameserver row shows which DNS host is authoritative (iwantmyname until the move, then Cloudflare)."
+            echo
+            echo "| Query | Runner resolver | Cloudflare 1.1.1.1 | Google 8.8.8.8 |"
+            echo "|---|---|---|---|"
+            for spec in "NS $DOMAIN" "A $DOMAIN" "AAAA $DOMAIN" "CNAME $WWW" "CAA $DOMAIN" "MX $DOMAIN" "TXT $DOMAIN"; do
+              set -- $spec
+              printf '| %s `%s` | %s | %s | %s |\n' "$1" "$2" "$(cell "$(q "$1" "$2")")" "$(cell "$(q @1.1.1.1 "$1" "$2")")" "$(cell "$(q @8.8.8.8 "$1" "$2")")"
+            done
+            echo
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
-          # Verdict. The job fails only when GitHub would not serve the site on the custom domain.
-          if [ "$(jq -r '.domain.is_proxied // false' health.json)" = "true" ]; then
-            echo "::warning::The custom domain is proxied. Set the GitHub Pages A and CNAME records to DNS only so GitHub's certificate and Enforce HTTPS keep working."
+          fail=0
+          expected_sorted=$(printf '%s\n' $EXPECTED_A | sort | tr '\n' ' ' | sed 's/ *$//')
+          match=0
+          for a in "$(q A "$DOMAIN")" "$(q @1.1.1.1 A "$DOMAIN")" "$(q @8.8.8.8 A "$DOMAIN")"; do
+            [ "$a" = "$expected_sorted" ] && match=$((match + 1))
+          done
+          if [ "$match" -eq 0 ]; then
+            echo "::error::No resolver returns exactly the four GitHub Pages addresses for $DOMAIN. If the answers are Cloudflare addresses, the record is proxied: set it to DNS only."
+            fail=1
+          elif [ "$match" -lt 3 ]; then
+            echo "::warning::The resolvers disagree on the A records for $DOMAIN. Propagation may still be in progress; run this check again later."
           fi
-          if [ "$(jq -r '.domain.enforces_https // false' health.json)" != "true" ]; then
-            echo "::warning::HTTPS is not enforced on the custom domain. Tick Enforce HTTPS in Settings → Pages once the certificate is approved."
+          www=$(q @1.1.1.1 CNAME "$WWW")
+          if [ "$www" != "$EXPECTED_CNAME" ]; then
+            echo "::warning::$WWW does not CNAME to $EXPECTED_CNAME (answer: ${www:-none}). The www address will not reach the site."
           fi
-          if [ "$(jq -r '[.domain.is_valid, .domain.is_served_by_pages] | all' health.json)" != "true" ]; then
-            echo "::error::The custom domain is not correctly configured for GitHub Pages. See the job summary for the failing checks."
+          ns=$(q @1.1.1.1 NS "$DOMAIN")
+          case "$ns" in
+            *ns.cloudflare.com*) echo "Nameservers: Cloudflare ($ns)";;
+            *) echo "Nameservers: $ns";;
+          esac
+          [ "$fail" -eq 0 ] || exit 1
+
+      - name: HTTPS and certificate
+        id: https
+        if: always()
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          if [ -z "${DOMAIN:-}" ]; then echo "No custom domain to probe."; exit 0; fi
+          # Every probe tolerates a dead domain: curl's failure (for example exit 6, host not
+          # found) must not abort the step, so the table is still written and the verdict decides.
+          http() { { curl -sS -o /dev/null -m 20 -w '%{http_code} %{redirect_url}' "$1" 2>/dev/null || true; } | sed 's/ *$//'; }
+          hdr() { { curl -sS -I -m 20 "$1" 2>/dev/null || true; } | tr -d '\r' | awk -F': ' 'tolower($1)=="server"{print $2; exit}'; }
+          cert=$( { echo | openssl s_client -servername "$DOMAIN" -connect "$DOMAIN:443" 2>/dev/null || true; } | { openssl x509 -noout -issuer -enddate 2>/dev/null || true; } )
+          issuer=$(printf '%s\n' "$cert" | sed -n 's/^issuer=//p')
+          expires=$(printf '%s\n' "$cert" | sed -n 's/^notAfter=//p')
+          apex=$(http "https://$DOMAIN/")
+          plain=$(http "http://$DOMAIN/")
+          wwws=$(http "https://$WWW/")
+          server=$(hdr "https://$DOMAIN/")
+          {
+            echo "## HTTPS and certificate"
+            echo
+            echo "| Check | Result |"
+            echo "|---|---|"
+            echo "| https://$DOMAIN/ | $apex |"
+            echo "| http://$DOMAIN/ (should redirect to https) | $plain |"
+            echo "| https://$WWW/ (GitHub redirects to the apex) | $wwws |"
+            echo "| Server header | ${server:-—} |"
+            echo "| Certificate issuer | ${issuer:-—} |"
+            echo "| Certificate expires | ${expires:-—} |"
+            echo
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+          fail=0
+          case "$apex" in 200*) ;; 000*|"") echo "::error::https://$DOMAIN/ did not answer at all (no connection or the name did not resolve)."; fail=1;; *) echo "::error::https://$DOMAIN/ answered '$apex', not 200."; fail=1;; esac
+          case "$server" in
+            GitHub.com) ;;
+            cloudflare*) echo "::error::Responses come from Cloudflare, not GitHub Pages: the domain is proxied. Set the GitHub Pages records to DNS only."; fail=1;;
+            *) echo "::warning::Server header is '${server:-empty}', expected GitHub.com.";;
+          esac
+          case "$plain" in 301*https://*) ;; *) echo "::warning::http://$DOMAIN/ does not redirect to HTTPS ('$plain'). Enforce HTTPS may be off or not yet active.";; esac
+          case "$wwws" in 200*|301*|302*) ;; *) echo "::warning::https://$WWW/ answered '$wwws'.";; esac
+          [ "$fail" -eq 0 ] || exit 1
+
+      - name: Verdict
+        if: always()
+        run: |
+          if [ "${{ steps.dns.outcome }}" = "failure" ] || [ "${{ steps.https.outcome }}" = "failure" ]; then
+            echo "::error::The custom domain check failed. See the job summary for the failing table."
             exit 1
           fi
           echo "Custom domain checks pass."
