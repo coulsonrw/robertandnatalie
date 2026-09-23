@@ -1,0 +1,101 @@
+name: Check the custom domain
+
+# Read-only check of the custom domain's DNS and HTTPS state as GitHub sees it (RUNBOOK §3 and §11).
+# Run it from Actions → "Check the custom domain" → Run workflow, before invitations go out, after
+# any DNS change (for example moving the nameservers), and in the week before the wedding.
+# It deploys nothing and changes no setting.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write   # the Pages health endpoint needs Pages write permission on the token
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Pages settings
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pages" > pages.json
+          {
+            echo "## GitHub Pages settings"
+            echo
+            jq -r '
+              "- Source: \(.build_type)" + (if .build_type == "legacy" then " (branch \(.source.branch // "?")\(.source.path // ""))" else "" end),
+              "- Custom domain: \(.cname // "none")",
+              "- URL: \(.html_url // "n/a")",
+              "- Enforce HTTPS: \(.https_enforced)",
+              "- Certificate: \(.https_certificate.state // "n/a") — \(.https_certificate.description // "")",
+              "- Domain protection: \(.protected_domain_state // "n/a"); site status: \(.status // "n/a")"
+            ' pages.json
+            echo
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: DNS health check
+        run: |
+          # The first call starts an asynchronous check and answers 202 with no result; poll until
+          # the result arrives (GitHub documents the endpoint this way).
+          ready=""
+          for i in $(seq 1 18); do
+            gh api "repos/$GITHUB_REPOSITORY/pages/health" > health.json 2> health.err || true
+            if jq -e '.domain.host' health.json > /dev/null 2>&1; then ready=1; break; fi
+            sleep 10
+          done
+          if [ -z "$ready" ]; then
+            echo "::error::The DNS health check did not return a result within three minutes."
+            cat health.err health.json 2>/dev/null || true
+            exit 1
+          fi
+
+          render() {
+            jq -r --arg label "$1" --arg key "$2" '
+              .[$key] as $d
+              | if $d == null then "### \($label)\n\n_No record to check._\n" else
+                "### \($label): `\($d.host)`\n\n| Check | Result |\n|---|---|\n" +
+                ([
+                  ["Resolves", $d.dns_resolves],
+                  ["Valid for GitHub Pages", $d.is_valid],
+                  ["Reason (if not valid)", ($d.reason // "—")],
+                  ["Apex domain", $d.is_apex_domain],
+                  ["Should be an A record", $d.should_be_a_record],
+                  ["A record present", $d.is_a_record],
+                  ["CNAME record present", $d.has_cname_record],
+                  ["CNAME to the GitHub user domain", $d.is_cname_to_github_user_domain],
+                  ["Points to the GitHub Pages IPs", $d.is_pointed_to_github_pages_ip],
+                  ["Old GitHub Pages IP present", $d.is_old_ip_address],
+                  ["Non-GitHub IP present", $d.is_non_github_pages_ip_present],
+                  ["Proxied (for example a Cloudflare orange cloud)", $d.is_proxied],
+                  ["Answers with a Cloudflare IP", $d.is_cloudflare_ip],
+                  ["Served by GitHub Pages", $d.is_served_by_pages],
+                  ["Responds to HTTPS", $d.responds_to_https],
+                  ["Enforces HTTPS", $d.enforces_https],
+                  ["HTTPS error", ($d.https_error_message // $d.https_error // "—")],
+                  ["CAA error", ($d.caa_error // "—")],
+                  ["MX records present", $d.has_mx_records_present],
+                  ["Nameservers", ($d.nameservers // "—")]
+                ] | map("| \(.[0]) | \(.[1]) |") | join("\n")) + "\n"
+              end' health.json
+          }
+          {
+            echo "## DNS health check (as seen by GitHub)"
+            echo
+            render "Custom domain" domain
+            render "Alternate domain" alt_domain
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+          # Verdict. The job fails only when GitHub would not serve the site on the custom domain.
+          if [ "$(jq -r '.domain.is_proxied // false' health.json)" = "true" ]; then
+            echo "::warning::The custom domain is proxied. Set the GitHub Pages A and CNAME records to DNS only so GitHub's certificate and Enforce HTTPS keep working."
+          fi
+          if [ "$(jq -r '.domain.enforces_https // false' health.json)" != "true" ]; then
+            echo "::warning::HTTPS is not enforced on the custom domain. Tick Enforce HTTPS in Settings → Pages once the certificate is approved."
+          fi
+          if [ "$(jq -r '[.domain.is_valid, .domain.is_served_by_pages] | all' health.json)" != "true" ]; then
+            echo "::error::The custom domain is not correctly configured for GitHub Pages. See the job summary for the failing checks."
+            exit 1
+          fi
+          echo "Custom domain checks pass."

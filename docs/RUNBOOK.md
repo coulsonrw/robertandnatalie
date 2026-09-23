@@ -24,6 +24,7 @@ The build refuses an active banner whose approval is still pending.
 Run this checklist once before invitations go out and again in the week before the wedding. Record the date and who ran it in the pull request that follows.
 
 - [ ] `npm run build` shows no unexpected blockers; the register is current.
+- [ ] The "Check the custom domain" workflow (Actions → Run workflow) passes: the domain resolves to the GitHub Pages addresses, is not proxied, is served by Pages and enforces HTTPS. Run it again after any DNS change, such as moving the nameservers.
 - [ ] Ceremony and reception times, addresses and the change-of-venue note are correct on the live site.
 - [ ] Every external link opens: hotel website, Getting Here, contact page, chapel website, both Directions and Apple Maps links.
 - [ ] Both calendar downloads import in Apple Calendar, Google Calendar and Outlook with the correct local start time and no end time (CONTENT-05, AT-14).
