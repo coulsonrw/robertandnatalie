@@ -7,7 +7,7 @@ PRD reference: Robert and Natalie Wedding Website PRD v1.2 (22 September 2026; S
 | Item | Status |
 |---|---|
 | Design foundation | **Custom component-based composition** (the PRD's preferred starting hypothesis, TPL-08). No template was purchased or used. |
-| Hosting | **GitHub Pages**, static, at the owner's direction ("hosted on the GitHub Pages"). Custom domain `robertandnatalie.wedding` already attached to this repository. |
+| Hosting | **GitHub Pages**, static, at the owner's direction ("hosted on the GitHub Pages"). Custom domain `robertandnatalie.wedding` already attached to this repository. RSVP service: Cloudflare Workers + D1 in the owners' Cloudflare account at `api.robertandnatalie.wedding` (deployed 23 September 2026); the DNS zone moved to Cloudflare the same day and the apex is still served by GitHub Pages. |
 | Direction to build | Given by the owner (Robert) on 21 September 2026 in the request that produced this implementation: "Review this PRD and start building the website." |
 | G1 concept approval | **Pending.** The owner has directed the build; a formal record of concept approval (owner name, date) is still to be entered below. |
 | G2 production-build authorization | **Pending.** Visual baseline captured in `docs/proofs/`; awaiting owner visual sign-off and technical-lead validation. |
@@ -37,7 +37,7 @@ On 22 September 2026 the owner re-supplied the invitation file (identical to A2 
 
 | PRD requirement | Effect of static hosting | Handling |
 |---|---|---|
-| RSVP-01/02/05, ARCH-01 to ARCH-03, ADMIN-01 to ADMIN-04 (server-side household authorization, atomic saves, coordinator tools) | Cannot run on GitHub Pages. | The guest-facing RSVP flow is built; it calls a separate API defined in `docs/RSVP_API_CONTRACT.md`. Until that service exists, `rsvp.mode` is `coming-soon`. |
+| RSVP-01/02/05, ARCH-01 to ARCH-03, ADMIN-01 to ADMIN-04 (server-side household authorization, atomic saves, coordinator tools) | Cannot run on GitHub Pages. | The guest-facing RSVP flow is built; it calls a separate API defined in `docs/RSVP_API_CONTRACT.md`. The service is deployed at `https://api.robertandnatalie.wedding` (23 September 2026); `rsvp.mode` stays `coming-soon` until Access, the mail provider, the cutoff and the roster are in place and G3 is recorded. |
 | SEC-01 invitation-only visibility | A static site cannot gate pages server-side; client-side gating is explicitly rejected by the PRD. | The site publishes event logistics only (no guest data). `noindex` is set as a supplementary measure. Owner approval of public visibility for the logistics pages is **required** and recorded below when given. |
 | ARCH-04 private cache policy | Not applicable to public pages; applies to the future API. | Documented in the API contract. |
 | NFR-04 self-hosted fonts | Met. | Fonts in `src/fonts/`, licenses in `docs/licenses/`. |
@@ -52,7 +52,7 @@ The custom composition ("CUSTOM-01") was screened against all six mandatory gate
 | Template, font and media rights | pass — no template; three OFL typefaces with licence texts; crest and invitation are owner-supplied; unverified photos excluded; vendored axe-core is MPL-2.0 (tooling only) | `assets/ASSET_MANIFEST.md`, `docs/licenses/` |
 | Technical viability | pass — clean build reproduced with `npm run build` (Node 22.22.2, no runtime dependencies); external requests from the pages: none; form handlers: the RSVP page posts only to the configured API origin | "Build validation" below, `docs/evidence/PERFORMANCE.md` resource list |
 | Visual adaptability | pass — original crest, live invitation text, type hierarchy, charcoal copy, matching-size closing line, responsive layouts | `docs/proofs/CHECKLIST.md` |
-| Guest-system integration | pending verification — contract and tested reference implementation exist (`backend/`); household context and server-side RSVP are not proven until the service is deployed | `docs/RSVP_API_CONTRACT.md`, `backend/README.md` |
+| Guest-system integration | pending verification — the service is deployed on `api.robertandnatalie.wedding` (23 September 2026; `/health` ok, CORS preflight from the site origin observed 24 September); household context and server-side RSVP are not proven until credentials exist (Access application, roster) and AT-04 to AT-13 are run | `docs/RSVP_API_CONTRACT.md`, `backend/README.md` "Deployment status", `docs/TEST_RESULTS.md` |
 | Accessible and performant path | pass (lab) — axe clean, budgets met; manual screen-reader and cross-browser runs outstanding | `docs/evidence/` |
 
 ## Build validation (TPL-06)
@@ -68,7 +68,7 @@ The custom composition ("CUSTOM-01") was screened against all six mandatory gate
 - **HOME-02 / AT-03 with the envelope landing.** On a first visit the full page is two actions away (open the seal, continue). Mitigations kept: date, destination and both start times are visible under the sealed envelope; "Skip to the wedding details" and RSVP are always in the entry bar; deep links, `/celebration.html` and same-session returns bypass the envelope; reduced motion shows the invitation immediately. This is the owner-directed composition (21 September 2026) and is treated as an approved deviation once the owners sign the approvals table. The envelope remains P1 (HOME-03) in PRD terms.
 - **Contrast records (HOME-04, §13).** Ink #292A28 on paper #F7F3EA 13.0:1; text gold #856119 on paper 5.1:1; deep gold #6E4F12 on paper 6.8:1 and on card #FBF8F1 about 7.4:1 (tertiary buttons, menu border, links); paper on ink (primary buttons) 13.0:1. Decorative gold #B38A39 (2.9:1) is used only for ornament, never for text or control borders.
 - **Public review builds.** Until G3, `main` deploys to the public domain as a review build with `noindex` and the synthetic RSVP preview disabled (`SITE_PREVIEW=0` in `deploy.yml`); collaborators get a preview-enabled build as a CI artifact. If the owners want no public review builds, switch `deploy.yml` to `workflow_dispatch` only; that is a decision recorded in `docs/DECISION_REGISTER.md`.
-- **Hosting reliability (§13).** GitHub Pages publishes no availability SLA; the PRD's 99.9% target applies to the RSVP service and is to be validated after deployment with an external uptime check (see `docs/RUNBOOK.md`).
+- **Hosting reliability (§13).** GitHub Pages publishes no availability SLA; the PRD's 99.9% target applies to the RSVP service, deployed 23 September 2026; the external uptime check on `https://api.robertandnatalie.wedding/health` (GET) is still to be configured (see `docs/RUNBOOK.md` §11).
 - **Field performance data (NFR-02).** Lab runs are the evidence; the site has no analytics or RUM by design (SEC-04), so 75th-percentile field INP will not be collected.
 - **Remaining effort at owner direction.** Keep/adapt/replace for external templates was not costed before the build. Remaining implementation work is estimated in `docs/DELIVERY_PLAN.md` as a single "custom" line.
 

@@ -1,6 +1,6 @@
 # Operating runbook
 
-How to run the website and the RSVP service after handover (PRD OPS-01, OPS-02, OPS-03, SEC-06, SEC-07). Everything here assumes the owner-controlled accounts: the GitHub repository (website), the domain registrar for `robertandnatalie.wedding`, and the Cloudflare account that will host the RSVP service described in `backend/README.md`. Secrets are never stored in this repository.
+How to run the website and the RSVP service after handover (PRD OPS-01, OPS-02, OPS-03, SEC-06, SEC-07). Everything here assumes the owner-controlled accounts: the GitHub repository (website), the domain registrar for `robertandnatalie.wedding`, and the owners' Cloudflare account, which hosts the DNS zone for `robertandnatalie.wedding` and the RSVP service at `https://api.robertandnatalie.wedding` (described in `backend/README.md`). Secrets are never stored in this repository.
 
 ## 1. Publish a content change
 
@@ -24,7 +24,8 @@ The build refuses an active banner whose approval is still pending.
 Run this checklist once before invitations go out and again in the week before the wedding. Record the date and who ran it in the pull request that follows.
 
 - [ ] `npm run build` shows no unexpected blockers; the register is current.
-- [ ] The "Check the custom domain" workflow (Actions → Run workflow) passes: the domain resolves to the GitHub Pages addresses, is not proxied, is served by Pages and enforces HTTPS. Run it again after any DNS change, such as moving the nameservers.
+- [ ] The "Check the custom domain" workflow (Actions → Run workflow) passes: the domain resolves to the GitHub Pages addresses, is not proxied, is served by Pages and enforces HTTPS. Run it again after any DNS change (the nameservers moved to Cloudflare on 23 September 2026; runs 5 and 6 that day passed).
+- [ ] `GET https://api.robertandnatalie.wedding/health` returns `{"ok":true,"environment":"production"}` (use GET; HEAD returns 404) and `GET /admin/status` is refused before it reaches the Worker once the Access application exists.
 - [ ] Ceremony and reception times, addresses and the change-of-venue note are correct on the live site.
 - [ ] Every external link opens: hotel website, Getting Here, contact page, chapel website, both Directions and Apple Maps links.
 - [ ] Both calendar downloads import in Apple Calendar, Google Calendar and Outlook with the correct local start time and no end time (CONTENT-05, AT-14).
@@ -70,8 +71,8 @@ If the RSVP service is unavailable, guests see the network-error state with thei
 
 ## 11. Monitoring and incident contact (NFR-01 reliability row)
 
-- Website: GitHub Pages status at githubstatus.com; there is no SLA. Configure an external uptime check (any free monitor) on `https://robertandnatalie.wedding/` and, once deployed, on the RSVP service health endpoint described in `backend/README.md`, alerting the incident contact below.
-- RSVP service: Cloudflare Workers analytics and the `coordinator_alert` table (mail failures) are the first places to look; the runbook sections 4–8 cover corrections and the manual fallback.
+- Website: GitHub Pages status at githubstatus.com; there is no SLA. Configure an external uptime check (any free monitor) on `https://robertandnatalie.wedding/` and on the RSVP service health endpoint `https://api.robertandnatalie.wedding/health` (GET; expected body `{"ok":true,"environment":"production"}`; HEAD returns 404), alerting the incident contact below. Neither check is configured yet (24 September 2026).
+- RSVP service: Worker `robertandnatalie-rsvp-api` in the owners' Cloudflare account (Workers logs and analytics; observability is enabled), then `GET /admin/alerts` and `GET /admin/outbox?state=abandoned` (the `coordinator_alert` and `mail_outbox` tables) are the first places to look; sections 4–8 cover corrections and the manual fallback. The cron job runs every five minutes: it sends queued mail, abandons a message after `MAIL_MAX_ATTEMPTS` or `MAIL_MAX_AGE_HOURS` and raises a coordinator alert, and applies the retention rule once the retention date (20 March 2027) has passed. Coordinator alerts are emailed through the same mail provider as guest confirmations, so with the `stub` provider they are recorded but never delivered. No Cloudflare notification policy exists yet; create one for Worker errors (an email destination is already eligible in the account).
 - Incident contact (fill in at handover): name, telephone, email, and the second person who can act if the first is unavailable.
 
 ## 12. Access register (fill in at handover)
@@ -80,12 +81,13 @@ If the RSVP service is unavailable, guests see the network-error state with thei
 |---|---|---|---|
 | GitHub repository and Pages | | | |
 | Domain registrar (robertandnatalie.wedding) | | | |
-| Cloudflare (RSVP service, D1, Access) | | | |
+| Cloudflare account (DNS zone `robertandnatalie.wedding`, Worker `robertandnatalie-rsvp-api`, D1 `rsvp`, Access once enabled) — on 24 September 2026 one Super Administrator without 2FA and no second person | | | |
+| Cloudflare API token used for deployment (expires 31 December 2026; extend or reissue before the retention run on 20 March 2027; narrow its permissions) | | | |
 | Email sending provider | | | |
 
 ## 13. Announce the RSVP opening date (audit IMP-02)
 
-Set `rsvp.opensAt` in `content/site.config.json` to the approved date-time with its offset (for example `2026-10-01T09:00:00-05:00`) only once the owners have approved it and the service is ready to open on that day. The not-yet-open state on `/rsvp.html` and the note under the welcome area then name the date in Central Time. Leave it `null` otherwise; the site says only that responses are not open yet. Switching `rsvp.mode` to `live` requires `rsvp.apiBaseUrl` and a deployed service (§1).
+Set `rsvp.opensAt` in `content/site.config.json` to the approved date-time with its offset (for example `2026-10-01T09:00:00-05:00`) only once the owners have approved it and the service is ready to open on that day. The not-yet-open state on `/rsvp.html` and the note under the welcome area then name the date in Central Time. Leave it `null` otherwise; the site says only that responses are not open yet. Switching `rsvp.mode` to `live` requires `rsvp.apiBaseUrl` set to `https://api.robertandnatalie.wedding` (the service deployed on 23 September 2026) and the owner decisions in `backend/README.md` steps 6–7 (§1).
 
 ## 14. Publish Our Story (audit IMP-12/13)
 

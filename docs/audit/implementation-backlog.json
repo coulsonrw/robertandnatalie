@@ -48,12 +48,13 @@
       "priority_and_evidence": "P0 / Backend not inspected",
       "implementation_and_acceptance": "Private links/code entry; random scoped credentials; rate limits; revocation; secure session; no public guest lookup. Prove household isolation in staging.",
       "dependencies": "IMP-03; synthetic roster",
-      "status": "implemented_not_deployed",
+      "status": "deployed_not_verified",
       "owner": "technical lead / owners",
       "evidence": [
-        "backend/ (sessions with digest-only credentials, deny-by-default, revocation); see docs/audit/BACKEND_QA_MATRIX.md. Household isolation proven by the vitest suite against a local D1, not in staging."
+        "backend/ (sessions with digest-only credentials, deny-by-default, revocation); see docs/audit/BACKEND_QA_MATRIX.md. Household isolation proven by the vitest suite against a local D1, not in staging.",
+    "Deployed to the owners' Cloudflare account at api.robertandnatalie.wedding on 2026-09-23; household isolation is not yet re-proven there: the roster import needs the Access application, and Access is not enabled on the account (2026-09-24)."
       ],
-      "updated": "2026-09-22"
+      "updated": "2026-09-24"
     },
     {
       "id": "IMP-05",
@@ -61,12 +62,13 @@
       "priority_and_evidence": "P0 / Public form unavailable",
       "implementation_and_acceptance": "Named guests, allowed events, explicit attendance, authorized plus-ones, conditional details, meaningful labels, review and correction.",
       "dependencies": "IMP-04; policies",
-      "status": "implemented_not_deployed",
+      "status": "deployed_not_verified",
       "owner": "technical lead",
       "evidence": [
-        "src/js/rsvp.js wizard (named guests, per-guest per-event answers, plus-one names, conditional meals, review) + backend validation; synthetic preview at /rsvp.html?preview=1 in local/CI builds"
+        "src/js/rsvp.js wizard (named guests, per-guest per-event answers, plus-one names, conditional meals, review) + backend validation; synthetic preview at /rsvp.html?preview=1 in local/CI builds",
+    "Backend deployed 2026-09-23; the front end stays in coming-soon mode (rsvp.apiBaseUrl null) until the owner decisions and G3."
       ],
-      "updated": "2026-09-22"
+      "updated": "2026-09-24"
     },
     {
       "id": "IMP-06",
@@ -74,12 +76,13 @@
       "priority_and_evidence": "P0 / Backend not inspected",
       "implementation_and_acceptance": "Atomic/idempotent saves, revision conflicts, email outbox/retries, saved-result confirmation, deadline-enforced edits.",
       "dependencies": "IMP-05; mail service",
-      "status": "implemented_not_deployed",
+      "status": "deployed_not_verified",
       "owner": "technical lead",
       "evidence": [
-        "backend: requestId idempotency, revision conflicts (409), outbox in the same transaction, cutoff enforcement; docs/audit/BACKEND_QA_MATRIX.md"
+        "backend: requestId idempotency, revision conflicts (409), outbox in the same transaction, cutoff enforcement; docs/audit/BACKEND_QA_MATRIX.md",
+    "Deployed 2026-09-23 with MAIL_PROVIDER=stub (confirmation mail marked sent, never delivered) and no cutoff; AT-09/10/11/12 not yet run against it."
       ],
-      "updated": "2026-09-22"
+      "updated": "2026-09-24"
     },
     {
       "id": "IMP-07",
@@ -100,12 +103,13 @@
       "priority_and_evidence": "P0 / Not inspected",
       "implementation_and_acceptance": "Authenticated staff roles/MFA, safe import, event counts, exceptions, restricted exports, revoke/reissue and audited corrections.",
       "dependencies": "IMP-04–06",
-      "status": "implemented_not_deployed",
+      "status": "partially_done_blocked_on_owner",
       "owner": "coordinator / technical lead",
       "evidence": [
-        "backend/src/admin/* (import preview and apply, counts, exports without restricted notes, credential issue/revoke, corrections with origin) behind Cloudflare Access (staff accounts and MFA are Access policy, not code); docs/audit/BACKEND_QA_MATRIX.md"
+        "backend/src/admin/* (import preview and apply, counts, exports without restricted notes, credential issue/revoke, corrections with origin) behind Cloudflare Access (staff accounts and MFA are Access policy, not code); docs/audit/BACKEND_QA_MATRIX.md",
+    "Worker deployed 2026-09-23; every /admin/* request is refused by the Worker (401) because no Access application exists: Cloudflare Access is not enabled on the owners' account (GET /access/apps \u2192 access.api.error.not_enabled, 2026-09-24)."
       ],
-      "updated": "2026-09-22"
+      "updated": "2026-09-24"
     },
     {
       "id": "IMP-09",
@@ -311,9 +315,10 @@
       "status": "not_started_blocked",
       "owner": "owners / coordinator",
       "evidence": [
-        "Six-person pilot and coordinator reconciliation need a deployed staging service."
+        "Six-person pilot and coordinator reconciliation need a deployed staging service.",
+    "Service deployed 2026-09-23 (production, no staging Worker); the pilot still needs the Access application and a synthetic roster with issued credentials."
       ],
-      "updated": "2026-09-22"
+      "updated": "2026-09-24"
     }
   ],
   "status_vocabulary": {
@@ -323,6 +328,7 @@
     "built_switched_off": "implemented but excluded from the public build until approved content exists",
     "built_awaiting_originals": "pipeline implemented and tested with synthetic input; no owner originals supplied",
     "implemented_not_deployed": "code and automated tests exist; not deployed to any environment",
+  "deployed_not_verified": "deployed to the owners' Cloudflare account (23 September 2026); acceptance tests not yet run against it",
     "partially_done": "part implemented; remaining part listed in evidence",
     "partially_done_blocked_on_owner": "implementation ready; needs owner values",
     "partially_done_blocked_on_coordinator": "implementation ready; needs coordinator verification",

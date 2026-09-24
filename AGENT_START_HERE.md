@@ -6,14 +6,15 @@ Orientation for anyone (person or agent) picking up this repository. Read in thi
 2. `docs/DECISION_RECORD.md` — what was decided, by whom, and the gate status (G1, G2, G3). As of 21 September 2026 no gate is signed; the owner's instruction on that date was to start building the website on GitHub Pages, and that instruction is recorded as the authority for the work so far.
 3. `docs/PRD_GAP_ANALYSIS.md` and `docs/TRACEABILITY.md` — every requirement with its verified status and remaining action.
 4. `docs/DECISION_REGISTER.md` — the decisions still owed by the owners and coordinator.
-5. `README.md` — how the site is built, edited and deployed; `docs/RUNBOOK.md` — how it is operated.
+5. `docs/DELIVERY_PLAN.md` — the checklist to complete the full site, the critical path and the remaining effort.
+6. `README.md` — how the site is built, edited and deployed; `docs/RUNBOOK.md` — how it is operated.
 
 ## What exists
 
 - Static site (`content/`, `scripts/`, `src/`) built by `npm run build` with no runtime dependencies, deployed to GitHub Pages by `.github/workflows/deploy.yml`.
-- RSVP service reference implementation in `backend/` (Cloudflare Workers + D1), tested locally, not deployed.
+- RSVP service in `backend/` (Cloudflare Workers + D1), tested locally and in CI (71 tests) and deployed on 23 September 2026 to the owners' Cloudflare account at `https://api.robertandnatalie.wedding` (`backend/README.md`, "Deployment status"). Cloudflare Access, the mail provider, the cutoff and the site's `rsvp.apiBaseUrl`/`rsvp.mode` switch are still owner decisions, so the live site remains in `coming-soon`.
 - Evidence: `docs/proofs/` (visual and interaction proofs), `docs/evidence/` (axe and performance), `docs/ACCEPTANCE_TESTS.md`, `docs/TEST_RESULTS.md`.
-- Selection package: `docs/selection/` (candidate register, scorecard, keep/adapt/replace, report, two alternative concept mockups) — see its own README for status.
+- Selection package: `docs/selection/` (candidate register, scorecard, keep/adapt/replace, report, two alternative concept mockups) — status in `docs/selection/SELECTION_REPORT.md`.
 
 ## Commands
 

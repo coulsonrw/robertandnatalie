@@ -2,14 +2,14 @@
 
 This directory is a reference backend for the RSVP contract in `../docs/RSVP_API_CONTRACT.md`, written against PRD v1.1 Sections 08–12 (unchanged in PRD v1.2). PRD v1.2 adds ARCH-07 and GALLERY-02/03/05 (guest uploads, moderation and retention through this service); none of that is implemented here yet. The static site on GitHub Pages calls it from `src/js/rsvp.js`; nothing in the static site stores guest data.
 
-**Status (22 September 2026):** built and tested locally in the Workers runtime with a local D1 database (71 tests, see "Tests"); verified against the external audit's acceptance scenarios QA-10..QA-22 in `../docs/audit/BACKEND_QA_MATRIX.md`. It has **not** been deployed to any Cloudflare account, no domain has been attached, no Access application exists, and no mail provider is connected. Everything about Cloudflare's hosted behaviour below is labelled *publisher claim* or *not verified* unless it was observed here.
+**Status (24 September 2026):** built and tested locally in the Workers runtime with a local D1 database (71 tests, see "Tests"); verified against the external audit's acceptance scenarios QA-10..QA-22 in `../docs/audit/BACKEND_QA_MATRIX.md`. **Deployed on 23 September 2026 to the owners' Cloudflare account at `https://api.robertandnatalie.wedding`** (see "Deployment status"). No Access application exists (Access is not enabled on the account), no admin accounts are named, no mail provider is connected (the `stub` provider delivers nothing), no cutoff is set and no guest data is imported. Everything about Cloudflare's hosted behaviour below is labelled *publisher claim* or *not verified* unless it was observed here or during the deployment.
 
 ## Layout
 
 | Path | Purpose |
 |---|---|
 | `wrangler.toml` | Worker configuration: D1 binding `DB`, cron trigger, custom domain route, plain variables. No secrets. Every binding is commented. |
-| `migrations/0001_init.sql` | Schema for every PRD §10 entity with the invariants as constraints. Applied with `wrangler d1 migrations apply`. |
+| `migrations/0001_init.sql`, `migrations/0002_meal_options.sql` | Schema for every PRD §10 entity with the invariants as constraints, plus the event meal-options column. Applied with `wrangler d1 migrations apply`. |
 | `src/index.js` | Entry point: `fetch` (routing, CORS, security headers, redacted request log) and `scheduled` (mail outbox + retention). |
 | `src/session.js`, `src/response.js`, `src/snapshot.js` | Guest endpoints `POST/GET/DELETE /session`, `PUT /response`, the session snapshot. |
 | `src/admin/*` | `/admin` routes: Access JWT check, CSV import (preview/commit), reports, exports, credentials, corrections, content versions. |
@@ -57,11 +57,11 @@ Point the static site at it for a local end-to-end check: set `rsvp.mode` to `li
 
 ## Deployment into the owners' Cloudflare account (ARCH-06)
 
-Prerequisites: a Cloudflare account owned by Robert / Natalie (not a developer's personal account), with the `robertandnatalie.wedding` zone on Cloudflare DNS if the custom domain in `wrangler.toml` is to be used (custom domains for Workers require the zone to be on Cloudflare — *not verified here*; if DNS stays elsewhere, use a `workers.dev` hostname and note that the session cookie then becomes cross-site, which `SameSite=Lax` does not send: the custom subdomain is the supported shape).
+Prerequisites: a Cloudflare account owned by Robert / Natalie (not a developer's personal account), with the `robertandnatalie.wedding` zone on Cloudflare DNS if the custom domain in `wrangler.toml` is to be used (custom domains for Workers require the zone to be on Cloudflare — *verified on 23 September 2026*: the zone has been on Cloudflare nameservers since that day and the custom domain is attached; if DNS were ever moved elsewhere, use a `workers.dev` hostname and note that the session cookie then becomes cross-site, which `SameSite=Lax` does not send: the custom subdomain is the supported shape).
 
 1. `npx wrangler login` as the owner account.
 2. `npx wrangler d1 create rsvp` and paste the returned `database_id` into `wrangler.toml` (`[[d1_databases]]`).
-3. `npm run migrate:remote` (applies `migrations/0001_init.sql`).
+3. `npm run migrate:remote` (applies every file in `migrations/`, currently `0001_init.sql` and `0002_meal_options.sql`).
 4. Seed events from the site's single source of truth: `node scripts/events-sync.mjs > /tmp/events.sql && npx wrangler d1 execute rsvp --remote --file /tmp/events.sql`. Re-run whenever `content/site.config.json` events change (or `PUT /admin/events` with the same JSON as an owner).
 5. Secrets (generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`):
    - `npx wrangler secret put CREDENTIAL_PEPPER`
@@ -80,17 +80,17 @@ Prerequisites: a Cloudflare account owned by Robert / Natalie (not a developer's
 
 | Step | Result |
 |---|---|
-| 1. Token | `wrangler whoami` reports an Account API Token for account `7548abd079e5adf9599165c4c5d632cf`. The zone `robertandnatalie.wedding` is `active` on Cloudflare nameservers. Earlier attempts the same day stopped on the token three times: its start date was 31 December 2026, it was read-only, and it had no zone edit permission. The owners fixed each one. |
+| 1. Token | `wrangler whoami` reports an Account API Token for the owners' account (the account id is visible in the Cloudflare dashboard and is not reproduced here). The zone `robertandnatalie.wedding` is `active` on Cloudflare nameservers. Earlier attempts the same day stopped on the token three times: its start date was 31 December 2026, it was read-only, and it had no zone edit permission. The owners fixed each one. |
 | 2. D1 | Database `rsvp` created in region ENAM. `database_id = "0f670edc-9378-4f4b-9fec-d65fe1a5e610"` is in `wrangler.toml`. |
 | 3. Migrations | `0001_init.sql` and `0002_meal_options.sql` applied remotely. |
 | 4. Events | `scripts/events-sync.mjs` output applied. The `event` table holds `ceremony` (14:00 −06:00, `carried-forward`) and `reception` (16:00 −06:00, `approved`). `household` and `guest` are empty: no guest data imported. |
 | 5. Secrets | `CREDENTIAL_PEPPER` and `SESSION_SECRET` were generated from 32 random bytes each and piped straight into `wrangler secret put`. They were never printed, stored or committed; `wrangler secret list` shows both. The first `secret put` returned 403 because the Worker did not exist yet, so the secrets were set just after the first upload. At that point the Worker had no public hostname (custom domain not yet attached, `workers.dev` disabled). |
 | 6–7. Access, admin emails, mail, cutoff | Not done: owner decisions. `MAIL_PROVIDER` stays `stub`; `RSVP_CUTOFF_AT`, `ACCESS_*`, `OWNER_EMAILS` and `COORDINATOR_EMAILS` are empty. `GET /admin/status` returns `401 unauthenticated` from the Worker (fail closed). Once the Access application exists, Access should block it before it reaches the Worker. |
 | 8. Deploy | Script `robertandnatalie-rsvp-api` deployed with custom domain `api.robertandnatalie.wedding`, version `8d42afbd-2983-4820-b8b0-c3bf679f18ee`. `/health` answers `200 {"ok":true,"environment":"production"}` with `Cache-Control: private, no-store` and `Referrer-Policy: no-referrer`. The script's `workers.dev` route is disabled. |
-| 9. Cron | `*/5 * * * *` registered at deploy ("schedule: */5 * * * *"). Not yet confirmed on the dashboard's Worker → Triggers page. |
+| 9. Cron | `*/5 * * * *` registered at deploy ("schedule: */5 * * * *") and confirmed on 24 September 2026 through the API (`GET …/workers/scripts/robertandnatalie-rsvp-api/schedules`). That the job actually fires has not been observed; the scheduled handler logs one line per run to Workers Logs (observability is enabled), which is where to confirm it once, or `GET /admin/alerts` once Access exists. |
 
 **Owner follow-ups:**
-- The token expires `2026-12-31T23:59:59Z`, before the retention period ends (90 days after the wedding, about 19 March 2027). Extend it, or issue a new one when needed.
+- The token expires `2026-12-31T23:59:59Z`, before the retention job first applies (`src/retention.js`: wedding date + 90 + 1 days = 20 March 2027 UTC). Extend it, or issue a new one, before 31 December 2026; the post-event close, the daily exports and any redeploy need it.
 - The token now also holds broad account permissions (for example Registrar Domains Admin and Pages Write). Consider narrowing it to D1 Edit, Workers Scripts Edit, and Zone Workers Routes Edit / DNS Edit.
 - Steps 6, 7 and 10, and the load and restore tests listed below, remain before launch.
 
@@ -158,7 +158,7 @@ Legend: **met** (implemented and covered by a test here), **partly** (implemente
 | RSVP-05 | met | One D1 batch per save; `idempotency_record` returns the stored result on retry; `household_revision` guard turns a race into `409 conflict` with `latest`. |
 | RSVP-06 | partly | Explicit error codes for the front end; coordinator fallback documented above. Page-memory retention on failure is the front end's job (implemented in `src/js/rsvp.js`). |
 | RSVP-07 | met | Outbox row committed with the response; background sender with retries, max age and coordinator alert; notes excluded. Sending identity: owner decision. |
-| ADMIN-01 | partly | Owner and coordinator roles enforced per route; Access JWT verification implemented. The Access application with MFA must be created in the owners' account (deployment step 6) and the JWT details confirmed against current documentation. |
+| ADMIN-01 | partly | Owner and coordinator roles enforced per route; Access JWT verification implemented. Access is not enabled on the owners' account (checked 24 September 2026); until the application with MFA exists (deployment step 6) every `/admin/*` request, including the roster import, is refused by the Worker with `401`. JWT details still to be confirmed against current documentation. |
 | ADMIN-02 | met | CSV preview with validation (duplicate ids, missing invitees, unknown events, conflicting updates), immutable ids, commit by batch id, re-import preserves responses, phone/email responses recorded with origin. |
 | ADMIN-03 | met | Household status (no response / incomplete / complete), people counted per event, general export without notes, separate audited restricted export, formula neutralisation, timestamp and exporter recorded. Meal values are exported when configured; no meal configuration exists yet. |
 | ADMIN-04 | partly | Versioned urgent banner with rollback and `rsvp-settings`. FAQs, venue notes and hotel links are edited in `content/site.config.json` with its approval register and a rebuild (the static site's mechanism), not through this API. |
@@ -170,7 +170,7 @@ Legend: **met** (implemented and covered by a test here), **partly** (implemente
 | ARCH-03 | met | Attendance, revision, outbox row and audit event commit in one batch; sender retries with deduplication key, max age and alerting. Atomicity of a D1 batch in production is a *publisher claim*; the local emulator was verified to run a batch in one SQLite transaction. |
 | ARCH-04 | partly | `Cache-Control: private, no-store` on every guest/admin response (tested); the public banner is the only cacheable endpoint. The cross-household cache test in an integrated deployment remains to be run. |
 | ARCH-05 | met (n/a) | The API links to nothing external; no third party receives RSVP data. |
-| ARCH-06 | partly | Source, migrations, deployment steps, `.dev.vars.example`, lockfile (`package-lock.json`) delivered. Account ownership, domain and mail identity are owner actions. |
+| ARCH-06 | partly | Source, migrations, deployment steps, `.dev.vars.example`, lockfile (`package-lock.json`) delivered and deployed to the owners' account on 23 September 2026 (D1, migrations, events, secrets, custom domain, cron). Remaining owner actions: Access application and admin accounts (step 6), mail identity and cutoff (step 7), front-end switch (step 10). |
 | SEC-01 | open (site) | Visibility of the logistics pages is a static-site decision recorded in `docs/DECISION_RECORD.md`; this API only ever returns one household's data after access. |
 | SEC-02 | met | 256-bit link tokens, 59-bit rate-limited codes, HMAC digests with a secret pepper, expiry and revocation, `GET` never consumes a credential, tokens carried in the URL fragment by the site, request logs drop query strings and mask tokens/emails, `Referrer-Policy: no-referrer`. |
 | SEC-03 | met | HTTPS (Cloudflare), `HttpOnly; Secure; SameSite=Lax` cookie, Origin check on state-changing requests, JSON content type forcing preflight, `X-Requested-With` on admin mutations, rate limits, validated inputs, restrictive headers, per-request authorisation. |
@@ -193,14 +193,14 @@ Other PRD items touched: OPS-02 (banner), OPS-03 (`rsvp-settings.open=false`), N
 
 ## Verification labels
 
-- **Verified here:** the test results above; `npx wrangler deploy --dry-run` bundles the Worker and lists the D1 binding, cron trigger and variables; `scripts/events-sync.mjs` generates SQL from the site config; miniflare's local D1 executes `batch()` inside `transactionSync` (`node_modules/miniflare/dist/src/workers/d1/database.worker.js`); wrangler 4.124.0 `d1 time-travel restore --help` states the 30-day window; `d1 export --help` shows `--remote`/`--output`.
+- **Verified here:** the test results above; the deployment of 23 September 2026 as recorded under "Deployment status" (`GET /health` 200 in production, `/admin/status` 401, custom domain attached, cron registered, the two secret names listed, `workers.dev` disabled; re-checked through the Cloudflare API on 24 September 2026, when a CORS preflight from the site origin was also observed to pass); `npx wrangler deploy --dry-run` bundles the Worker and lists the D1 binding, cron trigger and variables; `scripts/events-sync.mjs` generates SQL from the site config; miniflare's local D1 executes `batch()` inside `transactionSync` (`node_modules/miniflare/dist/src/workers/d1/database.worker.js`); wrangler 4.124.0 `d1 time-travel restore --help` states the 30-day window; `d1 export --help` shows `--remote`/`--output`.
 - **Publisher claim (from installed package README/help text):** `@cloudflare/vitest-pool-workers` runs tests in the Workers runtime with per-test isolated storage; D1 Time Travel restores to a point in time.
-- **Not verified (docs host blocked from the build environment on 2026-09-21):** production D1 batch atomicity, Cloudflare Access JWT header/claim/certificate details, custom-domain prerequisites, D1 encryption at rest, cron trigger scheduling behaviour.
+- **Not verified (docs host blocked from the build environment on 2026-09-21):** production D1 batch atomicity, Cloudflare Access JWT header/claim/certificate details, D1 encryption at rest, and that the registered cron trigger actually fires (registration is verified; firing is not).
 
 ## Open items before guest launch
 
 1. Owner decisions: credential delivery method, RSVP cutoff, retention period approval, data recipients for the restricted export, mail sending identity, coordinator alert address.
-2. Create the Cloudflare account resources (steps 1–9) and confirm the Access JWT details against current documentation.
+2. Steps 1–5, 8 and 9 are done. Owners: enable Cloudflare Zero Trust on the account (`GET /accounts/{id}/access/apps` returned `access.api.error.not_enabled` on 24 September 2026), choose the team domain, then create the self-hosted Access application with an MFA policy (step 6); set `ACCESS_AUD`, `ACCESS_TEAM_DOMAIN`, `OWNER_EMAILS`, `COORDINATOR_EMAILS` and redeploy; confirm the Access JWT details against current documentation. The deployment token holds only Access *Read* permissions, so the application is created in the dashboard, not with this token.
 3. Choose and wire a mail provider (adapter or relay), verify sending domain, and test AT-11 with delivery disabled.
 4. Load test (NFR) and cross-household cache test (ARCH-04) on the deployed service.
 5. Restore test and encryption confirmation (SEC-07); record in the decision record.

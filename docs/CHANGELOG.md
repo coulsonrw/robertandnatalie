@@ -25,6 +25,12 @@ Nothing in this reissue is implemented yet: see the v1.2 addendum in `docs/TRACE
 
 Unchanged in v1.1: wedding date, venues and start times, invitation copy, original-colour crest, ivory/gold/charcoal identity, household RSVP requirements, privacy decision status, P1/P2 scope boundaries.
 
+## Repository changes (24 September 2026)
+
+| Change | Instruction or reason | Affected requirements | Approvals reopened |
+|---|---|---|---|
+| Checklist to complete the full site reviewed and rewritten in `docs/DELIVERY_PLAN.md` after re-verifying every item against the repository, the live site and read-only queries of the owners' Cloudflare account: done items, owner decisions, owner account actions, coordinator inputs, service configuration and tests, release, post-event, and a dated critical path. New findings recorded: Cloudflare Access is not enabled on the account, so deployment step 6 cannot start; the account's only member has no two-factor authentication and there is no second administrator; R2 is not enabled; the domain's registrar is outside Cloudflare with an unrecorded renewal date; no MX, SPF, DKIM or DMARC record exists for the preset sending address; the `stub` mail provider delivers neither confirmations nor coordinator alerts; `HEAD /health` returns 404, so monitors must use GET; the readiness report does not check the P0 chapel-to-reception directions. Stale "not deployed" statements corrected in `AGENT_START_HERE.md`, `README.md`, `backend/README.md`, `docs/DECISION_REGISTER.md` (also the stray seventh cell in rows 25–27), `docs/DECISION_RECORD.md`, `docs/RUNBOOK.md` (§3 health check, §11 cron and alert path, §12 Cloudflare account and API-token rows), `docs/TEST_RESULTS.md` (dated rows for the 22–24 September runs and the deployment smoke test), `docs/ACCEPTANCE_TESTS.md`, `docs/audit/*`, and the factual part of the `rsvp` approval note in `content/site.config.json` (approval state unchanged; register regenerated). Dated addenda in `docs/TRACEABILITY.md`, `docs/PRD_GAP_ANALYSIS.md` and `docs/selection/SELECTION_REPORT.md`; the owners' Cloudflare account id removed from `backend/README.md`. No site, published value or service change. | Owner: "Review the checklist to complete the full site. Update it." (24 September 2026) | RELEASE-01, OPS-01, ADMIN-01, ARCH-06, SEC-06/07, CONTENT-08 | None; all 27 decision rows remain open |
+
 ## Repository changes (23 September 2026)
 
 | Change | Instruction or reason | Affected requirements | Approvals reopened |
