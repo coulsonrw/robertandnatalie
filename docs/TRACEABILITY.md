@@ -324,3 +324,7 @@ Requirements and acceptance cases added by `docs/PRD_v1_2.md`. None is started: 
 
 v1.2 status counts: owner-input-required 4, backend-required 4, not started 3 (acceptance cases). The v1.1 counts above are unchanged by the reissue.
 
+### Addendum (24 September 2026)
+
+The rows above are the 21 September audit record and are not edited by hand. Since then, `backend/` was committed and deployed to the owners' Cloudflare account on 23 September 2026 (`api.robertandnatalie.wedding`; `backend/README.md` "Deployment status"), which partly satisfies the "commit and deploy" remaining actions of §02-principle, §15-stage-5-core, ARCH-06 and SEC-07; the "once deployed" condition in the owner key is met for the service itself. Still open before those rows can move to met: the Cloudflare Access application (Access is not enabled on the account), the admin accounts, the mail provider, the cutoff, the roster, and AT-04 to AT-13 against the deployed service. ARCH-07 gains one fact: R2 is not enabled on the owners' account. The current checklist is `docs/DELIVERY_PLAN.md`.
+

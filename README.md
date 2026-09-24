@@ -26,7 +26,7 @@ Event details (venues, start times) come from the owners' instructions in the PR
 | `assets/` | Original artwork (A1 crest, A2 invitation) and the asset manifest. Photos of unconfirmed provenance sit in `assets/review/` and are not published. |
 | `docs/` | PRD, decision record and register, gap analysis and traceability, delivery plan, acceptance tests and results log, runbook, changelog, sources, RSVP API contract, content approval register, selection package, evidence, proofs and font licences. |
 | `AGENT_START_HERE.md` | Reading order, stop rules and commands for anyone picking the work up. |
-| `backend/` | RSVP service reference implementation (Cloudflare Workers + D1) with tests; not deployed. |
+| `backend/` | RSVP service (Cloudflare Workers + D1) with tests; deployed on 23 September 2026 into the owners' Cloudflare account as `robertandnatalie-rsvp-api` on `https://api.robertandnatalie.wedding` (see its README, "Deployment status"); Access, mail provider, cutoff and the site's `rsvp.apiBaseUrl`/`rsvp.mode` switch remain owner decisions. |
 | `.github/workflows/` | `ci.yml` validates and builds on pull requests; `deploy.yml` builds and publishes `main` to GitHub Pages; `domain-check.yml` (run by hand) reports the Pages settings and the custom domain's DNS answers, HTTPS behaviour and certificate as observed from a GitHub-hosted runner. |
 
 ## Editing content
@@ -61,7 +61,7 @@ Node 20 or newer; no `npm install` is required for the build.
 
 `deploy.yml` builds `dist/` and publishes it with the official Pages actions on every push to `main`.
 
-The workflow switches **Settings → Pages → Build and deployment → Source** to **GitHub Actions** through the API on its first run and enables *Enforce HTTPS* once the certificate is issued; each run prints the Pages state (source, custom domain, certificate) in its job summary. If the token is not allowed to change the setting, the run warns and the setting must be made once by hand; until then GitHub's own build of the branch root overwrites every deployment. Keep the custom domain `robertandnatalie.wedding`. The `CNAME` file is copied into the artifact for completeness.
+On every run the workflow reads the Pages settings, switches **Settings → Pages → Build and deployment → Source** to **GitHub Actions** if it is not already, and tries to enable *Enforce HTTPS* once the certificate is approved; each run prints the Pages state (source, custom domain, Enforce HTTPS, certificate) in its job summary. On 22 September 2026 the workflow token was refused for both changes (HTTP 403) and the owners made them by hand the same day; every run since prints `build_type=workflow` and `https_enforced=true`. If either setting is ever changed back, the run warns and the setting must be made once by hand; until then GitHub's own build of the branch root overwrites every deployment. Keep the custom domain `robertandnatalie.wedding`. The `CNAME` file is copied into the artifact for completeness.
 
 ## RSVP status
 
@@ -69,7 +69,7 @@ GitHub Pages serves static files only. It cannot authorize a household, keep gue
 
 - `rsvp.mode` is `coming-soon`: guests see a clear message and no form.
 - The full guest-facing RSVP flow is already built (`src/js/rsvp.js`) against the API in `docs/RSVP_API_CONTRACT.md`. Review it with synthetic guests at `/rsvp.html?preview=1` (code `PREVIEW`); a banner states that nothing is saved.
-- To go live: deploy a small backend that implements the contract (Cloudflare Workers + D1, or Supabase, are the candidates), set `rsvp.apiBaseUrl` and `rsvp.mode: "live"`, set `rsvp.cutoffAt`, name the provider in `privacy.rsvpProvider`, and rebuild.
+- The backend that implements the contract is deployed on Cloudflare Workers + D1 at `https://api.robertandnatalie.wedding` (`/health` answers `{"ok":true,"environment":"production"}`). To go live: complete backend README steps 6–7 (Cloudflare Access with MFA, admin emails, mail provider, cutoff), run AT-04 to AT-13 against it, then set `rsvp.apiBaseUrl` to `https://api.robertandnatalie.wedding`, `rsvp.mode: "live"`, `rsvp.cutoffAt`, name Cloudflare in `privacy.rsvpProvider`, and rebuild. The full checklist is `docs/DELIVERY_PLAN.md`.
 
 ## Our Story
 
@@ -81,4 +81,4 @@ The audit handoff, its 24-task backlog and 32 acceptance scenarios are tracked w
 
 ## Before guests are invited
 
-`npm run build` lists the blockers. At the time of writing they are: RSVP backend not deployed, RSVP cutoff not set, no private contact route, RSVP provider not named in the privacy notice. Items marked *review* (chapel entrance and parking, transport between venues, dress code, room block, draft wording) need an owner or coordinator decision but do not block a build.
+`npm run build` lists the blockers. As of 24 September 2026 there are five: guest release (G3) not recorded (`site.launchApproved` is false); RSVP not live (`rsvp.mode` is `coming-soon` and `rsvp.apiBaseUrl` is unset, although the service itself is deployed at `https://api.robertandnatalie.wedding`); RSVP cutoff not set; no private contact route; RSVP provider not named in the privacy notice. The checklist to complete the site is `docs/DELIVERY_PLAN.md`. Items marked *review* (chapel entrance and parking, transport between venues, dress code, room block, draft wording) need an owner or coordinator decision but do not block a build.

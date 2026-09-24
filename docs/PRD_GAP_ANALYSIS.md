@@ -4,6 +4,7 @@
 **Scope:** every numbered requirement (IA, DES, TPL, HOME, CONTENT, RSVP, ADMIN, DATA, ARCH, SEC, NFR, AT, RELEASE, OPS) and every un-numbered requirement (document control, basis table, routes, journeys, content master, form sequence, data entities, configuration keys, success measures, decision table, handover package, sources register) in `docs/PRD_v1_1.md`.
 **Repository state audited:** the repository after commit `68e4844` "Add PRD v1.1 to the repository as the governing specification", read at HEAD `7f8d326` on 2026-09-21 together with the working tree at that time (which additionally held `docs/selection/proofs/alt-b-couple-template/` as untracked). Line numbers cited below refer to that state; several findings were first raised against an earlier tree and corrected by the verifiers (see "Verifier overrides").
 **Method:** an auditor classified each requirement from repository evidence; independent verifiers re-checked every finding against the files, `npm run build` output, `git status` and `git ls-files`, and overrode the auditor where the evidence had moved.
+**Update (24 September 2026):** this is a dated audit snapshot; its rows are not edited. Since it was taken, `backend/` was committed (71 vitest cases) and deployed to the owners' Cloudflare account on 23 September 2026 (`docs/CHANGELOG.md`); the current checklist is `docs/DELIVERY_PLAN.md`.
 
 ## Summary
 

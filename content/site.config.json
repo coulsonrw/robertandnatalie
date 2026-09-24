@@ -529,7 +529,7 @@
       "owner": "Robert / Natalie / technical lead",
       "source": "PRD §08–§11",
       "reviewed": "2026-09-22",
-      "note": "Backend service, credential delivery and cutoff are undecided. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. Synthetic fixtures (PRD §14): PREVIEW = couple with a plus-one slot and a reception-only guest; SOLO = an individual; FAMILY = a named family including children as named invitees."
+      "note": "The RSVP service is deployed at https://api.robertandnatalie.wedding (23 September 2026); credential delivery, the cutoff, the mail provider and the Access admin accounts are undecided, so the block stays pending. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. Synthetic fixtures (PRD §14): PREVIEW = couple with a plus-one slot and a reception-only guest; SOLO = an individual; FAMILY = a named family including children as named invitees."
     },
     "mealChoices": {
       "eventId": null,

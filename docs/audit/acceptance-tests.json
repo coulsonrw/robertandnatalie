@@ -328,7 +328,7 @@
       "environment": "Node 22 + headless Chromium in the repository CI/local environment",
       "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
       "evidence": [
-        "Backup/restore drill needs a deployed D1 database (backend/README.md, docs/RUNBOOK.md §7)."
+        "D1 database rsvp exists in the owners' account since 2026-09-23; the drill still needs a staging Worker with synthetic households and a second database (backend/README.md 'Restore test before launch', docs/RUNBOOK.md §7). Not run."
       ]
     },
     {
@@ -350,7 +350,7 @@
       "environment": "Node 22 + headless Chromium in the repository CI/local environment",
       "build": "branch claude/zen-gates-fhulbh, 22 September 2026",
       "evidence": [
-        "Pilot needs a staging service and real participants."
+        "Service deployed 2026-09-23 (production Worker, no staging); the pilot still needs the Access application, a synthetic roster with issued credentials, a build pointed at the API, six participants and the coordinator. Not run."
       ]
     }
   ]
