@@ -83,7 +83,8 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   await page.waitForTimeout(1500);
   await page.screenshot({ path: path.join(OUT, `entry-site-keepsake-${vp.width}.png`), fullPage: false });
   const entered = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), focused: document.activeElement && document.activeElement.id, entryHidden: document.getElementById('entry').hidden, keepsake: document.getElementById('keepsake').getBoundingClientRect().toJSON() }));
-  await page.click('.keepsake-btn');
+  // Below 1256px the keepsake is parked out of view (review P2 #6); the hero's "View the invitation" opens the dialog there.
+  await page.click(await page.isVisible('.keepsake-btn') ? '.keepsake-btn' : '.hero-keepsake [data-action="view-invitation"]');
   await page.waitForTimeout(1500);
   await page.screenshot({ path: path.join(OUT, `entry-dialog-${vp.width}.png`), fullPage: false });
   const dialog = await page.evaluate(() => ({ state: document.body.getAttribute('data-entry-state'), modal: document.getElementById('invitation-dialog').matches(':modal'), focused: document.activeElement && document.activeElement.className }));

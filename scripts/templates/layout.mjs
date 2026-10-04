@@ -84,6 +84,7 @@ export function header({ view, currentPage }) {
       </button>
       <ul id="primary-menu" class="nav-menu">
         ${view.story?.published ? `<li><a href="${home}#our-story">Our Story</a></li>` : ''}
+        <li class="nav-invitation"><a href="${home}#invitation">Invitation</a></li>
         <li><a href="${home}#wedding-day">Wedding Day</a></li>
         <li><a href="${home}#travel-stay">Travel &amp; Stay</a></li>
         <li><a href="${home}#questions">Questions</a></li>

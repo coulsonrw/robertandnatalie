@@ -89,8 +89,10 @@
   // Move the card to a new parent, animating from its old screen position (FLIP).
   function flipMove(newParent, cb) {
     var first = card.getBoundingClientRect();
+    var wasHidden = isHidden(card);
     newParent.appendChild(card);
-    if (!motion() || first.width === 0) { if (cb) cb(); return; }
+    // No glide to or from a place the guest cannot see (the keepsake is parked out of view on phones).
+    if (!motion() || first.width === 0 || wasHidden || isHidden(card)) { if (cb) cb(); return; }
     var last = card.getBoundingClientRect();
     var parentScale = newParent.offsetWidth ? newParent.getBoundingClientRect().width / newParent.offsetWidth : 1;
     var sx = first.width / last.width;
@@ -116,13 +118,30 @@
     });
   }
 
+  function isHidden(el) { return getComputedStyle(el).visibility === 'hidden'; }
+  function isShown(el) { return !!el && document.contains(el) && el.getClientRects().length > 0 && !isHidden(el); }
+
+  // The keepsake floats in the left gutter (review P2 #6). Below 1256px the gutter is too narrow and the
+  // stylesheet parks it out of view ("Invitation" is in the menu instead); above that it is sized to the
+  // gutter so it never covers the text column: 110px wide from about 1300px, smaller just above 1256px.
+  var contentRef = document.querySelector('#main .section .container');
+  var keepsakeTarget = 110;
+  function updateKeepsakeTarget() {
+    var room = 110;
+    if (contentRef && contentRef.getClientRects().length) {
+      room = Math.floor(contentRef.getBoundingClientRect().left + (parseFloat(getComputedStyle(contentRef).paddingLeft) || 0) - 24);
+    }
+    keepsakeTarget = Math.max(64, Math.min(110, room));
+    keepsake.classList.toggle('is-compact', keepsakeTarget < 100);
+  }
+
   function sizeKeepsake() {
+    updateKeepsakeTarget();
     var scale = slots.keepsake;
     var width = scale.offsetWidth;
     var height = card.offsetHeight;
     if (!width || !height) return;
-    var small = window.innerWidth < 480;
-    var k = Math.min((small ? 34 : 110) / width, (small ? 92 : 160) / height);
+    var k = Math.min(keepsakeTarget / width, (keepsakeTarget * 160 / 110) / height);
     scale.style.transform = 'scale(' + k + ')';
     keepsake.style.width = Math.round(width * k) + 'px';
     keepsake.style.height = Math.round(height * k) + 'px';
@@ -278,10 +297,17 @@
   }
 
   // Focus goes back to whatever opened the dialog if it is still visible; otherwise to the keepsake.
+  // Fallbacks: the keepsake, then (on phones, where it is parked) the menu button, then the hero heading.
   function returnFocus(el) {
-    var target = el && el !== document.body && document.contains(el) && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden' ? el : null;
-    if (!target) target = state === 'open' ? card : keepsake.querySelector('.keepsake-btn');
-    if (target) target.focus();
+    var candidates = state === 'open' ? [el, card] : [el, keepsake.querySelector('.keepsake-btn'), document.querySelector('.nav-toggle'), document.getElementById('hero-title')];
+    for (var i = 0; i < candidates.length; i++) {
+      var c = candidates[i];
+      if (c && c !== document.body && isShown(c)) {
+        if (c.id === 'hero-title' && !c.hasAttribute('tabindex')) c.setAttribute('tabindex', '-1');
+        c.focus();
+        return;
+      }
+    }
   }
 
   // Decide the starting state: the sealed envelope for a fresh visit, the site for deep links,

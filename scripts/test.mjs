@@ -234,6 +234,14 @@ test('P2 #4: RSVP calls to action follow rsvp.mode: outlined "opens soon" until 
   fs.rmSync(c.tmp, { recursive: true, force: true });
 });
 
+test('P2 #6: the menu carries an "Invitation" link on every page (it replaces the parked keepsake below 1256px)', () => {
+  const b = buildWith(readConfig(), { preview: false }); b.run();
+  assert.match(b.read('index.html'), /<li class="nav-invitation"><a href="#invitation">Invitation<\/a><\/li>/);
+  assert.match(b.read('rsvp.html'), /<li class="nav-invitation"><a href="\/#invitation">Invitation<\/a><\/li>/);
+  assert.match(b.read('styles/site.css'), /@media \(max-width: 1255\.98px\) \{\s*\.keepsake \{ visibility: hidden; pointer-events: none; \}/);
+  fs.rmSync(b.tmp, { recursive: true, force: true });
+});
+
 test('IMP-15: only airports with their own non-pending approval are published, each with its official site', () => {
   const b = buildWith(readConfig(), { preview: false }); b.run();
   const index = b.read('index.html');

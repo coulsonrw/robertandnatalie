@@ -353,7 +353,7 @@ legend { padding: 0 8px; margin-bottom: 4px; }
   .site-header, .site-footer, .actions, .card-actions, .skip-link, .btn, .entry-bar, .entry-hint, .keepsake-btn, .keepsake-caption, .hero-keepsake { display: none !important; }
   .invitation-card { box-shadow: none; animation: none; }
   /* Print the docked invitation at full size wherever it currently lives. */
-  .keepsake { position: static; width: auto !important; height: auto !important; margin: 0 0 24px; }
+  .keepsake { position: static; width: auto !important; height: auto !important; margin: 0 0 24px; visibility: visible; }
   .keepsake-scale { transform: none !important; width: auto; }
   .invitation-dialog { position: static; display: block; width: auto; }
   .invitation-dialog::backdrop { display: none; }
@@ -424,8 +424,20 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .envelope.is-open .seal { opacity: 0; pointer-events: none; }
 
 /* Keepsake (docked invitation, bottom-left) and dialog */
-.keepsake { position: fixed; left: 12px; bottom: 12px; z-index: 40; width: 110px; }
-@media (max-width: 479.98px) { .keepsake { left: 6px; bottom: 8px; } .keepsake-caption { font-size: 0.72rem; letter-spacing: 0.06em; margin-top: 4px; } }
+.keepsake { position: fixed; left: 12px; bottom: 12px; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 40; width: 110px; }
+/* Review P2 #6: the floating keepsake needs a free left gutter. The content column (1160px plus a 40px
+   gutter) leaves too little room below 1256px, so on phones, tablets and smaller laptops it covered body
+   text. There it is parked out of view (still laid out, so the card has somewhere to live) and the
+   invitation is reached from "View the invitation" in the hero and "Invitation" in the menu. */
+.nav-invitation { display: none; }
+@media (max-width: 1255.98px) {
+  .keepsake { visibility: hidden; pointer-events: none; }
+  .nav-invitation { display: list-item; }
+}
+.keepsake.is-compact .keepsake-caption { font-size: 0.72rem; letter-spacing: 0.06em; margin-top: 4px; }
+/* With "Invitation" in the desktop menu, keep 768-1023px on one row. */
+@media (min-width: 768px) and (max-width: 1023.98px) { .nav-menu a { padding: 0 7px; letter-spacing: 0.06em; } }
+@media (min-width: 768px) and (max-width: 899.98px) { .brand-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; } }
 .keepsake-scale { transform-origin: top left; width: min(760px, calc(100vw - 40px)); pointer-events: none; }
 .keepsake-scale .invitation-card { box-shadow: 0 12px 30px rgba(41, 42, 40, 0.35); }
 .keepsake-btn { position: absolute; inset: 0; background: transparent; border: 2px solid transparent; border-radius: 4px; cursor: pointer; padding: 0; }
