@@ -73,8 +73,9 @@
   var state = 'inline';
   var busy = false;
 
-  function storage(op, value) {
-    try { return op === 'get' ? window.sessionStorage.getItem(STORAGE_KEY) : window.sessionStorage.setItem(STORAGE_KEY, value); } catch (e) { return null; }
+  var SKIP_KEY = 'rn.skipIntro'; // set when a guest skips the opening animation; later openings this session are instant
+  function storage(op, value, key) {
+    try { return op === 'get' ? window.sessionStorage.getItem(key || STORAGE_KEY) : window.sessionStorage.setItem(key || STORAGE_KEY, value); } catch (e) { return null; }
   }
 
   function afterTransition(el, prop, ms, cb) {
@@ -87,7 +88,9 @@
   }
 
   // Move the card to a new parent, animating from its old screen position (FLIP).
+  var flipToken = 0; // a newer move (or a skip) supersedes an unfinished one
   function flipMove(newParent, cb) {
+    var token = ++flipToken;
     var first = card.getBoundingClientRect();
     var wasHidden = isHidden(card);
     newParent.appendChild(card);
@@ -108,6 +111,7 @@
       card.style.transition = 'transform 0.75s cubic-bezier(0.2, 0.7, 0.2, 1)';
       card.style.transform = '';
       afterTransition(card, 'transform', 750, function () {
+        if (token !== flipToken) return;
         card.style.transition = '';
         card.style.transform = '';
         card.style.transformOrigin = '';
@@ -203,20 +207,66 @@
     sizeEnvelopeCard();
   }
 
+  // Opening sequence (about 1.6s). While it runs, a visible "Skip animation" button, Escape, or any tap or
+  // click on the envelope jumps straight to the open invitation (review P2 #7). A skip is remembered for
+  // the session (sessionStorage rn.skipIntro), so the envelope opens instantly from then on. Under
+  // prefers-reduced-motion the envelope is never animated (the invitation is shown open on load).
+  var skipAnim = document.getElementById('entry-skip-animation');
+  var openRun = 0;
+  function opening() { return document.body.classList.contains('is-opening'); }
+
+  function finishOpen() {
+    document.body.classList.remove('is-opening');
+    if (skipAnim) skipAnim.hidden = true;
+    scene.hidden = true;
+    scene.classList.remove('is-fading');
+    openStage.hidden = false;
+    busy = false;
+    setState('open');
+    card.setAttribute('tabindex', '-1');
+    card.focus({ preventScroll: true });
+  }
+
+  // Jump to the open invitation with nothing moving.
+  function openNow() {
+    openRun++;
+    flipToken++;
+    document.body.classList.add('is-skipping');
+    card.style.transition = '';
+    card.style.transform = '';
+    card.style.transformOrigin = '';
+    card.classList.remove('card-moving');
+    document.body.classList.remove('is-animating');
+    envelope.classList.add('is-open');
+    document.getElementById('seal').setAttribute('aria-expanded', 'true');
+    slots.open.appendChild(card);
+    finishOpen();
+    requestAnimationFrame(function () { requestAnimationFrame(function () { document.body.classList.remove('is-skipping'); }); });
+  }
+
+  function skipOpening() {
+    if (!opening()) return;
+    storage('set', '1', SKIP_KEY);
+    openNow();
+  }
+
   function openEnvelope() {
     if (busy || state !== 'closed') return;
+    if (!motion() || storage('get', null, SKIP_KEY) === '1') { openNow(); return; }
     busy = true;
+    var run = ++openRun;
+    var sealHadFocus = document.activeElement === document.getElementById('seal');
+    document.body.classList.add('is-opening');
+    if (skipAnim) { skipAnim.hidden = false; if (sealHadFocus) skipAnim.focus({ preventScroll: true }); }
     envelope.classList.add('is-open');
     document.getElementById('seal').setAttribute('aria-expanded', 'true');
     afterTransition(slots.envelope, 'transform', 800, function () {
+      if (run !== openRun) return;
       openStage.hidden = false;
       scene.classList.add('is-fading');
       flipMove(slots.open, function () {
-        scene.hidden = true;
-        busy = false;
-        setState('open');
-        card.setAttribute('tabindex', '-1');
-        card.focus({ preventScroll: true });
+        if (run !== openRun) return;
+        finishOpen();
       });
     });
   }
@@ -340,6 +390,12 @@
   }
 
   document.addEventListener('click', function (e) {
+    if (opening()) {
+      // Any click or tap during the opening skips it; "Skip to the wedding details" then carries on into the site.
+      skipOpening();
+      var go = e.target.closest('[data-action="enter"]');
+      if (!go) { e.preventDefault(); return; }
+    }
     var inv = e.target.closest('a[href="#invitation"], a[href$="#invitation"]');
     if (inv && state === 'site') { e.preventDefault(); openDialog(false); return; }
     var t = e.target.closest('[data-action], #seal, #invitation-card');
@@ -353,6 +409,9 @@
     else if (action === 'enlarge-invitation') openDialog(true);
     else if (action === 'zoom-invitation') { if (!busy) setZoom(!dialog.classList.contains('is-zoomed')); }
     else if (action === 'close-invitation') closeDialog();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (opening() && (e.key === 'Escape' || e.key === 'Esc')) { e.preventDefault(); skipOpening(); }
   });
   card.addEventListener('keydown', function (e) {
     if (state === 'open' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openDialog(true); }

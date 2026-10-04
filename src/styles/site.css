@@ -374,7 +374,10 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .entry-brand { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.1em; font-size: 1.1rem; margin-right: auto; }
 .entry-bar-actions { display: flex; align-items: center; gap: 14px; }
 .entry-skip { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.08em; font-size: 1rem; color: var(--ink); display: inline-flex; align-items: center; min-height: 44px; }
-.entry-stage { flex: 1; display: grid; min-width: 0; }
+.entry-stage { flex: 1; display: grid; min-width: 0; position: relative; }
+/* Shown only while the envelope is opening (review P2 #7). */
+.entry-skip-animation { position: absolute; z-index: 6; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--paper-light); white-space: nowrap; }
+.is-skipping *, .is-skipping *::before, .is-skipping *::after { transition: none !important; animation: none !important; }
 .entry-stage > * { min-width: 0; }
 .entry-scene, .entry-open { grid-area: 1 / 1; }
 .entry-scene { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: clamp(24px, 5vw, 56px) var(--gutter); transition: opacity 0.5s; }

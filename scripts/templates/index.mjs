@@ -63,6 +63,7 @@ function entryStage(view) {
         </div>
       </div>
     </div>
+    <button class="btn btn-secondary entry-skip-animation" id="entry-skip-animation" type="button" data-action="skip-animation" hidden>Skip animation</button>
   </div>
 </main>`;
 }
