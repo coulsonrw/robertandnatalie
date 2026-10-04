@@ -187,6 +187,44 @@ ${storySection(v, { headingLevel: 1 })}
   return page({ view: v, currentPage: 'story-preview', title: 'Our Story (layout preview)', description: 'Layout preview with synthetic fixtures; not published.', main, bodyClass: 'story-preview' });
 }
 
+// The Details (direction A card layout in the site palette; Rob, 4 Oct 2026; Figma 67:584 / 67:706).
+// Content comes from view.details (scripts/build.mjs detailsView): facts derived from config, TBD rows otherwise.
+// The TBD badge is visual only; the note beside it carries the word "TBD", so it is announced once.
+function detailsInline(parts) {
+  return parts.map((x) => (typeof x === 'string' ? esc(x) : `<a href="${esc(x.href)}">${esc(x.text)}</a>`)).join('');
+}
+
+function detailsCard(c) {
+  return `<article class="details-card${c.full ? ' details-card--full' : ''}" id="details-${esc(c.id)}" aria-labelledby="details-${esc(c.id)}-title">
+        <div class="details-card-head"><span class="details-icon">${icon(c.icon)}</span><h3 id="details-${esc(c.id)}-title">${esc(c.title)}</h3></div>
+        ${(c.body ?? []).map((p) => `<p class="details-card-body">${detailsInline(p)}</p>`).join('\n        ')}
+        ${c.tbd ? `<p class="tbd-row"><span class="tbd-badge" aria-hidden="true">TBD</span><span class="tbd-note">${esc(c.tbd)}</span></p>` : ''}
+      </article>`;
+}
+
+function detailsSection(view) {
+  const d = view.details;
+  if (!d) return '';
+  const divider = '<div class="details-divider" aria-hidden="true"><span></span><span class="diamond"></span><span></span></div>';
+  return `<section id="details" class="details" aria-labelledby="details-title">
+  <header class="details-band">
+    <svg class="details-waves" aria-hidden="true" focusable="false"><use href="#d-waves"/></svg>
+    <h2 id="details-title">${esc(d.heading)}</h2>
+    <svg class="details-flourish" aria-hidden="true" focusable="false"><use href="#ornament-flourish"/></svg>
+  </header>
+  <div class="details-body">
+    <ul class="glance">
+      ${d.glance.map((g) => `<li><time datetime="${esc(g.datetime)}">${esc(g.time)}</time>${g.label ? ` <span aria-hidden="true">·</span> ${esc(g.label)}` : ''}</li>`).join('\n      ')}
+    </ul>
+    ${divider}
+    <div class="details-grid">
+      ${d.cards.map(detailsCard).join('\n      ')}
+    </div>
+    ${divider}
+  </div>
+</section>`;
+}
+
 function weddingDaySection(view) {
   return `<section id="wedding-day" class="section" aria-labelledby="wedding-day-title">
   <div class="container">
@@ -284,6 +322,7 @@ ${header({ view, currentPage })}
 </section>
 ${heroSection(view)}
 ${thankYouSection(view)}
+${detailsSection(view)}
 ${storySection(view)}
 ${weddingDaySection(view)}
 ${travelSection(view)}

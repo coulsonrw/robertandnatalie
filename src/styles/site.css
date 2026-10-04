@@ -529,3 +529,42 @@ body.is-entry .site { display: none; }
 /* Airports (audit IMP-15): a list of official sites, no proximity ranking */
 .airport-list { padding-left: 1.2em; margin: 0.4em 0 1em; }
 .airport-list li { margin-bottom: 0.5em; }
+
+/* ---------- The Details (direction A card layout in the site palette; Rob, 4 Oct 2026; Figma 67:584 / 67:706) ----------
+   Site tokens only: no new colours or font families. Gold that carries text is --gold-text or --gold-deep only;
+   --gold (#B38A39) is used for the decorative diamond alone. */
+.details { background: var(--paper); }
+.details-band { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 80px 20px; background: var(--paper-deep); border-bottom: 1px solid var(--gold-rule); text-align: center; }
+.details-band h2 { font-family: var(--font-serif); font-weight: 600; font-size: 2.8rem; line-height: 1.15; letter-spacing: 0.01em; color: var(--gold-text); }
+.details-waves { width: 36px; height: 36px; fill: none; stroke: var(--gold-text); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.details-flourish { width: 240px; height: 24px; fill: none; stroke: var(--gold); stroke-width: 1.2; stroke-linecap: round; color: var(--gold); }
+.details-body { display: flex; flex-direction: column; align-items: center; gap: 36px; max-width: calc(1040px + 2 * var(--gutter)); margin-inline: auto; padding: 64px var(--gutter); }
+.glance { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; list-style: none; margin: 0; padding: 0; }
+.glance li { font-family: var(--font-sc); font-weight: 600; font-size: 16px; line-height: normal; letter-spacing: 0.1em; color: var(--gold-deep); background: var(--paper-light); border: 1px solid var(--gold-rule); border-radius: 999px; padding: 10px 18px; white-space: nowrap; }
+.details-divider { display: flex; align-items: center; justify-content: center; gap: 12px; height: 17px; }
+.details-divider > span:not(.diamond) { width: 202px; height: 1px; background: var(--gold-rule); }
+.details-divider .diamond { width: 7px; height: 7px; background: var(--gold); transform: rotate(45deg); margin: 0 1.5px; }
+.details-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; width: 100%; }
+@media (min-width: 760px) { .details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; } }
+.details-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 24px; background: var(--paper-light); border: 1px solid var(--gold-rule); border-radius: var(--radius); box-shadow: var(--shadow-card); }
+.details-card--full { grid-column: 1 / -1; }
+.details-card-head { display: flex; align-items: center; gap: 14px; }
+.details-icon { display: flex; flex: 0 0 42px; width: 42px; height: 42px; padding: 10px; background: var(--paper-deep); border-radius: var(--radius); color: var(--gold-text); }
+.details-icon .icon { width: 22px; height: 22px; stroke-width: 2; vertical-align: 0; }
+.details-card h3 { flex: 1 1 0; min-width: 0; font-family: var(--font-sc); font-weight: 600; font-size: 20px; line-height: 24px; letter-spacing: 0.04em; color: var(--ink); }
+.details-card-body { margin: 0; font-family: var(--font-serif); font-weight: 500; font-size: 18.5px; line-height: 1.5; color: var(--ink); overflow-wrap: break-word; }
+.tbd-row { display: flex; align-items: flex-start; gap: 8px; margin: 0; }
+/* Only Cormorant SC 500/600 ship with the site, so the badge uses 600 rather than a synthesised 700. */
+.tbd-badge { flex: 0 0 auto; margin-top: 1px; padding: 4px 10px; border-radius: 999px; background: var(--gold-rule); color: var(--ink); font-family: var(--font-sc); font-weight: 600; font-size: 13px; line-height: normal; letter-spacing: 0.08em; font-synthesis: none; }
+.tbd-note { flex: 1 1 0; min-width: 0; font-family: var(--font-serif); font-style: italic; font-weight: 500; font-size: 17.5px; line-height: 1.45; color: var(--ink-soft); }
+@media (max-width: 759.98px) {
+  .details-band { padding-block: 48px; }
+  .details-band h2 { font-size: 2.1rem; }
+  .details-body { gap: 24px; padding-block: 32px; }
+  .glance { flex-direction: column; align-items: center; }
+  .details-divider > span:not(.diamond) { width: 122px; }
+  .details-card h3 { font-size: 19px; line-height: 22.8px; }
+  .details-card-body { font-size: 18px; }
+  .tbd-note { font-size: 17px; }
+}
+@media (max-width: 359.98px) { .glance li { white-space: normal; text-align: center; } }

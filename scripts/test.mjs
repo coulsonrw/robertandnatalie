@@ -242,6 +242,54 @@ test('P2 #6: the menu carries an "Invitation" link on every page (it replaces th
   fs.rmSync(b.tmp, { recursive: true, force: true });
 });
 
+test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD rows for every unknown and no invented copy', () => {
+  const section = (html) => html.slice(html.indexOf('<section id="details"'), html.indexOf('</section>', html.indexOf('<section id="details"')));
+  const text = (h) => h.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  const b = buildWith(readConfig(), { preview: false }); b.run();
+  const html = b.read('index.html');
+  const d = section(html);
+  assert.ok(html.indexOf('id="details"') > html.indexOf('class="hero"') && html.indexOf('id="details"') < html.indexOf('id="wedding-day"'), 'between the hero and Wedding Day');
+  assert.match(d, /<h2 id="details-title">The Details<\/h2>/);
+  assert.deepEqual([...d.matchAll(/<li>(.*?)<\/li>/g)].map((m) => text(m[1])), ['Saturday, December 19, 2026', '2:00 PM · Ceremony', '4:00 PM · Reception']);
+  const cards = [...d.matchAll(/<article class="details-card([^"]*)"[\s\S]*?<\/article>/g)].map((m) => ({ full: /--full/.test(m[1]), title: text(m[0].match(/<h3[^>]*>(.*?)<\/h3>/)[1]), body: [...m[0].matchAll(/<p class="details-card-body">(.*?)<\/p>/g)].map((x) => text(x[1])), tbd: (m[0].match(/<span class="tbd-note">(.*?)<\/span>/) || [])[1] ?? null, badgeHidden: /<span class="tbd-badge" aria-hidden="true">TBD<\/span>/.test(m[0]) }));
+  assert.deepEqual(cards.map((c) => c.title), ['Dress Code', 'Between Ceremony & Reception', 'Transport & Parking', 'Room Block', 'Children', 'Charity', 'Contact Us']);
+  assert.deepEqual(cards.map((c) => c.tbd), ['Dress code TBD.', 'Plans for the time between TBD.', 'Parking and shuttle details TBD.', 'Room block rate, booking code and cut-off TBD.', 'Children policy TBD.', 'TBD', 'Email and phone TBD.']);
+  assert.ok(cards.every((c) => c.badgeHidden), 'the badge is visual only; the note carries the word TBD');
+  assert.deepEqual(cards.map((c) => c.full), [false, false, false, false, false, false, true], 'Contact Us spans the grid');
+  assert.deepEqual(cards[1].body, ['Ceremony 2:00 PM at Saint Francis Chapel, reception 4:00 PM at The Grand Hotel — about two hours apart.']);
+  assert.deepEqual(cards[2].body, ['Saint Francis Chapel: 17280 Scenic Highway 98, Fairhope, Alabama 36532. The Grand Hotel: One Grand Boulevard, Point Clear, Alabama 36564.']);
+  assert.deepEqual(cards[3].body, ['The Grand Hotel — general reservations (251) 928-9201.']);
+  assert.match(d, /<a href="tel:\+12519289201">\(251\) 928-9201<\/a>/);
+  for (const i of [0, 4, 5, 6]) assert.deepEqual(cards[i].body, [], `${cards[i].title} has no body until the owners supply it`);
+  assert.doesNotMatch(d, /Registry|celebrate with you|Everything you need/i, 'no registry and no copy in the couple\'s voice');
+  assert.doesNotMatch(b.read('styles/site.css').split('The Details (direction A')[1].split('*/').slice(1).join('').replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-f]{3,8}\b|Playfair|Inter\b|teal/i, 'the details styles use site tokens only');
+  fs.rmSync(b.tmp, { recursive: true, force: true });
+
+  // Supplying a fact removes its TBD row and shows the fact; nothing else changes.
+  const c = readConfig();
+  c.details.dressCode = { ...c.details.dressCode, text: 'Example dress code.', approval: { ...c.details.dressCode.approval, state: 'approved' } };
+  c.contact = { ...c.contact, email: 'hello@example.invalid', approval: { ...c.contact.approval, state: 'approved' } };
+  c.travel.betweenVenues = { text: 'Example plans.', approval: { ...c.travel.betweenVenues.approval, state: 'approved' } };
+  const s = buildWith(c, { preview: false }); s.run();
+  const d2 = section(s.read('index.html'));
+  assert.match(d2, /<p class="details-card-body">Example dress code\.<\/p>/);
+  assert.match(d2, /<a href="mailto:hello@example\.invalid">hello@example\.invalid<\/a>/);
+  assert.match(d2, /<p class="details-card-body">Example plans\.<\/p>/);
+  for (const gone of ['Dress code TBD.', 'Email and phone TBD.', 'Plans for the time between TBD.']) assert.ok(!d2.includes(gone), `${gone} removed`);
+  assert.ok(d2.includes('Parking and shuttle details TBD.'), 'parking stays TBD until a venue confirms it');
+  fs.rmSync(s.tmp, { recursive: true, force: true });
+
+  // details.enabled false omits the section; a TBD note without the word TBD is refused.
+  const off = readConfig(); off.details.enabled = false;
+  const o = buildWith(off, { preview: false }); o.run();
+  assert.ok(!o.read('index.html').includes('id="details"'));
+  fs.rmSync(o.tmp, { recursive: true, force: true });
+  const bad = readConfig(); bad.details.tbdNotes.contact = 'Coming soon.';
+  const x = buildWith(bad, { preview: false });
+  assert.throws(() => x.run(), /details\.tbdNotes\.contact must be a string containing the word "TBD"/);
+  fs.rmSync(x.tmp, { recursive: true, force: true });
+});
+
 test('IMP-15: only airports with their own non-pending approval are published, each with its official site', () => {
   const b = buildWith(readConfig(), { preview: false }); b.run();
   const index = b.read('index.html');
