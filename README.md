@@ -6,10 +6,10 @@ This is a small static site generated from one configuration file. There is no f
 
 ## The guest experience
 
-1. **Sealed envelope** at `/`. A gold seal with the RN monogram; the entry bar carries "Skip to the wedding details" and RSVP so nobody is forced through the animation (PRD HOME-03).
-2. **Opened invitation.** The flap folds back, the invitation card rises out of the envelope and settles centred: the approved artwork's own frame, flourishes, paper and crest, with the wording as live text laid over it at the artwork's positions. Tap the card, or use "Continue to the website".
-3. **The website.** The card glides to the bottom-left corner as a keepsake; the site opens on a compact hero (crest, names, date, destination, both start times, RSVP and Wedding Day actions), then Wedding Day, Travel & Stay and Questions.
-4. **Bring the invitation back.** Tap the keepsake (or "View the invitation" in the hero) and the card returns to the centre in a modal dialog; Escape, the close button or the backdrop sends it back to the corner.
+1. **Sealed envelope** at `/`. A gold seal with the RN monogram; the entry bar carries "Skip to the wedding details" (and RSVP once responses are live) so nobody is forced through the animation (PRD HOME-03). While the envelope opens, "Skip animation", Escape or any tap jumps straight to the open card; a skip is remembered for the session (`sessionStorage` `rn.skipIntro`).
+2. **Opened invitation.** The flap folds back, the invitation card rises out of the envelope and settles centred: the approved artwork's own frame, flourishes, paper and crest, with the wording as live text laid over it at the artwork's positions. Tap the card (or "Enlarge the invitation") to read it in the enlarged viewer; "Continue to the website" goes on. On desktop the card is sized to the screen height so the buttons stay above the fold, and on wide screens they sit beside it.
+3. **The website.** The card glides to the bottom-left corner as a keepsake (from 1256px wide, where the left gutter has room for it; narrower screens park it out of view and add "Invitation" to the menu); the site opens on a compact hero (crest, names, date, destination, both start times, RSVP and Wedding Day actions), then Wedding Day, Travel & Stay and Questions.
+4. **Bring the invitation back.** Tap the keepsake (or "View the invitation" in the hero, or "Invitation" in the menu) and the card returns to the centre in a modal dialog. "Enlarge text" or a tap on the card widens it to read (up to the artwork's native 1122px) and the dialog scrolls to pan. Escape, the close button or the backdrop sends it back, and focus returns to the control that opened it.
 
 Deep links such as `/#wedding-day`, the `/celebration.html` route and a return within the same browser session skip the envelope. `/?envelope=1` forces it. Reduced-motion users get the same states without animation; without JavaScript the invitation simply sits at the top of the page.
 
