@@ -206,6 +206,7 @@ a:hover { color: var(--ink); }
 .section-head h2, .section-head h1, .page-title { font-size: clamp(2.1rem, 4vw, 2.8rem); color: var(--gold-text); font-weight: 600; letter-spacing: 0.01em; }
 .ornament { display: block; width: 170px; height: 14px; margin: 12px auto 18px; color: var(--gold); fill: none; stroke: currentColor; stroke-width: 1.2; }
 .section-intro { font-size: 1.15rem; color: var(--ink-soft); margin: 0; }
+.section-head .see-details { font-size: 1.15rem; color: var(--ink-soft); margin: 0.6em 0 0; } /* pointer to the Details card that holds a fact (Q12) */
 .card { background: var(--paper-light); border: 1px solid var(--gold-rule); border-radius: var(--radius); padding: clamp(22px, 3.5vw, 36px); box-shadow: var(--shadow-card); }
 .card > :last-child { margin-bottom: 0; }
 .kicker { font-family: var(--font-sc); font-weight: 600; font-size: 0.95rem; letter-spacing: 0.16em; color: var(--gold-text); margin: 0 0 0.5em; }

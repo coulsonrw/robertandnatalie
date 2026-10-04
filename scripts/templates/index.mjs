@@ -118,7 +118,7 @@ function eventCard(view, ev) {
   <dl class="event-facts">
     <div><dt>${icon('i-calendar')}<span class="sr-only">Date</span></dt><dd>${esc(ev.longDate)}</dd></div>
     <div><dt>${icon('i-clock')}<span class="sr-only">Time</span></dt><dd><time datetime="${esc(ev.startsAt)}">${esc(ev.clock)}</time> ${esc(ev.tzLabel)}</dd></div>
-    <div><dt>${icon('i-pin')}<span class="sr-only">Address</span></dt><dd>${ev.addressLines.map(esc).join('<br>')}</dd></div>
+    ${view.details ? '' : `<div><dt>${icon('i-pin')}<span class="sr-only">Address</span></dt><dd>${ev.addressLines.map(esc).join('<br>')}</dd></div>`}
   </dl>
   ${notes ? `<ul class="event-notes">${notes}</ul>` : ''}
   <div class="card-actions">
@@ -225,6 +225,13 @@ function detailsSection(view) {
 </section>`;
 }
 
+// One place per fact (Rob, Q12, 4 Oct 2026): while The Details is on, venue addresses, the hotel's reservations
+// number and the guest contact route are shown only there; Wedding Day, Travel & Stay and Questions keep their own
+// content and point to the Details card that holds the fact. With details.enabled false the facts render in place.
+function detailsPointer(view, html) {
+  return view.details ? `<p class="see-details">${html}</p>` : '';
+}
+
 function weddingDaySection(view) {
   return `<section id="wedding-day" class="section" aria-labelledby="wedding-day-title">
   <div class="container">
@@ -232,6 +239,7 @@ function weddingDaySection(view) {
       <h2 id="wedding-day-title">Wedding Day</h2>
       <svg class="ornament" aria-hidden="true" focusable="false"><use href="#ornament-rule"/></svg>
       <p class="section-intro">${esc(view.weddingDay.intro)}</p>
+      ${detailsPointer(view, 'See <a href="#details-transport">Transport &amp; Parking in The Details</a> for both venue addresses.')}
     </header>
     <div class="event-grid">
       ${view.events.map((ev) => eventCard(view, ev)).join('\n      ')}
@@ -256,9 +264,9 @@ function travelSection(view) {
         <p class="kicker">Where to stay</p>
         <h3 id="hotel-title">${esc(hotel.name)}</h3>
         <p>${esc(hotel.intro)}</p>
-        <address>
-          ${hotel.addressLines.map(esc).join('<br>')}${hotel.phoneDisplay ? `<br><a href="tel:${esc(hotel.phoneTel)}">${icon('i-phone')} ${esc(hotel.phoneDisplay)}</a>` : ''}
-        </address>
+        ${view.details
+    ? detailsPointer(view, 'See <a href="#details-transport">Transport &amp; Parking</a> and <a href="#details-room-block">Room Block in The Details</a> for the hotel\'s address and general reservations number.')
+    : (hotel.phoneDisplay ? `<address><a href="tel:${esc(hotel.phoneTel)}">${icon('i-phone')} ${esc(hotel.phoneDisplay)}</a></address>` : '')}
         <div class="card-actions">
           <a class="btn btn-secondary" href="${esc(hotel.links.website)}" rel="noopener">View hotel &amp; general reservations</a>
           ${roomBlock ? `<a class="btn btn-primary" href="${esc(roomBlock.url)}" rel="noopener">Book our wedding room block</a>` : ''}
@@ -304,7 +312,9 @@ function questionsSection(view) {
     </div>` : ''}
     <div class="card contact-card">
       <p class="kicker">Get in touch</p>
-      ${contactBlock(view)}
+      ${view.details
+    ? `${view.contact?.note ? `<p>${esc(view.contact.note)}</p>` : ''}${detailsPointer(view, 'If your question isn\'t answered here, see <a href="#details-contact">Contact Us in The Details</a> for how to reach us.')}`
+    : contactBlock(view)}
     </div>
   </div>
 </section>`;

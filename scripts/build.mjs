@@ -186,6 +186,8 @@ function validate(c) {
 // The Details (direction A card layout in the site palette; Rob, 4 Oct 2026). The section adds no facts of its
 // own: owner-supplied answers live in details.dressCode / children / charity, everything else is derived from
 // existing keys, and anything still unknown renders as a TBD row whose wording comes from this block.
+// It is also the one place on the page for venue addresses, the hotel's reservations number and the guest
+// contact route (Rob, Q12): Wedding Day, Travel & Stay and Questions point here instead of repeating them.
 const DETAILS_OWNER_KEYS = ['dressCode', 'children', 'charity'];
 const DETAILS_TBD_KEYS = ['between', 'transport', 'roomBlock', 'contact'];
 function validateDetails(c) {
@@ -204,6 +206,10 @@ function validateDetails(c) {
     tbd(`details.${k}.tbdNote`, b.tbdNote);
   }
   for (const k of DETAILS_TBD_KEYS) tbd(`details.tbdNotes.${k}`, d.tbdNotes?.[k]);
+  // One place per fact (Q12): the hotel's address is the reception venue's, shown once in Transport & Parking.
+  const hotelName = c.travel?.hotel?.name;
+  if (hotelName && !(c.events ?? []).some((ev) => ev.venue?.name === hotelName)) warn(`travel.hotel.name "${hotelName}" is not an event venue, so its address appears nowhere on the page (The Details lists venue addresses from events[].venue)`);
+  if (c.travel?.hotel?.addressLines) warn('travel.hotel.addressLines is not rendered; the hotel address comes from its events[].venue entry (one place per fact)');
 }
 
 // "2:00 PM": the Details pills and cards use the build spec's clock style (the rest of the site keeps "2:00 p.m.").

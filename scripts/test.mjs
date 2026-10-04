@@ -296,6 +296,37 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   fs.rmSync(x.tmp, { recursive: true, force: true });
 });
 
+test('One place per fact (Rob, Q12): addresses, the hotel number and the contact route appear once, in The Details', () => {
+  const visible = (html) => html.replace(/<(script|style|svg)\b[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
+  const count = (hay, needle) => hay.split(needle).length - 1;
+  const section = (html, id) => { const i = html.indexOf(`<section id="${id}"`); return html.slice(i, html.indexOf('</section>', i)); };
+  const FACTS = ['17280 Scenic Highway 98', 'Fairhope, Alabama 36532', 'One Grand Boulevard', 'Point Clear, Alabama 36564', '(251) 928-9201', 'hello@example.invalid', '(555) 010-0199'];
+  const withContact = (cfg) => { cfg.contact = { ...cfg.contact, email: 'hello@example.invalid', phone: '+15550100199', phoneDisplay: '(555) 010-0199', approval: { ...cfg.contact.approval, state: 'approved' } }; return cfg; };
+  for (const enabled of [true, false]) {
+    const cfg = withContact(readConfig()); cfg.details.enabled = enabled;
+    const b = buildWith(cfg, { preview: false }); b.run();
+    for (const file of ['index.html', 'celebration.html']) {
+      const html = b.read(file); const text = visible(html);
+      for (const f of FACTS) assert.equal(count(text, f), 1, `${f} appears once on ${file} (details.enabled=${enabled})`);
+      if (enabled) {
+        const d = visible(section(html, 'details'));
+        for (const f of FACTS) assert.equal(count(d, f), 1, `${f} lives in The Details`);
+        for (const id of ['wedding-day', 'travel-stay', 'questions']) for (const f of FACTS) assert.ok(!visible(section(html, id)).includes(f), `${f} is not repeated in #${id}`);
+        assert.match(section(html, 'wedding-day'), /See <a href="#details-transport">Transport &amp; Parking in The Details<\/a> for both venue addresses\./);
+        assert.match(section(html, 'travel-stay'), /See <a href="#details-transport">Transport &amp; Parking<\/a> and <a href="#details-room-block">Room Block in The Details<\/a> for the hotel's address and general reservations number\./);
+        assert.match(section(html, 'questions'), /see <a href="#details-contact">Contact Us in The Details<\/a> for how to reach us\./);
+        for (const id of ['details-transport', 'details-room-block', 'details-contact']) assert.match(html, new RegExp(`id="${id}"`), `pointer target #${id} exists`);
+      } else {
+        assert.doesNotMatch(html, /see-details|#details-/, 'no pointers when the Details section is off');
+      }
+    }
+    // Wedding Day keeps its own content: times, directions, calendar files and venue links.
+    const wd = section(b.read('index.html'), 'wedding-day');
+    for (const keep of ['Directions', 'Add to calendar', 'Open in Apple Maps', 'Venue website', '2:00 p.m.', '4:00 p.m.']) assert.ok(wd.includes(keep), `Wedding Day keeps ${keep}`);
+    fs.rmSync(b.tmp, { recursive: true, force: true });
+  }
+});
+
 test('IMP-15: only airports with their own non-pending approval are published, each with its official site', () => {
   const b = buildWith(readConfig(), { preview: false }); b.run();
   const index = b.read('index.html');

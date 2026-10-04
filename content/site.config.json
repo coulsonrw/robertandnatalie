@@ -214,10 +214,6 @@
     "hotel": {
       "name": "The Grand Hotel",
       "intro": "The reception is held at The Grand Hotel on Mobile Bay. Guests who would like to stay at the hotel may make general reservations directly with the resort.",
-      "addressLines": [
-        "One Grand Boulevard",
-        "Point Clear, Alabama 36564"
-      ],
       "phoneDisplay": "(251) 928-9201",
       "phoneTel": "+12519289201",
       "links": {
