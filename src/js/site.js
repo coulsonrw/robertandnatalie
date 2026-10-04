@@ -221,14 +221,41 @@
     sizeKeepsake();
   }
 
-  function openDialog() {
-    if (busy || state !== 'site') return;
+  // The dialog doubles as the invitation viewer (review P2 #3): "Enlarge text" (or a tap on the card)
+  // lays the card out at up to the artwork's native 1122px width, so its live text reads at about
+  // 17-28px; the slot scrolls in both directions to pan. The artwork itself is never altered.
+  var zoomBtn = dialog.querySelector('[data-action="zoom-invitation"]');
+  var dialogReturn = 'site';
+  var dialogOpener = null;
+
+  function setZoom(on, point) {
+    var before = card.getBoundingClientRect();
+    var fx = point && before.width ? (point.x - before.left) / before.width : 0.5;
+    var fy = point && before.height ? (point.y - before.top) / before.height : 0;
+    dialog.classList.toggle('is-zoomed', on);
+    if (zoomBtn) zoomBtn.textContent = on ? 'Fit to screen' : 'Enlarge text';
+    var slot = slots.dialog;
+    if (!on) { slot.scrollLeft = 0; return; }
+    // Keep the tapped point (or the card's centre line) where it was on screen.
+    var after = card.getBoundingClientRect();
+    slot.scrollLeft += (after.left + fx * after.width) - (point ? point.x : window.innerWidth / 2);
+    if (point) slot.scrollTop += (after.top + fy * after.height) - point.y;
+  }
+
+  function openDialog(zoom) {
+    if (busy || (state !== 'site' && state !== 'open')) return;
     busy = true;
+    dialogReturn = state;
+    dialogOpener = document.activeElement;
     card.removeAttribute('aria-hidden');
+    card.removeAttribute('tabindex');
+    dialog.classList.toggle('is-zoomed', !!zoom);
+    if (zoomBtn) zoomBtn.textContent = zoom ? 'Fit to screen' : 'Enlarge text';
     if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
     flipMove(slots.dialog, function () {
       busy = false;
       setState('dialog');
+      if (zoom) { slots.dialog.scrollLeft = (slots.dialog.scrollWidth - slots.dialog.clientWidth) / 2; }
       var close = dialog.querySelector('[data-action="close-invitation"]');
       if (close) close.focus();
     });
@@ -237,15 +264,24 @@
   function closeDialog() {
     if (busy || state !== 'dialog') return;
     busy = true;
-    card.setAttribute('aria-hidden', 'true');
-    flipMove(slots.keepsake, function () {
+    var back = dialogReturn === 'open' ? slots.open : slots.keepsake;
+    if (dialogReturn !== 'open') card.setAttribute('aria-hidden', 'true');
+    flipMove(back, function () {
       if (dialog.open) dialog.close(); else dialog.removeAttribute('open');
+      setZoom(false);
       busy = false;
-      setState('site');
-      sizeKeepsake();
-      var btn = keepsake.querySelector('.keepsake-btn');
-      if (btn) btn.focus();
+      setState(dialogReturn);
+      if (dialogReturn === 'open') card.setAttribute('tabindex', '-1');
+      else sizeKeepsake();
+      returnFocus(dialogOpener);
     });
+  }
+
+  // Focus goes back to whatever opened the dialog if it is still visible; otherwise to the keepsake.
+  function returnFocus(el) {
+    var target = el && el !== document.body && document.contains(el) && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden' ? el : null;
+    if (!target) target = state === 'open' ? card : keepsake.querySelector('.keepsake-btn');
+    if (target) target.focus();
   }
 
   // Decide the starting state: the sealed envelope for a fresh visit, the site for deep links,
@@ -259,7 +295,7 @@
   if (start === 'site') {
     showSite();
     dock(false);
-    if (window.location.hash === '#invitation') { setTimeout(openDialog, 0); }
+    if (window.location.hash === '#invitation') { setTimeout(function () { openDialog(false); }, 0); }
     else if (hashTarget) { hashTarget.scrollIntoView(); }
   } else if (!motion()) {
     // Reduced motion: skip the sealed envelope and show the invitation directly (equivalent static rendering).
@@ -279,18 +315,21 @@
 
   document.addEventListener('click', function (e) {
     var inv = e.target.closest('a[href="#invitation"], a[href$="#invitation"]');
-    if (inv && state === 'site') { e.preventDefault(); openDialog(); return; }
+    if (inv && state === 'site') { e.preventDefault(); openDialog(false); return; }
     var t = e.target.closest('[data-action], #seal, #invitation-card');
     if (!t) return;
     if (t.id === 'seal') { openEnvelope(); return; }
-    if (t.id === 'invitation-card' && state === 'open') { enterSite(); return; }
+    if (t.id === 'invitation-card' && state === 'open') { openDialog(true); return; }
+    if (t.id === 'invitation-card' && state === 'dialog') { if (!busy) setZoom(!dialog.classList.contains('is-zoomed'), { x: e.clientX, y: e.clientY }); return; }
     var action = t.getAttribute('data-action');
     if (action === 'enter') { if (t.tagName === 'A') e.preventDefault(); if (state === 'closed') { envelope.classList.add('is-open'); slots.open.appendChild(card); scene.hidden = true; openStage.hidden = false; setState('open'); } enterSite(); }
-    else if (action === 'view-invitation') openDialog();
+    else if (action === 'view-invitation') openDialog(false);
+    else if (action === 'enlarge-invitation') openDialog(true);
+    else if (action === 'zoom-invitation') { if (!busy) setZoom(!dialog.classList.contains('is-zoomed')); }
     else if (action === 'close-invitation') closeDialog();
   });
   card.addEventListener('keydown', function (e) {
-    if (state === 'open' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); enterSite(); }
+    if (state === 'open' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openDialog(true); }
   });
   dialog.addEventListener('cancel', function (e) { e.preventDefault(); closeDialog(); });
   dialog.addEventListener('click', function (e) { if (e.target === dialog) closeDialog(); });

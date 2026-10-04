@@ -377,7 +377,7 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .entry-open { display: flex; flex-direction: column; align-items: center; padding: clamp(20px, 4vw, 48px) var(--gutter) clamp(40px, 6vw, 72px); }
 .entry-open .entry-hint { margin: 22px 0 16px; }
 .entry-card-slot { width: 100%; max-width: 760px; }
-.entry-card-slot .invitation-card { cursor: pointer; }
+.entry-card-slot .invitation-card { cursor: zoom-in; }
 @media (max-width: 479.98px) { .entry-brand { display: none; } .entry-skip { letter-spacing: 0.04em; } }
 
 /* Envelope */
@@ -421,6 +421,25 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .dialog-close::after { content: ''; position: absolute; width: 2px; height: 22px; background: currentColor; transform: rotate(-45deg); }
 .dialog-close .icon { display: none; }
 .dialog-close:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+/* Invitation viewer (review P2 #3): the card's wording is live text sized in cqw, so laying the card out
+   wider makes the text larger and stays sharp. "Enlarge text" (or a tap on the card) widens it to
+   680px on phones (about 17px text) and up to the artwork's native 1122px on larger screens. */
+.dialog-zoom {
+  position: absolute; top: 8px; left: 12px; z-index: 2; min-height: 44px; padding: 0 18px;
+  border-radius: 22px; border: 1.5px solid var(--paper); background: var(--ink); color: var(--paper);
+  font-family: var(--font-sc); font-weight: 600; font-size: 1rem; letter-spacing: 0.08em; cursor: pointer;
+}
+.dialog-zoom:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+.dialog-slot .invitation-card { cursor: zoom-in; }
+.invitation-dialog.is-zoomed { width: 100vw; }
+.invitation-dialog.is-zoomed .dialog-slot { overscroll-behavior: contain; }
+.invitation-dialog.is-zoomed .dialog-slot .invitation-card { width: min(1122px, max(680px, 100vw - 32px)); max-width: none; cursor: zoom-out; }
+.dialog-slot:focus-visible { outline: 3px solid var(--paper); outline-offset: -3px; }
+.entry-enlarge { margin: 14px 0 10px; text-align: center; font-size: 1.05rem; }
+@media (max-width: 479.98px) {
+  /* Give the card the full phone width (it was inset by the 20px gutter on each side). */
+  .entry-open { padding-left: 8px; padding-right: 8px; }
+}
 body.is-entry .site { display: none; }
 .invitation-section.is-empty { display: none; }
 .card-moving { will-change: transform; }

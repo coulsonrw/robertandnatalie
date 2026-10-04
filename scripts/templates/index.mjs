@@ -55,7 +55,7 @@ function entryStage(view) {
     </div>
     <div class="entry-open" id="entry-open" hidden>
       <div class="entry-card-slot" id="entry-card-slot"></div>
-      <p class="entry-hint" id="entry-open-hint">Tap the invitation to continue to the website.</p>
+      <p class="entry-enlarge"><button class="text-button" type="button" data-action="enlarge-invitation" aria-haspopup="dialog">Enlarge the invitation</button></p>
       <div class="actions">
         <button class="btn btn-primary" type="button" data-action="enter">Continue to the website</button>
         ${view.postEvent ? '' : `<a class="btn btn-secondary" href="${p}/rsvp.html">RSVP</a>`}
@@ -293,6 +293,7 @@ ${footer({ view })}
 </div>
 <dialog class="invitation-dialog" id="invitation-dialog" aria-label="Your invitation">
   <div class="dialog-frame">
+    <button class="dialog-zoom" type="button" data-action="zoom-invitation">Enlarge text</button>
     <button class="dialog-close" type="button" data-action="close-invitation" aria-label="Close the invitation">${icon('i-minus')}<span class="sr-only">Close</span></button>
     <div class="dialog-slot" id="dialog-slot" tabindex="0" role="region" aria-label="Invitation, scrollable"></div>
   </div>
