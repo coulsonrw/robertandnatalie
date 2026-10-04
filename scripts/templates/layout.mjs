@@ -52,13 +52,23 @@ export function banner(view) {
 </div>`;
 }
 
+// One RSVP call to action, used by the header, the hero and the opened invitation. While responses are
+// not open (rsvp.mode "coming-soon" or "closed") it is an outlined link that says so ("RSVP opens soon",
+// "RSVP opens October 1", "RSVP closed") instead of a solid RSVP button (review P2 #4).
+export function rsvpCta(view, { openClass = 'btn btn-primary', extraClass = '', current = false } = {}) {
+  const cta = view.rsvpCta;
+  if (!cta) return '';
+  const cls = `${cta.open ? openClass : 'btn btn-pending'}${extraClass ? ' ' + extraClass : ''}`;
+  return `<a class="${cls}" href="${view.basePath}/rsvp.html"${current ? ' aria-current="page"' : ''}>${esc(cta.label)}</a>`;
+}
+
 export function header({ view, currentPage }) {
   const p = view.basePath;
   const home = currentPage === 'index' || currentPage === 'celebration' ? '' : `${p}/`;
   const rsvpButton = view.postEvent
     ? `<a class="btn btn-primary btn-rsvp" href="${home}#thank-you">Thank you</a>`
-    : `<a class="btn btn-primary btn-rsvp" href="${p}/rsvp.html"${currentPage === 'rsvp' ? ' aria-current="page"' : ''}>RSVP</a>`;
-  return `${banner(view)}<header class="site-header">
+    : rsvpCta(view, { extraClass: 'btn-rsvp', current: currentPage === 'rsvp' });
+  return `${banner(view)}<header class="site-header${view.rsvpCta && !view.rsvpCta.open ? ' rsvp-pending' : ''}">
   <div class="header-inner">
     <a class="brand" href="${home || p + '/'}#top" aria-label="${esc(view.couple.displayName)} — home">
       <picture>

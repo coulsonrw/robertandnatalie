@@ -306,6 +306,7 @@ function buildView(c) {
   const sub = (s) => String(s).replace('{destination}', c.wedding.destination).replace('{longDate}', longDate(weddingParts));
   const cutoff = c.rsvp.cutoffAt ? cutoffLabel(c.rsvp.cutoffAt, tz) : null;
   const opensAt = c.rsvp.opensAt ? cutoffLabel(c.rsvp.opensAt, tz) : null;
+  const opensShort = c.rsvp.opensAt ? (({ month, day }) => `${month} ${day}`)(zonedParts(c.rsvp.opensAt, tz)) : null;
   const faqs = (c.faqs ?? []).filter((f) => isPublished(f) && f.answer).map((f) => ({ id: f.id, question: f.question, answer: cutoff && f.answerWithCutoff ? f.answerWithCutoff.replace('{cutoff}', cutoff) : f.answer }));
   const contactPublished = isPublished(c.contact) && (c.contact.email || c.contact.phone);
   const betweenVenues = isPublished(c.travel.betweenVenues) && c.travel.betweenVenues.text ? c.travel.betweenVenues.text : null;
@@ -340,6 +341,11 @@ function buildView(c) {
     // The synthetic preview is disabled in deployed review builds (SITE_PREVIEW=0, set by deploy.yml) so that
     // review previews stay out of the public domain (PRD TPL-09); local builds keep it.
     rsvp: { ...(postEvent ? { ...c.rsvp, mode: 'closed', allowPreview: false, closedText: c.postEvent.message } : (PREVIEW_BUILD ? c.rsvp : { ...c.rsvp, allowPreview: false })), cutoffLabel: cutoff, opensAtLabel: opensAt },
+    // Every RSVP call to action follows rsvp.mode (review P2 #4): only "live" gets the solid RSVP button;
+    // "coming-soon" and "closed" get an outlined, honestly labelled link to the RSVP page, which explains the state.
+    rsvpCta: postEvent ? null : (c.rsvp.mode === 'live'
+      ? { open: true, label: 'RSVP' }
+      : { open: false, label: c.rsvp.mode === 'closed' ? 'RSVP closed' : (opensShort ? `RSVP opens ${opensShort}` : 'RSVP opens soon') }),
     story: storyView(c),
     privacy: c.privacy,
     lastReviewedLabel: reviewed.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),

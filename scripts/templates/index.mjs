@@ -1,5 +1,5 @@
 import { esc, linesWithBreaks } from '../lib/html.mjs';
-import { shell, header, footer, icon, page } from './layout.mjs';
+import { shell, header, footer, icon, page, rsvpCta } from './layout.mjs';
 
 
 // The invitation card: live text, one DOM node that the entry script moves between the
@@ -32,7 +32,7 @@ function entryStage(view) {
     <span class="entry-brand">${esc(view.couple.displayName)}</span>
     <div class="entry-bar-actions">
       <a class="entry-skip" href="#main" data-action="enter">Skip to the wedding details</a>
-      ${view.postEvent ? '' : `<a class="btn btn-primary btn-rsvp" href="${p}/rsvp.html">RSVP</a>`}
+      ${view.rsvpCta?.open ? rsvpCta(view, { extraClass: 'btn-rsvp' }) : ''}
     </div>
   </div>
   <div class="entry-stage">
@@ -58,7 +58,7 @@ function entryStage(view) {
       <p class="entry-enlarge"><button class="text-button" type="button" data-action="enlarge-invitation" aria-haspopup="dialog">Enlarge the invitation</button></p>
       <div class="actions">
         <button class="btn btn-primary" type="button" data-action="enter">Continue to the website</button>
-        ${view.postEvent ? '' : `<a class="btn btn-secondary" href="${p}/rsvp.html">RSVP</a>`}
+        ${rsvpCta(view, { openClass: 'btn btn-secondary' })}
       </div>
     </div>
   </div>
@@ -81,8 +81,10 @@ function heroSection(view) {
     <p class="glance-line"><span>${esc(view.longDate)}</span><span class="dot" aria-hidden="true">·</span><span>${esc(view.wedding.destination)}</span></p>
     <p class="glance-times">${times}</p>
     <div class="actions">
-      ${view.postEvent ? `<a class="btn btn-primary" href="#thank-you">${esc(view.postEvent.heading)}</a>` : `<a class="btn btn-primary" href="${p}/rsvp.html">RSVP</a>`}
-      <a class="btn btn-secondary" href="#wedding-day">View Wedding Day</a>
+      ${view.postEvent ? `<a class="btn btn-primary" href="#thank-you">${esc(view.postEvent.heading)}</a>
+      <a class="btn btn-secondary" href="#wedding-day">View Wedding Day</a>` : view.rsvpCta.open ? `${rsvpCta(view)}
+      <a class="btn btn-secondary" href="#wedding-day">View Wedding Day</a>` : `<a class="btn btn-primary" href="#wedding-day">View Wedding Day</a>
+      ${rsvpCta(view)}`}
     </div>
     ${view.rsvp.mode === 'coming-soon' && !view.postEvent ? `<p class="hero-note">Responses are not open yet${view.rsvp.opensAtLabel ? `; they open on ${esc(view.rsvp.opensAtLabel)}` : ''}.</p>` : ''}
     <p class="hero-keepsake js-only"><button class="text-button" type="button" data-action="view-invitation">View the invitation</button></p>

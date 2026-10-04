@@ -80,6 +80,13 @@ a:hover { color: var(--ink); }
 .btn-secondary:hover { background: var(--ink); color: var(--paper); }
 .btn-tertiary { background: transparent; color: var(--gold-deep); border-color: var(--gold-deep); }
 .btn-tertiary:hover { color: var(--ink); border-color: var(--ink); }
+/* RSVP while responses are not open (rsvp.mode coming-soon or closed): a quiet dashed outline so it never
+   reads as a live call to action (review P2 #4). gold-deep on paper is 6.8:1. */
+.btn-pending { background: transparent; color: var(--gold-deep); border: 1.5px dashed var(--gold-deep); }
+.btn-pending:hover { color: var(--ink); border-color: var(--ink); background: var(--paper-light); }
+.btn-pending.btn-rsvp { white-space: nowrap; padding-inline: 14px; letter-spacing: 0.06em; }
+/* The longer label needs the room the couple's name takes in the header between 480 and 1023px; the crest stays. */
+@media (max-width: 1023.98px) { .rsvp-pending .brand-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; } }
 .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.55; cursor: progress; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 

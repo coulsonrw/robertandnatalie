@@ -205,6 +205,35 @@ test('IMP-02/07: the opening date and the deadline appear only when set, and the
   fs.rmSync(after.tmp, { recursive: true, force: true });
 });
 
+test('P2 #4: RSVP calls to action follow rsvp.mode: outlined "opens soon" until live, solid RSVP only when live', () => {
+  const ctas = (html) => [...html.matchAll(/<a class="(btn [^"]*)" href="\/rsvp\.html"[^>]*>([^<]*)<\/a>/g)].map((m) => ({ cls: m[1], label: m[2] }));
+  const soon = buildWith(readConfig(), { preview: false }); soon.run();
+  const idx = ctas(soon.read('index.html'));
+  assert.equal(idx.length, 3, 'header, hero and opened invitation (none in the entry bar while closed)');
+  for (const c of idx) { assert.match(c.cls, /btn-pending/); assert.doesNotMatch(c.cls, /btn-primary/); assert.equal(c.label, 'RSVP opens soon'); }
+  assert.match(soon.read('index.html'), /<a class="btn btn-primary" href="#wedding-day">View Wedding Day<\/a>/);
+  assert.equal(ctas(soon.read('privacy.html'))[0].label, 'RSVP opens soon');
+  fs.rmSync(soon.tmp, { recursive: true, force: true });
+
+  const dated = readConfig(); dated.rsvp.opensAt = '2026-10-15T09:00:00-05:00';
+  const d = buildWith(dated, { preview: false }); d.run();
+  assert.ok(ctas(d.read('index.html')).every((c) => c.label === 'RSVP opens October 15'));
+  fs.rmSync(d.tmp, { recursive: true, force: true });
+
+  const live = readConfig(); live.rsvp.mode = 'live'; live.rsvp.apiBaseUrl = 'https://script.google.com/macros/s/TEST-deployment-id/exec';
+  const l = buildWith(live, { preview: false }); l.run();
+  const lc = ctas(l.read('index.html'));
+  assert.equal(lc.length, 4, 'entry bar, header, hero and opened invitation');
+  assert.ok(lc.every((c) => c.label === 'RSVP' && !/btn-pending/.test(c.cls)));
+  assert.ok(lc.some((c) => /btn-primary/.test(c.cls)));
+  fs.rmSync(l.tmp, { recursive: true, force: true });
+
+  const closed = readConfig(); closed.rsvp.mode = 'closed';
+  const c = buildWith(closed, { preview: false }); c.run();
+  assert.ok(ctas(c.read('index.html')).every((x) => x.label === 'RSVP closed' && /btn-pending/.test(x.cls)));
+  fs.rmSync(c.tmp, { recursive: true, force: true });
+});
+
 test('IMP-15: only airports with their own non-pending approval are published, each with its official site', () => {
   const b = buildWith(readConfig(), { preview: false }); b.run();
   const index = b.read('index.html');
