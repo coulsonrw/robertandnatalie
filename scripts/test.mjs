@@ -263,6 +263,12 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   for (const i of [0, 4, 5, 6]) assert.deepEqual(cards[i].body, [], `${cards[i].title} has no body until the owners supply it`);
   assert.doesNotMatch(d, /Registry|celebrate with you|Everything you need/i, 'no registry and no copy in the couple\'s voice');
   assert.doesNotMatch(b.read('styles/site.css').split('The Details (direction A')[1].split('*/').slice(1).join('').replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-f]{3,8}\b|Playfair|Inter\b|teal/i, 'the details styles use site tokens only');
+  const css = b.read('styles/site.css');
+  assert.match(css, /\.details-band \{[^}]*background: var\(--ink\);/, 'the title band is the footer\'s dark ink (Rob, 3:22 PM ET)');
+  assert.doesNotMatch(css.match(/\.details-band \{[^}]*\}/)[0], /border/, 'no hairline under the dark band');
+  for (const sel of ['\\.details-band h2', '\\.details-waves', '\\.details-flourish']) assert.match(css, new RegExp(`${sel} \\{[^}]*var\\(--gold-footer\\)`), `${sel} uses --gold-footer on the dark band`);
+  assert.doesNotMatch([...css.matchAll(/\.details-(?:band|waves|flourish)[^{]*\{[^}]*\}/g)].map((m) => m[0]).join(''), /--gold-text|--gold\)/, 'no --gold or --gold-text on the band');
+  assert.match(css, /\.footer-names \{[^}]*color: var\(--gold-footer\)/, 'the footer names share the variable');
   fs.rmSync(b.tmp, { recursive: true, force: true });
 
   // Supplying a fact removes its TBD row and shows the fact; nothing else changes.

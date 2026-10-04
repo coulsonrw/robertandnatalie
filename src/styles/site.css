@@ -11,6 +11,7 @@
   --gold-text: #856119;
   --gold-deep: #6E4F12;
   --gold-rule: #D9C89A;
+  --gold-footer: #D9B968; /* light gold for text and ornaments on the dark --ink surfaces (footer names, Details band): 7.6:1 on --ink */
   --navy: #152B45;
   --font-script: 'Pinyon Script', 'Snell Roundhand', 'Apple Chancery', 'URW Chancery L', cursive;
   --font-serif: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
@@ -253,7 +254,7 @@ address { font-style: normal; margin: 0.6em 0 1em; }
 
 /* ---------- Footer ---------- */
 .site-footer { background: var(--ink); color: var(--paper); padding: 48px 0; margin-top: 32px; text-align: center; }
-.footer-names { font-family: var(--font-script); font-size: 2.3rem; color: #D9B968; margin: 0 0 0.15em; }
+.footer-names { font-family: var(--font-script); font-size: 2.3rem; color: var(--gold-footer); margin: 0 0 0.15em; }
 .footer-meta { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.1em; font-size: 1rem; color: #E9E2D3; margin: 0 0 1em; }
 .footer-links { margin: 0; }
 .site-footer a { color: var(--paper); }
@@ -531,13 +532,14 @@ body.is-entry .site { display: none; }
 .airport-list li { margin-bottom: 0.5em; }
 
 /* ---------- The Details (direction A card layout in the site palette; Rob, 4 Oct 2026; Figma 67:584 / 67:706) ----------
-   Site tokens only: no new colours or font families. Gold that carries text is --gold-text or --gold-deep only;
-   --gold (#B38A39) is used for the decorative diamond alone. */
+   Site tokens only: no new font families. On the light surfaces, gold that carries text is --gold-text or
+   --gold-deep only and --gold (#B38A39) is the decorative diamond alone. The title band is the footer's dark --ink
+   (Rob, 3:22 PM ET), so everything on it is --gold-footer; --gold and --gold-text never sit on the band. */
 .details { background: var(--paper); }
-.details-band { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 80px 20px; background: var(--paper-deep); border-bottom: 1px solid var(--gold-rule); text-align: center; }
-.details-band h2 { font-family: var(--font-serif); font-weight: 600; font-size: 2.8rem; line-height: 1.15; letter-spacing: 0.01em; color: var(--gold-text); }
-.details-waves { width: 36px; height: 36px; fill: none; stroke: var(--gold-text); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.details-flourish { width: 240px; height: 24px; fill: none; stroke: var(--gold); stroke-width: 1.2; stroke-linecap: round; color: var(--gold); }
+.details-band { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 80px 20px; background: var(--ink); color: var(--gold-footer); text-align: center; }
+.details-band h2 { font-family: var(--font-serif); font-weight: 600; font-size: 2.8rem; line-height: 1.15; letter-spacing: 0.01em; color: var(--gold-footer); }
+.details-waves { width: 36px; height: 36px; fill: none; stroke: var(--gold-footer); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.details-flourish { width: 240px; height: 24px; fill: none; stroke: var(--gold-footer); stroke-width: 1.2; stroke-linecap: round; color: var(--gold-footer); }
 .details-body { display: flex; flex-direction: column; align-items: center; gap: 36px; max-width: calc(1040px + 2 * var(--gutter)); margin-inline: auto; padding: 64px var(--gutter); }
 .glance { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; list-style: none; margin: 0; padding: 0; }
 .glance li { font-family: var(--font-sc); font-weight: 600; font-size: 16px; line-height: normal; letter-spacing: 0.1em; color: var(--gold-deep); background: var(--paper-light); border: 1px solid var(--gold-rule); border-radius: 999px; padding: 10px 18px; white-space: nowrap; }

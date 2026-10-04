@@ -180,7 +180,7 @@
     "approval": {
       "state": "draft",
       "owner": "Robert / Natalie",
-      "source": "Layout: direction A card layout in the site palette, decided by Rob on 4 October 2026 (3:12 PM ET). Figma h9O9RkNe6T5hdTB1oviAXl nodes 67:584 / 67:706. Facts are derived from events, travel.hotel, travel.betweenVenues and contact.",
+      "source": "Layout: direction A card layout in the site palette, decided by Rob on 4 October 2026 (3:12 PM ET); title band switched to the footer's dark --ink with --gold-footer content (3:22 PM ET). Figma h9O9RkNe6T5hdTB1oviAXl nodes 67:584 / 67:706. Facts are derived from events, travel.hotel, travel.betweenVenues and contact.",
       "reviewed": "2026-10-04",
       "note": "Heading, card titles and TBD notes follow the build spec; no copy in the couple's voice. Each TBD row disappears once its source key (details.dressCode/children/charity.text, travel.betweenVenues.text, events[].venue.parking, travel.hotel.roomBlock, contact.email/phone) is supplied and approved. Set enabled to false to omit the section."
     }
