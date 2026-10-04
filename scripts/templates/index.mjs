@@ -55,10 +55,12 @@ function entryStage(view) {
     </div>
     <div class="entry-open" id="entry-open" hidden>
       <div class="entry-card-slot" id="entry-card-slot"></div>
-      <p class="entry-enlarge"><button class="text-button" type="button" data-action="enlarge-invitation" aria-haspopup="dialog">Enlarge the invitation</button></p>
-      <div class="actions">
-        <button class="btn btn-primary" type="button" data-action="enter">Continue to the website</button>
-        ${rsvpCta(view, { openClass: 'btn btn-secondary' })}
+      <div class="entry-open-aside">
+        <p class="entry-enlarge"><button class="text-button" type="button" data-action="enlarge-invitation" aria-haspopup="dialog">Enlarge the invitation</button></p>
+        <div class="actions">
+          <button class="btn btn-primary" type="button" data-action="enter">Continue to the website</button>
+          ${rsvpCta(view, { openClass: 'btn btn-secondary' })}
+        </div>
       </div>
     </div>
   </div>

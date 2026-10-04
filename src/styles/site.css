@@ -385,6 +385,23 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .entry-open .entry-hint { margin: 22px 0 16px; }
 .entry-card-slot { width: 100%; max-width: 760px; }
 .entry-card-slot .invitation-card { cursor: zoom-in; }
+.entry-open-aside { display: flex; flex-direction: column; align-items: center; max-width: 100%; }
+/* Desktop and tablet (review P2 #5): size the opened card by the viewport height so "Continue to the
+   website" stays above the fold. 70px is the entry bar; --open-reserve is the padding, the enlarge
+   button and the buttons around the card. 0.8 is the artwork's aspect ratio (1122 / 1402). */
+@media (min-width: 768px) {
+  .entry-open { --open-reserve: 200px; }
+  .entry-card-slot { width: min(100%, 760px, calc((100vh - 70px - var(--open-reserve)) * 0.8)); width: min(100%, 760px, calc((100svh - 70px - var(--open-reserve)) * 0.8)); min-width: min(100%, 320px); }
+}
+/* Wide landscape screens (1280x720, 1366x768, 1440x900 ...): the buttons sit beside the card, so the
+   card can use the full height and stays as large (and as readable) as possible. */
+@media (min-width: 1024px) and (min-aspect-ratio: 5/4) {
+  .entry-open { --open-reserve: 48px; flex-direction: row; justify-content: center; align-items: center; gap: clamp(32px, 4vw, 64px); padding-top: 24px; padding-bottom: 24px; }
+  .entry-card-slot { flex: 0 0 auto; }
+  .entry-open-aside { flex: 0 1 300px; }
+  .entry-open-aside .entry-enlarge { margin: 0 0 16px; }
+  .entry-open-aside .actions { flex-direction: column; align-items: stretch; width: 100%; }
+}
 @media (max-width: 479.98px) { .entry-brand { display: none; } .entry-skip { letter-spacing: 0.04em; } }
 
 /* Envelope */
