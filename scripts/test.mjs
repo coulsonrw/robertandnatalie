@@ -250,13 +250,13 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   const d = section(html);
   assert.ok(html.indexOf('id="details"') > html.indexOf('class="hero"') && html.indexOf('id="details"') < html.indexOf('id="wedding-day"'), 'between the hero and Wedding Day');
   assert.match(d, /<h2 id="details-title">The Details<\/h2>/);
-  assert.deepEqual([...d.matchAll(/<li>(.*?)<\/li>/g)].map((m) => text(m[1])), ['Saturday, December 19, 2026', '2:00 PM · Ceremony', '4:00 PM · Reception']);
+  assert.deepEqual([...d.matchAll(/<li>(.*?)<\/li>/g)].map((m) => text(m[1])), ['Saturday, December 19, 2026', '2:00 p.m. · Ceremony', '4:00 p.m. · Reception']);
   const cards = [...d.matchAll(/<article class="details-card([^"]*)"[\s\S]*?<\/article>/g)].map((m) => ({ full: /--full/.test(m[1]), title: text(m[0].match(/<h3[^>]*>(.*?)<\/h3>/)[1]), body: [...m[0].matchAll(/<p class="details-card-body">(.*?)<\/p>/g)].map((x) => text(x[1])), tbd: (m[0].match(/<span class="tbd-note">(.*?)<\/span>/) || [])[1] ?? null, badgeHidden: /<span class="tbd-badge" aria-hidden="true">TBD<\/span>/.test(m[0]) }));
   assert.deepEqual(cards.map((c) => c.title), ['Dress Code', 'Between Ceremony & Reception', 'Transport & Parking', 'Room Block', 'Children', 'Charity', 'Contact Us']);
   assert.deepEqual(cards.map((c) => c.tbd), ['Dress code TBD.', 'Plans for the time between TBD.', 'Parking and shuttle details TBD.', 'Room block rate, booking code and cut-off TBD.', 'Children policy TBD.', 'TBD', 'Email and phone TBD.']);
   assert.ok(cards.every((c) => c.badgeHidden), 'the badge is visual only; the note carries the word TBD');
   assert.deepEqual(cards.map((c) => c.full), [false, false, false, false, false, false, true], 'Contact Us spans the grid');
-  assert.deepEqual(cards[1].body, ['Ceremony 2:00 PM at Saint Francis Chapel, reception 4:00 PM at The Grand Hotel — about two hours apart.']);
+  assert.deepEqual(cards[1].body, ['Ceremony 2:00 p.m. at Saint Francis Chapel, reception 4:00 p.m. at The Grand Hotel — about two hours apart.']);
   assert.deepEqual(cards[2].body, ['Saint Francis Chapel: 17280 Scenic Highway 98, Fairhope, Alabama 36532. The Grand Hotel: One Grand Boulevard, Point Clear, Alabama 36564.']);
   assert.deepEqual(cards[3].body, ['The Grand Hotel — general reservations (251) 928-9201.']);
   assert.match(d, /<a href="tel:\+12519289201">\(251\) 928-9201<\/a>/);
@@ -325,6 +325,23 @@ test('One place per fact (Rob, Q12): addresses, the hotel number and the contact
     for (const keep of ['Directions', 'Add to calendar', 'Open in Apple Maps', 'Venue website', '2:00 p.m.', '4:00 p.m.']) assert.ok(wd.includes(keep), `Wedding Day keeps ${keep}`);
     fs.rmSync(b.tmp, { recursive: true, force: true });
   }
+});
+
+test('Times read "2:00 p.m." everywhere (Rob, Q13): no AM/PM variants in any rendered page', () => {
+  const visible = (html) => html.replace(/<(script|style|svg)\b[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  const cfg = readConfig(); cfg.events[0].startsAt = '2026-12-19T10:30:00-06:00'; cfg.events[0].formalDayPart = 'Morning';
+  cfg.rsvp.opensAt = '2026-10-15T09:00:00-05:00'; cfg.rsvp.cutoffAt = '2026-11-15T23:59:00-06:00';
+  const b = buildWith(cfg, { preview: true }); b.run();
+  const pages = fs.readdirSync(b.dist).filter((f) => f.endsWith('.html'));
+  for (const f of pages) {
+    const text = visible(b.read(f));
+    assert.doesNotMatch(text, /\d{1,2}(:\d{2})?\s?(AM|PM|A\.M\.|P\.M\.|am|pm)\b/, `${f}: no AM/PM clock strings`);
+    for (const m of text.match(/\d{1,2}:\d{2}\s?[ap]\.?m\.?/gi) ?? []) assert.match(m, /^\d{1,2}:\d{2} [ap]\.m\.$/, `${f}: "${m}" is in the 2:00 p.m. style`);
+  }
+  const index = b.read('index.html');
+  assert.match(index, /<time datetime="2026-12-19T10:30:00-06:00">10:30 a\.m\.<\/time> <span aria-hidden="true">·<\/span> Ceremony<\/li>/, 'Details pill');
+  assert.match(index, /Ceremony 10:30 a\.m\. at Saint Francis Chapel, reception 4:00 p\.m\. at The Grand Hotel/, 'Details between card');
+  fs.rmSync(b.tmp, { recursive: true, force: true });
 });
 
 test('IMP-15: only airports with their own non-pending approval are published, each with its official site', () => {

@@ -212,12 +212,7 @@ function validateDetails(c) {
   if (c.travel?.hotel?.addressLines) warn('travel.hotel.addressLines is not rendered; the hotel address comes from its events[].venue entry (one place per fact)');
 }
 
-// "2:00 PM": the Details pills and cards use the build spec's clock style (the rest of the site keeps "2:00 p.m.").
-function capsClock(parts) {
-  const h12 = parts.hour % 12 === 0 ? 12 : parts.hour % 12;
-  return `${h12}:${String(parts.minute).padStart(2, '0')} ${parts.hour < 12 ? 'AM' : 'PM'}`;
-}
-
+// Times use clockLabel ("2:00 p.m."), the one clock style across the site (Rob, Q13).
 function detailsView(c, events, contact, roomBlock) {
   const d = c.details;
   if (!d || !d.enabled || !isPublished(d)) return null;
@@ -225,7 +220,7 @@ function detailsView(c, events, contact, roomBlock) {
   const owner = (k) => { const text = supplied(d[k]); return { body: text ? [[text]] : null, tbd: text ? null : d[k].tbdNote }; };
   const glance = [
     { time: longDate(zonedParts(`${c.wedding.date}T12:00:00Z`, c.wedding.timezone)), datetime: c.wedding.date, label: null },
-    ...events.map((ev) => ({ time: capsClock(ev.parts), datetime: ev.startsAt, label: ev.label })),
+    ...events.map((ev) => ({ time: clockLabel(ev.parts), datetime: ev.startsAt, label: ev.label })),
   ];
 
   // Between: the two start times, venues and the gap, all from events[]; plans for the gap from travel.betweenVenues.
@@ -235,7 +230,7 @@ function detailsView(c, events, contact, roomBlock) {
     const mins = Math.round((new Date(b.startsAt) - new Date(a.startsAt)) / 60000);
     const hours = mins / 60;
     const gap = mins > 0 && Number.isInteger(hours) && hours <= 12 ? ` — about ${numberWords(hours).toLowerCase()} hour${hours === 1 ? '' : 's'} apart` : '';
-    between.body.push([`${a.label} ${capsClock(a.parts)} at ${a.name}, ${b.label.toLowerCase()} ${capsClock(b.parts)} at ${b.name}${gap}.`]);
+    between.body.push([`${a.label} ${clockLabel(a.parts)} at ${a.name}, ${b.label.toLowerCase()} ${clockLabel(b.parts)} at ${b.name}${gap}.`]);
   }
   const plans = supplied(c.travel.betweenVenues);
   if (plans) between.body.push([plans]); else between.tbd = d.tbdNotes.between;
