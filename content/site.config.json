@@ -510,6 +510,7 @@
         "role": "chapter",
         "kind": "photo",
         "source": "assets/story/originals/ch2-cairo.jpg",
+        "sketch": "assets/story/sketches/ch2-sketch.svg",
         "alt": "Robert and Natalie at the Great Sphinx in Giza, Cairo.",
         "caption": null,
         "photographer": "Robert & Natalie",
@@ -527,6 +528,7 @@
         "role": "chapter",
         "kind": "photo",
         "source": "assets/story/originals/ch3-boat.jpg",
+        "sketch": "assets/story/sketches/ch3-sketch.svg",
         "alt": "Sunset from a boat — Cape Town chapter.",
         "caption": null,
         "photographer": "Robert & Natalie",
@@ -544,6 +546,7 @@
         "role": "chapter",
         "kind": "photo",
         "source": "assets/story/originals/ch4-engagement.jpg",
+        "sketch": "assets/story/sketches/ch4-sketch.svg",
         "alt": "Engagement ring — safari proposal chapter.",
         "caption": null,
         "photographer": "Robert & Natalie",
@@ -561,6 +564,7 @@
         "role": "chapter",
         "kind": "photo",
         "source": "assets/story/originals/ch5-awards.jpg",
+        "sketch": "assets/story/sketches/ch5-sketch.svg",
         "alt": "Hands with engagement ring at an awards evening.",
         "caption": null,
         "photographer": "Robert & Natalie",
@@ -578,6 +582,7 @@
         "role": "chapter",
         "kind": "photo",
         "source": "assets/story/originals/ch6-rooftop.jpg",
+        "sketch": "assets/story/sketches/ch6-sketch.svg",
         "alt": "Rooftop toast — around the globe chapter.",
         "caption": null,
         "photographer": "Robert & Natalie",
@@ -611,9 +616,9 @@
     "approval": {
       "state": "approved",
       "owner": "Robert",
-      "source": "Owner document (story.chapters.json) and Rob chat request via Babbage, 5 October 2026",
+      "source": "Owner document (story.chapters.json); Rob chat request via Babbage, 5 October 2026; owner approval to ship scroll-sketch → colour reveal on chapters 2–6",
       "reviewed": "2026-10-05",
-      "note": "Rob asked to add Our Story (5 October 2026 via Babbage). Chapter copy from the owner document is approved as-is for chapters 1–6 and 10. Chapters 7–9 remain Coming soon… with monogram placeholders. Photos for chapters 2–6 are approved for public site use. Chapters 1 and 10 use the RN monogram until photographs exist. No AI or sketch pipeline on people photos."
+      "note": "Rob asked to add Our Story (5 October 2026 via Babbage). Chapter copy from the owner document is approved as-is for chapters 1–6 and 10. Chapters 7–9 remain Coming soon… with monogram placeholders. Photos for chapters 2–6 are approved for public site use. Chapters 1 and 10 use the RN monogram until photographs exist. Rob (owner) approved shipping scroll-sketch → full-colour photo reveal on chapters 2–6 only. Sketches are separate OpenCV/Potrace line-art overlays traced from the published photo derivatives; the photographs themselves are unchanged (no AI, no cream/greyscale/sepia on the photos)."
     }
   },
   "faqs": [

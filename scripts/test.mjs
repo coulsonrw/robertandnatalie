@@ -192,10 +192,11 @@ test('QA-07/08 (build level): the story is refused until every approval is recor
   fs.rmSync(b.tmp, { recursive: true, force: true }); fs.rmSync(derivTmp, { recursive: true, force: true });
 });
 
-test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real photos on 2–6, placeholders elsewhere, and no sketch overlay', () => {
+test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real photos on 2–6 with sketch overlays, placeholders elsewhere', () => {
   const b = buildWith(readConfig(), { preview: false });
   b.run();
   const index = b.read('index.html');
+  const css = fs.readFileSync(path.join(ROOT, 'src', 'styles', 'story.css'), 'utf8');
   assert.match(index, /<section id="our-story" class="section story story-timeline"/);
   assert.match(index, /href="#our-story">Our Story<\/a>/);
   assert.match(index, /Somewhere Between Africa &amp; America/);
@@ -215,12 +216,39 @@ test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real
   assert.match(index, /\/img\/story\/ch6-rooftop-/);
   assert.match(index, /\/img\/story\/monogram-rn-/);
   assert.match(index, /\/img\/story\/placeholder-monogram-/);
-  assert.doesNotMatch(index, /sketch-svg|sepia\(|class="sketch"/);
+  assert.match(index, /data-draw="scrub"/);
+  for (const n of [2, 3, 4, 5, 6]) {
+    assert.match(index, new RegExp(`class="chapter has-photo has-sketch" id="story-ch${n}"`));
+    assert.match(index, new RegExp(`data-sketch="/img/story/ch${n}-sketch\\.svg"`));
+    assert.ok(b.exists(`img/story/ch${n}-sketch.svg`), `ch${n} sketch copied`);
+  }
+  function chapterHtml(id) {
+    const start = index.indexOf(`id="story-${id}"`);
+    const next = index.indexOf('class="chapter', start + 1);
+    return index.slice(start, next === -1 ? undefined : next);
+  }
+  for (const id of ['ch1', 'ch7', 'ch8', 'ch9', 'ch10']) {
+    const html = chapterHtml(id);
+    assert.doesNotMatch(html, /data-sketch|class="sketch"|has-sketch/);
+  }
+  assert.doesNotMatch(index, /sepia\(/);
+  assert.doesNotMatch(css, /sepia\(|grayscale\(/);
+  assert.match(css, /--sketch-ink: #2c2414/);
+  assert.match(css, /\.sketch-photo \{ opacity: 1; \}/);
+  assert.match(css, /\.sketch-svg \{ opacity: 0;/);
   assert.doesNotMatch(index, /style="object-position/);
   assert.match(index, /styles\/story\.css/);
   assert.match(index, /js\/story\.js/);
   assert.ok(b.exists('img/story/ch2-cairo-800.webp'));
   assert.ok(!b.exists('story-preview.html'));
+  fs.rmSync(b.tmp, { recursive: true, force: true });
+});
+
+test('QA-07/08 timeline: a missing sketch overlay file fails the build', () => {
+  const config = readConfig();
+  config.story.images = config.story.images.map((im) => im.id === 'ch2-cairo' ? { ...im, sketch: 'assets/story/sketches/missing-sketch.svg' } : im);
+  const b = buildWith(config, { preview: false });
+  assert.throws(() => b.run(), /sketch file .* is missing/);
   fs.rmSync(b.tmp, { recursive: true, force: true });
 });
 

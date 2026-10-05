@@ -190,7 +190,7 @@ export function renderStoryPreview(view, fixture) {
   <div class="container"><div class="notice preview-notice" role="note">${icon('i-info')}<span><strong>Protected preview.</strong> This is a synthetic layout fixture: the pictures are labelled placeholder graphics and the text is placeholder copy supplied by the build, not the couple's story or photographs. The page exists only in local and CI builds and is never part of the deployed site (audit IMP-12, QA-06). Publishing steps: docs/OUR_STORY_INTAKE.md.</span></div></div>
 ${storySection(v, { headingLevel: 1 })}
 </main>`;
-  return page({ view: v, currentPage: 'story-preview', title: 'Our Story (layout preview)', description: 'Layout preview with synthetic fixtures; not published.', main, bodyClass: 'story-preview', stylesheets: ['/styles/story.css'], scripts: ['/js/story.js'] });
+  return page({ view: v, currentPage: 'story-preview', title: 'Our Story (layout preview)', description: 'Layout preview with synthetic fixtures; not published.', main, bodyClass: 'story-preview', htmlAttrs: 'data-draw="scrub"', stylesheets: ['/styles/story.css'], scripts: ['/js/story.js'] });
 }
 
 // The Details (direction A card layout in the site palette; Rob, 4 Oct 2026; Figma 67:584 / 67:706).
@@ -363,11 +363,22 @@ ${footer({ view })}
     <div class="dialog-slot" id="dialog-slot" tabindex="0" role="region" aria-label="Invitation, scrollable"></div>
   </div>
 </dialog>`;
+  const storyOn = storyAssets(view);
+  const sketchPreload = storyOn ? storySketchPreloads(view) : '';
   return shell({
-    view, title: null, bodyClass: 'home', bodyAttrs: `data-start="${start}"`, body, canonicalPath: '/',
-    stylesheets: storyAssets(view) ? ['/styles/story.css'] : [],
-    scripts: storyAssets(view) ? ['/js/story.js'] : [],
+    view, title: null, bodyClass: 'home', bodyAttrs: `data-start="${start}"`,
+    htmlAttrs: storyOn ? 'data-draw="scrub"' : '',
+    headExtra: sketchPreload,
+    body, canonicalPath: '/',
+    stylesheets: storyOn ? ['/styles/story.css'] : [],
+    scripts: storyOn ? ['/js/story.js'] : [],
   });
+}
+
+function storySketchPreloads(view) {
+  const p = view.basePath ?? '';
+  const urls = (view.story?.images ?? []).map((im) => im.sketch).filter(Boolean);
+  return urls.map((href) => `<link rel="preload" href="${p}${href}" as="fetch" crossorigin>`).join('\n');
 }
 
 export function renderIndex(view) { return renderHome(view, { start: 'closed' }); }

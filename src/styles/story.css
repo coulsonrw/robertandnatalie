@@ -1,8 +1,14 @@
 /* Our Story — vertical chapter timeline (Eames / Figma).
    Loaded after site.css. Reuses site tokens. No inline styles (CSP style-src 'self').
-   Real photographs are photo-first: no sepia, no sketch overlay. */
+   Chapters 2–6: scroll-drawn line overlay, then the published full-colour still
+   (no cream / greyscale / sepia on the photograph). Ch 1, 7–9, 10 stay photo-first. */
 
-.story-timeline { --rail: var(--gold-rule); --rail-ink: var(--gold); border-top: 1px solid var(--gold-rule); }
+.story-timeline {
+  --rail: var(--gold-rule); --rail-ink: var(--gold);
+  --sketch-ink: #2c2414; --sketch-w: 1.85; --sketch-a: .62;
+  --ease-draw: cubic-bezier(.45, .05, .25, 1);
+  border-top: 1px solid var(--gold-rule);
+}
 .story-hero { text-align: center; padding: clamp(8px, 2vw, 16px) var(--gutter) clamp(32px, 5vw, 56px); max-width: 920px; margin: 0 auto; }
 .story-kicker { margin-bottom: 0.8em; }
 .story-kicker::before,
@@ -67,10 +73,69 @@
   position: static; width: 100%; height: auto; object-fit: contain; filter: none;
 }
 
+/* Scroll-sketch frame: same card as PR #11 (16px radius, gold hairline, soft shadow). */
+.sketch {
+  position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 16px;
+  background: var(--paper-light); box-shadow: var(--shadow-card);
+  outline: 1px solid var(--gold-rule); outline-offset: -1px; view-timeline: --sketch block;
+}
+.sketch.is-portrait { aspect-ratio: 3 / 4; max-width: 440px; margin-inline: auto; }
+.sketch.is-square { aspect-ratio: 1 / 1; max-width: 360px; margin-inline: auto; }
+.sketch-photo, .sketch-photo .photo-el, .sketch-photo img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.sketch-photo img { filter: none; object-position: center 20%; }
+.sketch.is-portrait .sketch-photo img { object-position: center 15%; }
+.sketch.is-landscape .sketch-photo img { object-position: center 30%; }
+.sketch-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sketch-svg path {
+  fill: none; stroke: var(--sketch-ink); stroke-width: var(--sketch-w);
+  stroke-opacity: var(--sketch-a); stroke-linecap: round; stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+/* Resting / no-JS / reduced-motion / print: full-colour still, no half-drawn lines. */
+.sketch-photo { opacity: 1; }
+.sketch-svg { opacity: 0; mix-blend-mode: multiply; }
+.l1 { --s: .10; --d: .22; } .l2 { --s: .15; --d: .21; } .l3 { --s: .20; --d: .20; }
+.l4 { --s: .25; --d: .19; } .l5 { --s: .28; --d: .18; }
+
 @media (prefers-reduced-motion: no-preference) {
   .chapter-text > * { transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.45, 0.05, 0.25, 1); }
   .reveal .chapter:not(.is-seen) .chapter-text > * { opacity: 0; transform: translateY(14px); }
+
+  @supports (animation-timeline: view()) {
+    .draw-scrub:not(.js-progress) .sketch.is-ready .sketch-svg path { stroke-dasharray: 1 2; animation: sk-draw linear both; animation-timeline: --sketch; }
+    .draw-scrub:not(.js-progress) .sketch.is-ready .l1 path { animation-range: cover 10% cover 32%; }
+    .draw-scrub:not(.js-progress) .sketch.is-ready .l2 path { animation-range: cover 15% cover 36%; }
+    .draw-scrub:not(.js-progress) .sketch.is-ready .l3 path { animation-range: cover 20% cover 40%; }
+    .draw-scrub:not(.js-progress) .sketch.is-ready .l4 path { animation-range: cover 25% cover 44%; }
+    .draw-scrub:not(.js-progress) .sketch.is-ready .l5 path { animation-range: cover 28% cover 46%; }
+    .draw-scrub:not(.js-progress) .sketch.is-ready .sketch-photo { animation: sk-fade linear both; animation-timeline: --sketch; animation-range: cover 46% cover 58%; }
+    .draw-scrub:not(.js-progress) .sketch.is-ready .sketch-svg { animation: sk-settle linear both; animation-timeline: --sketch; animation-range: cover 50% cover 58%; }
+    .draw-scrub:not(.js-progress) .timeline { view-timeline: --tl block; }
+    .draw-scrub:not(.js-progress) .timeline::after { animation: tl-grow linear both; animation-timeline: --tl; }
+  }
+  .draw-scrub.js-progress .sketch.is-ready .sketch-svg path {
+    stroke-dasharray: 1 2;
+    stroke-dashoffset: clamp(0, calc(1.02 * (1 - (var(--p, 0) - var(--s)) / var(--d))), 1.02);
+  }
+  .draw-scrub.js-progress .sketch.is-ready .sketch-photo { opacity: clamp(0, calc((var(--p, 0) - .46) / .12), 1); }
+  .draw-scrub.js-progress .sketch.is-ready .sketch-svg { opacity: clamp(0, calc(1 - (var(--p, 0) - .50) / .08), 1); }
+  .draw-once .sketch.is-ready .sketch-svg path {
+    stroke-dasharray: 1 2; stroke-dashoffset: 1.02;
+    transition: stroke-dashoffset 1.5s var(--ease-draw) calc((var(--s) - .10) * 4s);
+  }
+  .draw-once .sketch.is-ready .sketch-photo { opacity: 0; transition: opacity 1.1s ease calc(2.3s); }
+  .draw-once .sketch.is-ready .sketch-svg { opacity: 1; transition: opacity 1s ease 2.9s; }
+  .draw-once .is-drawn .sketch.is-ready .sketch-svg path { stroke-dashoffset: 0; }
+  .draw-once .is-drawn .sketch.is-ready .sketch-photo { opacity: 1; }
+  .draw-once .is-drawn .sketch.is-ready .sketch-svg { opacity: 0; }
 }
+
+@keyframes sk-draw { from { stroke-dashoffset: 1.02; } to { stroke-dashoffset: 0; } }
+@keyframes sk-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sk-settle { from { opacity: 1; } to { opacity: 0; } }
+@keyframes tl-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 
 @media (min-width: 900px) {
   .timeline::before,
@@ -87,5 +152,7 @@
 
 @media print {
   .timeline::after { display: none; }
+  .sketch-svg { display: none; }
+  .sketch-photo { opacity: 1; }
   .reveal .chapter .chapter-text > * { opacity: 1; transform: none; }
 }
