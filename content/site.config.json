@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "documentVersion": "1.2",
-  "lastReviewed": "2026-09-22",
+  "lastReviewed": "2026-10-05",
   "site": {
     "name": "Robert and Natalie",
     "domain": "robertandnatalie.wedding",
@@ -22,7 +22,7 @@
     "approval": {
       "state": "approved",
       "owner": "Robert / Natalie",
-      "source": "PRD v1.1 §01 confirmed basis",
+      "source": "PRD v1.1 \u00a701 confirmed basis",
       "reviewed": "2026-09-21"
     }
   },
@@ -37,7 +37,7 @@
     "approval": {
       "state": "approved",
       "owner": "Robert / Natalie",
-      "source": "PRD v1.1 §01 and §06 content master",
+      "source": "PRD v1.1 \u00a701 and \u00a706 content master",
       "reviewed": "2026-09-21"
     }
   },
@@ -51,9 +51,9 @@
     "approval": {
       "state": "approved",
       "owner": "Robert / Natalie",
-      "source": "PRD v1.1 §06 approved content master",
+      "source": "PRD v1.1 \u00a706 approved content master",
       "reviewed": "2026-09-21",
-      "note": "Wording matches the PRD §06 content master. Capitalisation follows the approved invitation artwork (A2: 'With Joy and Gratitude, request the pleasure of Your Company for their Wedding'), which the PRD makes the visual authority; the PRD text shows the same words in lower case. Owner to confirm the capitalisation; the build blocks any change to the words themselves."
+      "note": "Wording matches the PRD \u00a706 content master. Capitalisation follows the approved invitation artwork (A2: 'With Joy and Gratitude, request the pleasure of Your Company for their Wedding'), which the PRD makes the visual authority; the PRD text shows the same words in lower case. Owner to confirm the capitalisation; the build blocks any change to the words themselves."
     }
   },
   "events": [
@@ -79,15 +79,15 @@
       },
       "calendar": {
         "uid": "ceremony-20261219@robertandnatalie.wedding",
-        "summary": "Robert and Natalie — Wedding Ceremony",
+        "summary": "Robert and Natalie \u2014 Wedding Ceremony",
         "description": "Wedding ceremony of Robert and Natalie at Saint Francis Chapel, Point Clear, Alabama."
       },
       "approval": {
         "state": "carried-forward",
         "owner": "Coordinator / venue",
-        "source": "Chapel name and start time: PRD v1.1 §01. Address and website: previous site (repository history, commit e67972f).",
+        "source": "Chapel name and start time: PRD v1.1 \u00a701. Address and website: previous site (repository history, commit e67972f).",
         "reviewed": "2026-09-21",
-        "note": "Exact chapel address, entrance, arrival, parking and accessibility notes require coordinator confirmation before guest launch (PRD §16). Unconfirmed items are omitted from the page."
+        "note": "Exact chapel address, entrance, arrival, parking and accessibility notes require coordinator confirmation before guest launch (PRD \u00a716). Unconfirmed items are omitted from the page."
       }
     },
     {
@@ -112,13 +112,13 @@
       },
       "calendar": {
         "uid": "reception-20261219@robertandnatalie.wedding",
-        "summary": "Robert and Natalie — Wedding Reception",
+        "summary": "Robert and Natalie \u2014 Wedding Reception",
         "description": "Wedding reception of Robert and Natalie at The Grand Hotel, Point Clear, Alabama."
       },
       "approval": {
         "state": "approved",
         "owner": "Robert / Natalie; coordinator for entrance details",
-        "source": "Venue and start time: PRD v1.1 §01. Resort address: PRD §07 CONTENT-03 [S5].",
+        "source": "Venue and start time: PRD v1.1 \u00a701. Resort address: PRD \u00a707 CONTENT-03 [S5].",
         "reviewed": "2026-09-21",
         "note": "Resort address is verified; reception room, guest entrance and parking are unconfirmed and omitted."
       }
@@ -130,7 +130,7 @@
     "approval": {
       "state": "draft",
       "owner": "Robert / Natalie",
-      "source": "Drafted from PRD §07 CONTENT-02",
+      "source": "Drafted from PRD \u00a707 CONTENT-02",
       "reviewed": "2026-09-21",
       "note": "Wording drafted by the implementation team; owner approval required."
     }
@@ -146,7 +146,7 @@
         "owner": "Robert / Natalie",
         "source": null,
         "reviewed": "2026-10-04",
-        "note": "Dress code not yet decided (PRD §16). Until text is supplied and approved the Details card shows a TBD row; the attire FAQ stays unpublished."
+        "note": "Dress code not yet decided (PRD \u00a716). Until text is supplied and approved the Details card shows a TBD row; the attire FAQ stays unpublished."
       }
     },
     "children": {
@@ -174,15 +174,14 @@
     "tbdNotes": {
       "between": "Plans for the time between TBD.",
       "transport": "Parking and shuttle details TBD.",
-      "roomBlock": "Room block rate, booking code and cut-off TBD.",
       "contact": "Email and phone TBD."
     },
     "approval": {
       "state": "draft",
       "owner": "Robert / Natalie",
-      "source": "Layout: direction A card layout in the site palette, decided by Rob on 4 October 2026 (3:12 PM ET); title band switched to the footer's dark --ink with --gold-footer content (3:22 PM ET). Figma h9O9RkNe6T5hdTB1oviAXl nodes 67:584 / 67:706. Facts are derived from events, travel.hotel, travel.betweenVenues and contact.",
-      "reviewed": "2026-10-04",
-      "note": "Heading, card titles and TBD notes follow the build spec; no copy in the couple's voice. Each TBD row disappears once its source key (details.dressCode/children/charity.text, travel.betweenVenues.text, events[].venue.parking, travel.hotel.roomBlock, contact.email/phone) is supplied and approved. Set enabled to false to omit the section."
+      "source": "Layout: direction A card layout in the site palette, decided by Rob on 4 October 2026 (3:12 PM ET); title band switched to the footer's dark --ink with --gold-footer content (3:22 PM ET). Figma h9O9RkNe6T5hdTB1oviAXl nodes 67:584 / 67:706. Facts are derived from events, travel.hotel, travel.betweenVenues and contact. Room Block card removed 5 October 2026 (Rob via Babbage: no wedding room blocks).",
+      "reviewed": "2026-10-05",
+      "note": "Heading, card titles and TBD notes follow the build spec; no copy in the couple's voice. Each TBD row disappears once its source key (details.dressCode/children/charity.text, travel.betweenVenues.text, events[].venue.parking, contact.email/phone) is supplied and approved. Hotel general reservations (phone and reservations website) live in the Transport & Parking card (Rob, 5 October 2026: no wedding room block). Set enabled to false to omit the section."
     }
   },
   "banner": {
@@ -219,15 +218,16 @@
       "links": {
         "website": "https://www.grand1847.com/",
         "gettingHere": "https://www.grand1847.com/about/GettingHere-137.html",
-        "contact": "https://www.grand1847.com/about/Contact-Us-148.html"
+        "contact": "https://www.grand1847.com/about/Contact-Us-148.html",
+        "reservations": "https://www.marriott.com/en-us/hotels/ptlak-the-grand-hotel-golf-resort-and-spa-autograph-collection/overview/"
       },
       "roomBlock": null,
       "approval": {
         "state": "publisher-claim",
-        "owner": "Robert / Natalie; hotel for room block",
-        "source": "Address and links: PRD §07 [S5, S6]. Telephone: previous site (repository history); verify against the hotel's Contact page.",
-        "reviewed": "2026-09-21",
-        "note": "No wedding room block has been supplied. Only general hotel information is published until a room block is confirmed and approved."
+        "owner": "Robert / Natalie",
+        "source": "Address and links: PRD \u00a707 [S5, S6]. Telephone: previous site (repository history); verify against the hotel's Contact page. Reservations website: Marriott Autograph Collection hotel page (Rob, 5 October 2026 via Babbage).",
+        "reviewed": "2026-10-05",
+        "note": "No wedding room block (Rob confirmed 5 October 2026 via Babbage). Only general hotel information is published: phone, hotel website and Marriott reservations page."
       }
     },
     "gettingThere": {
@@ -255,11 +255,11 @@
           "website": "https://www.flypensacola.com/",
           "note": null,
           "approval": {
-            "state": "pending",
-            "owner": "Coordinator",
-            "source": "Listed as an air-access option on the hotel's Getting Here page according to the audit (E05, E08); not verified from this environment.",
-            "reviewed": "2026-09-22",
-            "note": "Not published until the coordinator verifies December 2026 service and approves the entry (audit IMP-15)."
+            "state": "approved",
+            "owner": "Robert",
+            "source": "Rob confirmed 5 October 2026 via Babbage; official site https://www.flypensacola.com/.",
+            "reviewed": "2026-10-05",
+            "note": "Published alongside Mobile Regional (MOB). No proximity ranking (audit IMP-15). Jack Edwards (JKA) remains pending."
           }
         },
         {
@@ -280,8 +280,8 @@
         "state": "draft",
         "owner": "Coordinator",
         "source": "Airport named on the previous site; travel times deliberately omitted. Getting Here link: PRD [S6].",
-        "reviewed": "2026-09-22",
-        "note": "Audit IMP-15: no proximity ranking is published. Each airport carries its own approval; pending entries are prefilled from the audit's official-source register and stay unpublished until verified. Owner approval of the wording is required."
+        "reviewed": "2026-10-05",
+        "note": "Audit IMP-15: no proximity ranking is published. Each airport carries its own approval; pending entries stay unpublished until verified. MOB and PNS are published (Rob, 5 October 2026); JKA remains pending. Owner approval of the wording is required."
       },
       "airportsNote": "Airline schedules for December 2026 may change; please check with the airline before booking. We do not rank the airports by distance."
     },
@@ -292,7 +292,7 @@
         "owner": "Robert / Natalie / coordinator",
         "source": null,
         "reviewed": "2026-09-21",
-        "note": "Inter-venue transport is unconfirmed (PRD §16). Nothing is published until approved."
+        "note": "Inter-venue transport is unconfirmed (PRD \u00a716). Nothing is published until approved."
       }
     }
   },
@@ -349,7 +349,7 @@
         "owner": "Robert / Natalie",
         "source": null,
         "reviewed": "2026-09-21",
-        "note": "Dress code not yet decided (PRD §16). Not published."
+        "note": "Dress code not yet decided (PRD \u00a716). Not published."
       }
     },
     {
@@ -410,7 +410,7 @@
       "owner": "Robert / Natalie",
       "source": null,
       "reviewed": "2026-09-21",
-      "note": "Private contact route required before guest launch (PRD §03 exception path, CONTENT-04)."
+      "note": "Private contact route required before guest launch (PRD \u00a703 exception path, CONTENT-04)."
     }
   },
   "rsvp": {
@@ -573,9 +573,9 @@
     "approval": {
       "state": "pending",
       "owner": "Robert / Natalie / technical lead",
-      "source": "PRD §08–§11",
+      "source": "PRD \u00a708\u2013\u00a711",
       "reviewed": "2026-09-22",
-      "note": "The RSVP service is deployed at https://api.robertandnatalie.wedding (23 September 2026); credential delivery, the cutoff, the mail provider and the Access admin accounts are undecided, so the block stays pending. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. Synthetic fixtures (PRD §14): PREVIEW = couple with a plus-one slot and a reception-only guest; SOLO = an individual; FAMILY = a named family including children as named invitees."
+      "note": "The RSVP service is deployed at https://api.robertandnatalie.wedding (23 September 2026); credential delivery, the cutoff, the mail provider and the Access admin accounts are undecided, so the block stays pending. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. Synthetic fixtures (PRD \u00a714): PREVIEW = couple with a plus-one slot and a reception-only guest; SOLO = an individual; FAMILY = a named family including children as named invitees."
     },
     "mealChoices": {
       "eventId": null,

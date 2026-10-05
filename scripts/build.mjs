@@ -180,16 +180,19 @@ function validate(c) {
     if (rb.inclusions != null && (!Array.isArray(rb.inclusions) || rb.inclusions.some((x) => typeof x !== 'string'))) fail('travel.hotel.roomBlock.inclusions must be an array of strings');
     if (!rb.code && !rb.rate && !rb.cutoffDate && !(rb.inclusions ?? []).length && !rb.cancellation) fail('travel.hotel.roomBlock needs at least one supplied term (code, rate, cutoffDate, inclusions, cancellation)');
   }
+  const hotelReservations = c.travel?.hotel?.links?.reservations;
+  if (hotelReservations != null && !/^https:\/\//.test(hotelReservations)) fail('travel.hotel.links.reservations must be an https URL');
   collectApprovals(c);
 }
 
 // The Details (direction A card layout in the site palette; Rob, 4 Oct 2026). The section adds no facts of its
 // own: owner-supplied answers live in details.dressCode / children / charity, everything else is derived from
 // existing keys, and anything still unknown renders as a TBD row whose wording comes from this block.
-// It is also the one place on the page for venue addresses, the hotel's reservations number and the guest
-// contact route (Rob, Q12): Wedding Day, Travel & Stay and Questions point here instead of repeating them.
+// It is also the one place on the page for venue addresses, the hotel's general reservations (phone and
+// reservations website) and the guest contact route (Rob, Q12; room-block card removed 5 Oct 2026): Wedding Day,
+// Travel & Stay and Questions point here instead of repeating them.
 const DETAILS_OWNER_KEYS = ['dressCode', 'children', 'charity'];
-const DETAILS_TBD_KEYS = ['between', 'transport', 'roomBlock', 'contact'];
+const DETAILS_TBD_KEYS = ['between', 'transport', 'contact'];
 function validateDetails(c) {
   const d = c.details;
   if (!d) return;
@@ -213,7 +216,7 @@ function validateDetails(c) {
 }
 
 // Times use clockLabel ("2:00 p.m."), the one clock style across the site (Rob, Q13).
-function detailsView(c, events, contact, roomBlock) {
+function detailsView(c, events, contact) {
   const d = c.details;
   if (!d || !d.enabled || !isPublished(d)) return null;
   const supplied = (b) => (isPublished(b) && b.text ? b.text : null);
@@ -235,18 +238,25 @@ function detailsView(c, events, contact, roomBlock) {
   const plans = supplied(c.travel.betweenVenues);
   if (plans) between.body.push([plans]); else between.tbd = d.tbdNotes.between;
 
-  // Transport & Parking: addresses as written in events[].venue; parking only where a venue has confirmed it.
+  // Transport & Parking: addresses as written in events[].venue; parking only where a venue has confirmed it;
+  // hotel general reservations (phone + reservations website) folded here (Rob, 5 Oct 2026: no wedding room block).
+  const hotel = c.travel.hotel;
   const transport = { body: [[events.map((ev) => `${ev.name}: ${ev.addressLines.join(', ')}.`).join(' ')]], tbd: null };
   const parking = events.map((ev) => ({ ev, text: ev.notes.find((n) => n.label === 'Parking')?.text ?? null }));
   for (const p of parking) if (p.text) transport.body.push([`${p.ev.name} parking: ${p.text}`]);
+  if (hotel.phoneDisplay || hotel.links?.reservations) {
+    const row = [];
+    if (hotel.phoneDisplay) {
+      row.push(`${hotel.name} — general reservations `, { text: hotel.phoneDisplay, href: `tel:${hotel.phoneTel}` });
+      if (hotel.links?.reservations) row.push(' · ');
+    } else {
+      row.push(`${hotel.name} — `);
+    }
+    if (hotel.links?.reservations) row.push({ text: 'Reservations website', href: hotel.links.reservations });
+    row.push('.');
+    transport.body.push(row);
+  }
   if (parking.some((p) => !p.text) || !plans) transport.tbd = d.tbdNotes.transport;
-
-  // Room Block: the hotel's general reservations number (travel.hotel); terms only once travel.hotel.roomBlock is approved.
-  const hotel = c.travel.hotel;
-  const room = { body: [], tbd: null };
-  if (hotel.phoneDisplay) room.body.push([`${hotel.name} — general reservations `, { text: hotel.phoneDisplay, href: `tel:${hotel.phoneTel}` }, '.']);
-  if (roomBlock) room.body.push([roomBlock.rows.map((r) => `${r.label}: ${r.value}`).join(' · ')]);
-  else room.tbd = d.tbdNotes.roomBlock;
 
   // Contact: the private contact route (contact.email / contact.phone) once supplied.
   const contactCard = { body: null, tbd: null };
@@ -262,7 +272,6 @@ function detailsView(c, events, contact, roomBlock) {
     card('dress-code', 'Dress Code', 'd-shirt', owner('dressCode')),
     card('between', 'Between Ceremony & Reception', 'd-clock', between),
     card('transport', 'Transport & Parking', 'd-car', transport),
-    card('room-block', 'Room Block', 'd-bed', room),
     card('children', 'Children', 'd-baby', owner('children')),
     card('charity', 'Charity', 'd-gift', owner('charity')),
     card('contact', 'Contact Us', 'd-mail', contactCard, true),
@@ -426,7 +435,7 @@ function buildView(c) {
     },
     faqs,
     contact: contactPublished ? { email: c.contact.email, phone: c.contact.phone, phoneDisplay: c.contact.phoneDisplay, note: c.contact.note } : null,
-    details: detailsView(c, events, contactPublished ? c.contact : null, roomBlockView(c.travel.hotel.roomBlock)),
+    details: detailsView(c, events, contactPublished ? c.contact : null),
     // The synthetic preview is disabled in deployed review builds (SITE_PREVIEW=0, set by deploy.yml) so that
     // review previews stay out of the public domain (PRD TPL-09); local builds keep it.
     rsvp: { ...(postEvent ? { ...c.rsvp, mode: 'closed', allowPreview: false, closedText: c.postEvent.message } : (PREVIEW_BUILD ? c.rsvp : { ...c.rsvp, allowPreview: false })), cutoffLabel: cutoff, opensAtLabel: opensAt },
@@ -511,7 +520,7 @@ function readiness(c) {
   if (c.rsvp.allowPreview) add('review', 'Synthetic RSVP preview is enabled', 'rsvp.allowPreview is true, so /rsvp.html?preview=1 shows the labeled synthetic household. Set it to false before guest launch (PRD RELEASE-01).');
   if (view.details) {
     const open = view.details.cards.filter((x) => x.tbd).map((x) => x.title);
-    if (open.length) add('review', `The Details: ${open.length} TBD row(s) shown to guests`, `${open.join(', ')}. Each TBD row disappears once its source key is supplied and approved (details.*, travel.betweenVenues, events[].venue.parking, travel.hotel.roomBlock, contact).`);
+    if (open.length) add('review', `The Details: ${open.length} TBD row(s) shown to guests`, `${open.join(', ')}. Each TBD row disappears once its source key is supplied and approved (details.*, travel.betweenVenues, events[].venue.parking, contact).`);
   }
   if (!c.travel.hotel.roomBlock) add('info', 'No wedding room block published', 'travel.hotel.roomBlock is null; only general hotel information is shown (PRD CONTENT-03).');
   if (c.rsvp.mode === 'coming-soon') add('info', c.rsvp.opensAt ? 'RSVP opening date announced' : 'RSVP opening date not announced', c.rsvp.opensAt ? `rsvp.opensAt is ${c.rsvp.opensAt}; the not-yet-open state names it (audit IMP-02).` : 'rsvp.opensAt is null; the not-yet-open state names no date. Set it only once the owners approve an opening date (audit IMP-02).');
