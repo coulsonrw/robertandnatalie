@@ -19,7 +19,7 @@ Local and CI builds render a labelled synthetic timeline preview at `/story-prev
 | Short narrative (optional / unpublished path) | `story.narrative.paragraphs` | Used only when `layout` is `"narrative"`. Up to three short paragraphs; the build warns outside 150–250 words. |
 | Optional milestones | `story.milestones[]`: `{ id, title, description, when, place, imageId }` | Narrative layout only. `when` and `place` appear only when supplied. |
 | Photographs and monograms | Originals in `assets/story/originals/` (git-ignored); entries in `story.images[]` | Originals are never copied to the site. Only the couple's own or licensed photographs; no stock, no generated stand-ins, no AI of people photographs. Timeline chapters use `role: "chapter"` and `kind: "photo"`, `"monogram"` or `"placeholder"`. Narrative layout still uses `lead` / `supporting` / `milestone` and at most six pictures. |
-| Sketch overlays (chapters 2–6) | Optional `sketch` on a `kind: "photo"` image, file under `assets/story/sketches/` | Owner-approved OpenCV/Potrace line-art traced from the published photo derivatives. Overlays only — the photograph is unchanged (no cream, greyscale or sepia). Chapters 1, 7–9 and 10 have no sketch. |
+| Sketch overlays (chapters 1–6) | Optional `sketch` on a `kind: "photo"` image, file under `assets/story/sketches/` | Owner-approved OpenCV/Potrace line-art traced from the published photo derivatives. Overlays only — the photograph is unchanged (no cream, greyscale or sepia). Chapters 7–9 and 10 have no sketch. |
 | Per-image record | `story.images[]`: `{ id, role, kind, source, sketch, alt, caption, photographer, rightsConfirmed, subjectsApproved, publicationApproved, visibility, focalPoint }` | `alt` describes the picture without inventing names, places or feelings. For monogram placeholders say that a photo is forthcoming or that the chapter is coming soon. `caption` and `photographer` are optional (`"Robert & Natalie"` is acceptable when the couple took the picture). All three approval flags must be `true` and `visibility` must be `"public"` before the build will publish. `sketch` is optional and must be an `.svg` under `assets/story/sketches/`. |
 | Visibility decision | `story.visibility` | Only `"public"` is supported on this host. |
 | Approval | `story.approval` | `state: "approved"`, the approver in `owner`, the date in `reviewed`, and a note of where the approval is recorded. |
@@ -31,7 +31,7 @@ Local and CI builds render a labelled synthetic timeline preview at `/story-prev
 3. Run `npm run images`. Chromium re-encodes each picture (which drops EXIF and GPS metadata) and writes WebP and JPEG derivatives at 480, 800, 1200 and 1600 px wide (never wider than the original) to `assets/story/derivatives/`, plus `manifest.json`. The command prints each derivative's size and flags any that exceed the provisional budgets (about 250 KB for a narrative lead, 150 KB for the others, at 1200 px).
 4. Commit the derivatives and the manifest. Do not commit the originals.
 
-Real photographs render as-is (no sepia, no cream or greyscale wash). Chapters 2–6 add a separate scroll-drawn line overlay that fades out to the published colour still. Chapter 1 is a photograph without a sketch. Chapter 10 may use the RN monogram until a photograph is chosen. Chapters without copy yet keep their title and the coming-soon monogram. Without JavaScript or with `prefers-reduced-motion`, guests see the colour stills — never a half-drawn sketch.
+Real photographs render as-is (no sepia, no cream or greyscale wash). Chapters 1–6 add a separate scroll-drawn line overlay that fades out to the published colour still. Chapter 10 may use the RN monogram until a photograph is chosen. Chapters without copy yet keep their title and the coming-soon monogram. Without JavaScript or with `prefers-reduced-motion`, guests see the colour stills — never a half-drawn sketch.
 
 ## Publishing
 
@@ -46,4 +46,4 @@ Set `story.enabled` to `false`. The next build removes the section, the navigati
 
 ## What the section deliberately does not do
 
-No carousel, no autoplay, no lightbox, no hover-only captions, no AI of people photographs, and no story content in the deployed build without the approvals above. Owner-approved OpenCV/Potrace line overlays on chapters 2–6 are separate SVG assets; they do not replace or recolour the photographs.
+No carousel, no autoplay, no lightbox, no hover-only captions, no AI of people photographs, and no story content in the deployed build without the approvals above. Owner-approved OpenCV/Potrace line overlays on chapters 1–6 are separate SVG assets; they do not replace or recolour the photographs.
