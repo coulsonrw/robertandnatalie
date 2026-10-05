@@ -2,6 +2,8 @@
 
 How to open household RSVPs without touching Natalie’s original guest list. The form is already wired on the site (`rsvp.mode` = `live`, API `https://api.robertandnatalie.wedding`). Guests still need issued links.
 
+**Default path (Rob, 5 October 2026 via Babbage):** `OPS_BOOTSTRAP_TOKEN` + CSV roster sync + D1. Google Sheets is optional later and is not required to issue links or collect answers.
+
 ## Cutoff
 
 `2026-11-15T23:59:59-06:00` — Sunday 15 November 2026, 11:59 p.m. Central Time (CST), America/Chicago.
@@ -21,16 +23,12 @@ Nothing in this list is spent money. Generate tokens with `node -e "console.log(
 
 | Secret / var | Where | Required to |
 |---|---|---|
-| `OPS_BOOTSTRAP_TOKEN` | `npx wrangler secret put OPS_BOOTSTRAP_TOKEN` (from `backend/`) | Import the roster and issue links without Cloudflare Access |
-| `GOOGLE_SHEETS_ID` | `wrangler.toml` `[vars]` or `wrangler secret put` | Read the guest list / write the answers tab |
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | `npx wrangler secret put GOOGLE_SERVICE_ACCOUNT_JSON` | Same. Share the spreadsheet with the service account `client_email` as **Editor** |
-| `GOOGLE_SHEETS_SOURCE_TAB` | `[vars]`, optional | Name of Natalie’s original tab if the Worker should pull it. Leave empty and POST the CSV instead |
-| `GOOGLE_SHEETS_ANSWERS_TAB` | `[vars]`, default `RSVP Answers` | **Must differ** from the original tab title. The Worker refuses to write the first sheet |
+| `OPS_BOOTSTRAP_TOKEN` | `npx wrangler secret put OPS_BOOTSTRAP_TOKEN` (from `backend/`) | Import the CSV roster and issue links without Cloudflare Access |
 | `CREDENTIAL_PEPPER`, `SESSION_SECRET` | already set (23 Sep 2026) | Sessions |
 | `MAIL_WEBHOOK_URL`, `MAIL_WEBHOOK_TOKEN` | only if `MAIL_PROVIDER=webhook` | Actual confirmation email. Safe to leave `stub` |
 | Cloudflare Access (`ACCESS_*`, `OWNER_EMAILS`, `COORDINATOR_EMAILS`) | still unset | Admin UI. Not required for guest RSVP or `/ops` bootstrap |
 
-If sheet secrets are missing, RSVPs still save to D1. The answers tab is skipped. If `OPS_BOOTSTRAP_TOKEN` is missing, `/ops/*` returns `503 bootstrap_unavailable`.
+If `OPS_BOOTSTRAP_TOKEN` is missing, `/ops/*` returns `503 bootstrap_unavailable`. RSVPs always save to D1 once a household exists. Google Sheet secrets are not part of this path; see [Optional later: Google Sheets](#optional-later-google-sheets).
 
 Redeploy after secrets: `cd backend && npm run deploy`. Then apply the new migration on the remote D1:
 
@@ -43,14 +41,14 @@ npm run migrate:remote
 
 ## Import the roster and issue links
 
-1. Download the **first tab** of [Natalie’s guest sheet](https://docs.google.com/spreadsheets/d/1MzBwUQpLq78eIH6tmUFSM4PcojktZRJe/edit) as CSV. Do not edit that tab.
+1. Download the **first tab** of [Natalie’s guest sheet](https://docs.google.com/spreadsheets/d/1MzBwUQpLq78eIH6tmUFSM4PcojktZRJe/edit) as CSV. Do not edit that tab. The Worker never reads or writes the live sheet on this path.
 2. Preview the mapping (names omitted unless you pass `--print-names`):
 
 ```bash
 npm run rsvp:roster -- --csv ~/Downloads/guest-list.csv
 ```
 
-3. Either POST that CSV to the API, or set `GOOGLE_SHEETS_SOURCE_TAB` and let the Worker read the sheet:
+3. POST that CSV to the API:
 
 ```bash
 curl -sS -X POST https://api.robertandnatalie.wedding/ops/roster/sync \
@@ -64,13 +62,7 @@ EOF
 
 The response includes `counts`, `flags`, and `links[]` with `link` shown **once** per named guest. Store that list in an owner-controlled place (not this repository). A second run does not reissue existing labels unless `"reissue": true`.
 
-4. Check `GET /ops/status` with the same bearer token: household count, active links, whether Sheets is configured.
-
-## Answers tab
-
-On first successful configure, the Worker creates **RSVP Answers** (or `GOOGLE_SHEETS_ANSWERS_TAB`) with columns: Household ID, Guest Name, Group, RSVP, Headcount, Ceremony attending, Reception attending, Attending names, Declining names, Plus-one names, Dietary, Grand Hotel stay, Contact email, Notes, Reference, Submitted at, Revision.
-
-Each guest save upserts the row keyed by Household ID. Dietary/notes on this owner-only tab are the household notes (the same restricted field the general CSV export omits).
+4. Check `GET /ops/status` with the same bearer token: household count and active links. D1 is the source of truth for answers.
 
 ## Preview
 
@@ -80,7 +72,7 @@ npm run build && npm run serve
 # Synthetic household (nothing saved): http://127.0.0.1:8080/rsvp.html?preview=1  codes PREVIEW, SOLO, FAMILY
 ```
 
-Local API: `cd backend && cp .dev.vars.example .dev.vars` (fill secrets), `npm run migrate:local`, `npm run dev`. Point a **local copy** of `rsvp.apiBaseUrl` at `http://localhost:8787` only for that laptop check.
+Local API: `cd backend && cp .dev.vars.example .dev.vars` (fill `OPS_BOOTSTRAP_TOKEN` and the already-documented session secrets), `npm run migrate:local`, `npm run dev`. Point a **local copy** of `rsvp.apiBaseUrl` at `http://localhost:8787` only for that laptop check.
 
 ## Guest-list mapping (kept as written)
 
@@ -94,12 +86,30 @@ Rob decisions still open on the list itself:
 - Several rows have no email/phone; the RSVP form collects a contact email when anyone attends.
 - Site contact email/phone on Details stay TBD and do not block this ship.
 
-Do not invent fuller names. Re-run the roster sync after any sheet edit; ids are derived from the Guest Name cell so the same row updates in place.
+Do not invent fuller names. Re-run the CSV roster sync after any sheet edit; ids are derived from the Guest Name cell so the same row updates in place.
 
-## Remaining owner work (does not block this PR)
+## Remaining owner work
 
-- Distribute the issued links (text, email, or printed insert).
+- Set `OPS_BOOTSTRAP_TOKEN`, deploy, migrate, POST the CSV, store the issued links, then distribute them (text, email, or printed insert).
 - Mail provider if confirmation email is wanted.
 - Cloudflare Access + MFA for `/admin`.
 - Details contact route, dress code, children policy, G3 `site.launchApproved`.
 - Token expiry 31 December 2026 (extend before the March 2027 retention run).
+- Optional later: Google Sheets answers tab (below).
+
+## Optional later: Google Sheets
+
+Leave these unset for the D1-only launch. When Rob wants a spreadsheet mirror of answers, set them and redeploy. Natalie’s original guest-list tab is still never written (the Worker refuses to write the first sheet).
+
+| Secret / var | Where | Required to |
+|---|---|---|
+| `GOOGLE_SHEETS_ID` | `wrangler.toml` `[vars]` or `wrangler secret put` | Read the guest list from the live sheet / write the answers tab |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | `npx wrangler secret put GOOGLE_SERVICE_ACCOUNT_JSON` | Same. Share the spreadsheet with the service account `client_email` as **Editor** |
+| `GOOGLE_SHEETS_SOURCE_TAB` | `[vars]`, optional | Name of Natalie’s original tab if the Worker should pull it instead of a CSV POST |
+| `GOOGLE_SHEETS_ANSWERS_TAB` | `[vars]`, default `RSVP Answers` | **Must differ** from the original tab title |
+
+If these secrets are missing, RSVPs still save to D1 and the answers tab is skipped. `GET /ops/status` reports whether Sheets is configured.
+
+On first successful configure, the Worker creates **RSVP Answers** (or `GOOGLE_SHEETS_ANSWERS_TAB`) with columns: Household ID, Guest Name, Group, RSVP, Headcount, Ceremony attending, Reception attending, Attending names, Declining names, Plus-one names, Dietary, Grand Hotel stay, Contact email, Notes, Reference, Submitted at, Revision.
+
+Each guest save then upserts the row keyed by Household ID. Dietary/notes on this owner-only tab are the household notes (the same restricted field the general CSV export omits).

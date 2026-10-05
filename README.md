@@ -70,8 +70,8 @@ GitHub Pages serves static files only. Household authorization and responses liv
 
 - `rsvp.mode` is `live`, `rsvp.apiBaseUrl` is `https://api.robertandnatalie.wedding`, and `rsvp.cutoffAt` is `2026-11-15T23:59:59-06:00` (America/Chicago). Guests use a private household link (`/rsvp.html#t=<token>`); plus-ones answer on the host’s link and cannot add extra people.
 - Review the form with synthetic guests at `/rsvp.html?preview=1` (codes `PREVIEW`, `SOLO`, `FAMILY`); a banner states that nothing is saved.
-- Answers save to D1. When Google Sheet secrets are set, each save also upserts a row on a new **RSVP Answers** tab. Natalie’s original guest-list tab is never written. How to set secrets, import the roster and issue links: `docs/RSVP_GUEST_LAUNCH.md`.
-- Mail is still the `stub` provider (confirmations are recorded, not delivered). Cloudflare Access is still unset; roster import and link issue use `POST /ops/roster/sync` with `OPS_BOOTSTRAP_TOKEN` until Access exists.
+- Answers save to D1. The default launch path (Rob, 5 October 2026) is `OPS_BOOTSTRAP_TOKEN` + a CSV POST to `POST /ops/roster/sync` + D1. Google Sheets is optional later and is not required to issue links or collect answers. Natalie’s original guest-list tab is never written. How to set the token, import the CSV and issue links: `docs/RSVP_GUEST_LAUNCH.md`.
+- Mail is still the `stub` provider (confirmations are recorded, not delivered). Cloudflare Access is still unset; roster import and link issue use the CSV `/ops` path until Access exists.
 
 ## Our Story
 
