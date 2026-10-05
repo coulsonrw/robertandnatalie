@@ -14,8 +14,10 @@ import { requireSession } from './session.js';
 import { confirmationMail } from './mail/templates.js';
 import { retentionDueAt } from './retention.js';
 import { mealOptionsOf } from './events.js';
+import { syncHouseholdToSheet } from './sheets.js';
 
 const STATUSES = new Set(['attending', 'declining']);
+const HOTEL = new Set(['yes', 'no', 'undecided']);
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const MAX_NOTES = 500;
 const MAX_NAME = 80;
@@ -123,11 +125,26 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
   notes = notes.trim().slice(0, MAX_NOTES);
   if (!anyoneAttending) notes = ''; // declining households skip practical details (RSVP-03)
 
+  let hotelStay = payload.hotelStay === undefined || payload.hotelStay === null
+    ? (partial ? (loaded.state.hotel_stay || null) : null)
+    : payload.hotelStay;
+  if (hotelStay !== null && hotelStay !== undefined && hotelStay !== '') {
+    if (typeof hotelStay !== 'string' || !HOTEL.has(hotelStay)) {
+      problem('hotelStay', 'Please say whether you will stay at The Grand Hotel.');
+    }
+  } else {
+    hotelStay = partial ? (loaded.state.hotel_stay || null) : null;
+  }
+  if (anyoneAttending && !hotelStay && !partial) {
+    problem('hotelStay', 'Please say whether you will stay at The Grand Hotel.');
+  }
+  if (!anyoneAttending) hotelStay = null;
+
   if (problems.length) {
     const message = problems.length === 1 ? problems[0].message : `${problems.length} answers need attention. Please review them and try again.`;
     throw validationError(message, problems);
   }
-  return { answered, meals, nameUpdates, contactEmail, notes, anyoneAttending };
+  return { answered, meals, nameUpdates, contactEmail, notes, hotelStay, anyoneAttending };
 }
 
 // Replayed idempotency bodies are stored without the restricted note; attach the household's current note.
@@ -207,6 +224,10 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
     changedFields.push('notes'); // field name only; the text never enters the audit trail (SEC-05)
   }
 
+  if ((loaded.state.hotel_stay || null) !== (change.hotelStay || null)) {
+    changedFields.push('hotelStay');
+  }
+
   const reference = loaded.state.reference || newReference();
   const emailQueued = !!change.contactEmail;
   const hasState = !!(await one(db, 'SELECT 1 AS x FROM household_response WHERE household_id = ?', loaded.household.id));
@@ -214,14 +235,14 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
     statements.push(stmt(
       db,
       `UPDATE household_response SET revision = ?, reference = COALESCE(reference, ?), first_submitted_at = COALESCE(first_submitted_at, ?),
-         last_submitted_at = ?, last_origin = ?, last_email_queued = ? WHERE household_id = ? AND revision = ?`,
-      nextRevision, reference, now, now, origin, emailQueued ? 1 : 0, loaded.household.id, expectedRevision,
+         last_submitted_at = ?, last_origin = ?, last_email_queued = ?, hotel_stay = ? WHERE household_id = ? AND revision = ?`,
+      nextRevision, reference, now, now, origin, emailQueued ? 1 : 0, change.hotelStay || null, loaded.household.id, expectedRevision,
     ));
   } else {
     statements.push(stmt(
       db,
-      `INSERT INTO household_response (household_id, revision, reference, first_submitted_at, last_submitted_at, last_origin, last_email_queued) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      loaded.household.id, nextRevision, reference, now, now, origin, emailQueued ? 1 : 0,
+      `INSERT INTO household_response (household_id, revision, reference, first_submitted_at, last_submitted_at, last_origin, last_email_queued, hotel_stay) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      loaded.household.id, nextRevision, reference, now, now, origin, emailQueued ? 1 : 0, change.hotelStay || null,
     ));
   }
 
@@ -236,7 +257,7 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
       const meal = change.meals && change.meals.has(key) ? change.meals.get(key) : (status === 'attending' ? (e.meal_value || null) : null);
       return { ...e, status, meal_value: meal, submitted_at: now, origin };
     }),
-    state: { ...loaded.state, revision: nextRevision, reference, first_submitted_at: loaded.state.first_submitted_at || now, last_submitted_at: now, last_origin: origin, last_email_queued: emailQueued ? 1 : 0 },
+    state: { ...loaded.state, revision: nextRevision, reference, first_submitted_at: loaded.state.first_submitted_at || now, last_submitted_at: now, last_origin: origin, last_email_queued: emailQueued ? 1 : 0, hotel_stay: change.hotelStay || null },
     notes: change.notes,
   };
   const snapshot = buildSnapshot(after, await rsvpWindow(db, cfg));
@@ -321,5 +342,7 @@ export async function putResponse(request, env, cfg, payload) {
     actor: { kind: 'guest', id: householdId },
     retention: retentionDueAt(cfg),
   });
+  // Best-effort: a missing or failed Sheets secret must not undo a saved RSVP.
+  await syncHouseholdToSheet(env, cfg, householdId);
   return json(200, snapshot);
 }

@@ -14,6 +14,7 @@ import { validatePayload, commitResponse } from '../response.js';
 import { processOutbox, outboxSummary } from '../mail/outbox.js';
 import { applyRetention, retentionDueAt } from '../retention.js';
 import { normaliseEvents, UPSERT_EVENT_SQL, eventParams } from '../events.js';
+import { syncHouseholdToSheet } from '../sheets.js';
 
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
@@ -164,6 +165,7 @@ export async function handleAdmin(request, env, cfg, url) {
       retention: retentionDueAt(cfg),
     });
     delete snapshot.notes;
+    await syncHouseholdToSheet(env, cfg, m.id);
     return json(200, snapshot);
   }
   if (method === 'GET' && (m = match('/admin/households/:id/history', path))) {

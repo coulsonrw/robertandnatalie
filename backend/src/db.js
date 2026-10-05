@@ -64,7 +64,7 @@ export async function loadHousehold(db, householdId) {
     householdId,
   );
   const state = (await one(db, 'SELECT * FROM household_response WHERE household_id = ?', householdId)) || {
-    household_id: householdId, revision: 0, reference: null, first_submitted_at: null, last_submitted_at: null, last_origin: null, last_email_queued: 0,
+    household_id: householdId, revision: 0, reference: null, first_submitted_at: null, last_submitted_at: null, last_origin: null, last_email_queued: 0, hotel_stay: null,
   };
   const needs = await one(db, 'SELECT note FROM restricted_guest_needs WHERE household_id = ? AND guest_id IS NULL', householdId);
   return { household, guests, entitlements, state, notes: needs ? needs.note : '' };

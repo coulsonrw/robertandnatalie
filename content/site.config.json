@@ -716,9 +716,9 @@
     }
   },
   "rsvp": {
-    "mode": "coming-soon",
-    "apiBaseUrl": null,
-    "cutoffAt": null,
+    "mode": "live",
+    "apiBaseUrl": "https://api.robertandnatalie.wedding",
+    "cutoffAt": "2026-11-15T23:59:59-06:00",
     "opensAt": null,
     "allowPreview": true,
     "comingSoonText": "Responses are not being accepted yet. When they open, your invitation will include a private link or code for your household, and this page will show the response deadline.",
@@ -876,8 +876,8 @@
       "state": "pending",
       "owner": "Robert / Natalie / technical lead",
       "source": "PRD \u00a708\u2013\u00a711",
-      "reviewed": "2026-09-22",
-      "note": "The RSVP service is deployed at https://api.robertandnatalie.wedding (23 September 2026); credential delivery, the cutoff, the mail provider and the Access admin accounts are undecided, so the block stays pending. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. Synthetic fixtures (PRD \u00a714): PREVIEW = couple with a plus-one slot and a reception-only guest; SOLO = an individual; FAMILY = a named family including children as named invitees."
+      "reviewed": "2026-10-05",
+      "note": "Private-link RSVP is wired to https://api.robertandnatalie.wedding with cutoff 2026-11-15T23:59:59-06:00 (America/Chicago). Guests need an issued household link; the roster is imported through /ops/roster/sync when OPS_BOOTSTRAP_TOKEN (and optionally the Google service account) are set. Mail stays stub and Access is still unset. Approval stays pending until Rob confirms the issued links and the RSVP Answers tab. Synthetic preview fixtures (PRD \u00a714) are unchanged."
     },
     "mealChoices": {
       "eventId": null,
@@ -886,14 +886,14 @@
   },
   "privacy": {
     "websiteHost": "GitHub Pages (GitHub, Inc.)",
-    "rsvpProvider": null,
+    "rsvpProvider": "Cloudflare Workers and D1 (Cloudflare, Inc.), in accounts we control",
     "retentionDaysAfterWedding": 90,
     "approval": {
       "state": "draft",
       "owner": "Robert / Natalie",
       "source": "PRD SEC-04, SEC-06",
-      "reviewed": "2026-09-21",
-      "note": "Retention period and RSVP provider require owner approval before launch. The notice does not claim legal compliance."
+      "reviewed": "2026-10-05",
+      "note": "RSVP provider named as Cloudflare Workers and D1 in the owners' account (deployed 23 September 2026). Proposed retention remains 90 days after the wedding. Formal wording approval still sits with Robert / Natalie; the notice does not claim legal compliance."
     }
   }
 }

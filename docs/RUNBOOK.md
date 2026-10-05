@@ -39,7 +39,7 @@ Guests correct their own response through their link or code until `rsvp.cutoffA
 
 ## 5. Issue, replace or revoke an invitation link
 
-Personal links carry a random token in the URL fragment (`/rsvp.html#t=…`). Use the admin credential endpoints in `backend/README.md` to issue a link or a short fallback code for a household, to revoke one that was forwarded, and to issue a replacement. Revocation takes effect on the next request; the guest sees the neutral "no longer valid" message and the contact route (RSVP-01, SEC-02).
+Personal links carry a random token in the URL fragment (`/rsvp.html#t=…`). Until Cloudflare Access exists, import the guest sheet and issue one link per named guest with `POST /ops/roster/sync` (see `docs/RSVP_GUEST_LAUNCH.md`). After Access is on, use the admin credential endpoints in `backend/README.md` to issue a link or a short fallback code, to revoke one that was forwarded, and to issue a replacement. Revocation takes effect on the next request; the guest sees the neutral "no longer valid" message and the contact route (RSVP-01, SEC-02).
 
 ## 6. Export attendance safely
 
@@ -87,7 +87,7 @@ If the RSVP service is unavailable, guests see the network-error state with thei
 
 ## 13. Announce the RSVP opening date (audit IMP-02)
 
-Set `rsvp.opensAt` in `content/site.config.json` to the approved date-time with its offset (for example `2026-10-01T09:00:00-05:00`) only once the owners have approved it and the service is ready to open on that day. The not-yet-open state on `/rsvp.html` and the note under the welcome area then name the date in Central Time. Leave it `null` otherwise; the site says only that responses are not open yet. Switching `rsvp.mode` to `live` requires `rsvp.apiBaseUrl` set to `https://api.robertandnatalie.wedding` (the service deployed on 23 September 2026) and the owner decisions in `backend/README.md` steps 6–7 (§1).
+Set `rsvp.opensAt` in `content/site.config.json` to the approved date-time with its offset (for example `2026-10-01T09:00:00-05:00`) only once the owners have approved it and the service is ready to open on that day. The not-yet-open state on `/rsvp.html` and the note under the welcome area then name the date in Central Time. Leave it `null` otherwise; the site says only that responses are not open yet. `rsvp.mode` is `live` and `rsvp.apiBaseUrl` is `https://api.robertandnatalie.wedding`. Guests still need issued household links (`docs/RSVP_GUEST_LAUNCH.md`). Confirmation mail stays on the `stub` provider until a mail identity is chosen.
 
 ## 14. Publish Our Story (audit IMP-12/13)
 

@@ -37,7 +37,7 @@ On 22 September 2026 the owner re-supplied the invitation file (identical to A2 
 
 | PRD requirement | Effect of static hosting | Handling |
 |---|---|---|
-| RSVP-01/02/05, ARCH-01 to ARCH-03, ADMIN-01 to ADMIN-04 (server-side household authorization, atomic saves, coordinator tools) | Cannot run on GitHub Pages. | The guest-facing RSVP flow is built; it calls a separate API defined in `docs/RSVP_API_CONTRACT.md`. The service is deployed at `https://api.robertandnatalie.wedding` (23 September 2026); `rsvp.mode` stays `coming-soon` until Access, the mail provider, the cutoff and the roster are in place and G3 is recorded. |
+| RSVP-01/02/05, ARCH-01 to ARCH-03, ADMIN-01 to ADMIN-04 (server-side household authorization, atomic saves, coordinator tools) | Cannot run on GitHub Pages. | The guest-facing RSVP flow is built; it calls a separate API defined in `docs/RSVP_API_CONTRACT.md`. The service is deployed at `https://api.robertandnatalie.wedding` (23 September 2026). As of 5 October 2026 `rsvp.mode` is `live` with cutoff `2026-11-15T23:59:59-06:00`; the roster is imported and links are issued through `/ops/roster/sync` until Access exists. G3 is still unrecorded. |
 | SEC-01 invitation-only visibility | A static site cannot gate pages server-side; client-side gating is explicitly rejected by the PRD. | The site publishes event logistics only (no guest data). `noindex` is set as a supplementary measure. Owner approval of public visibility for the logistics pages is **required** and recorded below when given. |
 | ARCH-04 private cache policy | Not applicable to public pages; applies to the future API. | Documented in the API contract. |
 | NFR-04 self-hosted fonts | Met. | Fonts in `src/fonts/`, licenses in `docs/licenses/`. |

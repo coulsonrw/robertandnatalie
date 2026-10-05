@@ -29,9 +29,9 @@ All bodies are JSON. Errors use `{ "error": { "code": string, "message": string 
 
 The front end maps HTTP status to these codes when `error.code` is absent: 400 validation, 401 invalid_session, 403/404 invalid_code, 409 conflict, 423 closed, 429 rate_limited, otherwise server_error. Network failures are shown as retryable with input kept in page memory (RSVP-06).
 
-A `400 validation` body may also carry `error.fields`, an array of `{ "path", "message" }` naming every guest-fixable problem at once (added 22 September 2026, audit QA-15; additive, older clients ignore it). Paths: `contactEmail`, `notes`, `requestId`, `revision`, `responses` (structural, no id echoed), `responses.<guestId>.<eventId>.status`, `responses.<guestId>.<eventId>.meal`, `plusOneNames` (no id echoed), `plusOneNames.<guestId>`. Authorization and structural problems fail first and never echo a foreign identifier. The front end maps these paths to its inline field errors and announces `error.message`.
+A `400 validation` body may also carry `error.fields`, an array of `{ "path", "message" }` naming every guest-fixable problem at once (added 22 September 2026, audit QA-15; additive, older clients ignore it). Paths: `contactEmail`, `notes`, `hotelStay`, `requestId`, `revision`, `responses` (structural, no id echoed), `responses.<guestId>.<eventId>.status`, `responses.<guestId>.<eventId>.meal`, `plusOneNames` (no id echoed), `plusOneNames.<guestId>`. Authorization and structural problems fail first and never echo a foreign identifier. The front end maps these paths to its inline field errors and announces `error.message`.
 
-`rsvp.cutoffAt` (in configuration and in the owner-editable `rsvp-settings`) must carry an explicit UTC offset or `Z`, for example `2026-11-20T23:59:59-06:00`; the service refuses a cutoff without one, and a configured cutoff it cannot parse closes the window rather than leaving it open (`GET /admin/status` then reports `rsvp.cutoffInvalid: true`).
+`rsvp.cutoffAt` (in configuration and in the owner-editable `rsvp-settings`) must carry an explicit UTC offset or `Z`. The shipped value is `2026-11-15T23:59:59-06:00` (end of Sunday 15 November 2026, America/Chicago / CST). The service refuses a cutoff without an offset, and a configured cutoff it cannot parse closes the window rather than leaving it open (`GET /admin/status` then reports `rsvp.cutoffInvalid: true`).
 
 ## Session snapshot
 
@@ -49,6 +49,7 @@ A `400 validation` body may also carry `error.fields`, an array of `{ "path", "m
   "entitlements": [ { "guestId": "g_01", "eventId": "ceremony" }, { "guestId": "g_01", "eventId": "reception" } ],
   "responses":    [ { "guestId": "g_01", "eventId": "ceremony", "status": "pending" } ],
   "notes": "",
+  "hotelStay": null,
   "revision": 0,
   "reference": null,
   "submittedAt": null,
@@ -63,6 +64,7 @@ A `400 validation` body may also carry `error.fields`, an array of `{ "path", "m
 - `meal` (optional, per response) holds a configured meal choice for the event named in `rsvp.mealChoices.eventId`; it is only accepted for `attending` responses and only from the configured option list (RSVP-03, DATA-02). When no meal choices are configured the field is absent.
 - `emailQueued` is `true` only when a confirmation email was enqueued in the same transaction; the page shows an explicit "email not available" note otherwise (RSVP-06/07).
 - `revision` increments on every committed save and is used for optimistic concurrency (RSVP-05).
+- `hotelStay` (optional, household-level) is `yes`, `no` or `undecided` when anyone is attending, and `null` when the household declines. It is required on a guest save if anyone attends. Headcount is derived from attending guests and is not a separate payload field.
 
 ## Response payload
 
@@ -73,7 +75,8 @@ A `400 validation` body may also carry `error.fields`, an array of `{ "path", "m
   "responses": [ { "guestId": "g_01", "eventId": "ceremony", "status": "attending" } ],
   "plusOneNames": { "g_02": "Casey Example" },
   "contactEmail": "alex@example.com",
-  "notes": "Vegetarian, please."
+  "notes": "Vegetarian, please.",
+  "hotelStay": "yes"
 }
 ```
 
@@ -82,7 +85,7 @@ Server rules:
 1. If `requestId` was already committed for this household, return the stored result without writing again (idempotent retries; RSVP-05). This check comes first because a retry of a committed save carries the revision that save consumed. The stored replay body never contains the restricted note; the household's current note is re-attached on replay (SEC-05).
 2. Reject any `(guestId, eventId)` not in the household's entitlements and any missing pair (an unanswered choice is never a decline; RSVP-01/04).
 3. If `revision` does not equal the stored revision, return `409` with `latest`.
-4. In one transaction: update responses (with meal values where configured), plus-one names, contact email and notes; increment `revision`; set `reference` on first save; append a mail-outbox row and audit event (ARCH-03). Only then return `200`.
+4. In one transaction: update responses (with meal values where configured), plus-one names, contact email, notes and hotel stay; increment `revision`; set `reference` on first save; append a mail-outbox row and audit event (ARCH-03). Only then return `200`. After a successful guest save the Worker best-effort upserts that household on the Google Sheet **RSVP Answers** tab when sheet secrets are present; a sheet failure never rolls back the RSVP. Natalie’s original guest-list tab is never written.
 
 The reference implementation in `backend/` also exposes `GET /health`, a public `GET /content/urgent-banner` (owner-editable, cached 60 s) and the `/admin` API described in `backend/README.md`; `rsvp.open` and `cutoffAt` in the snapshot come from the owner-editable `rsvp-settings` content when present, otherwise from configuration.
 5. After `rsvp.cutoffAt`, return `423 closed` to guests; owner corrections happen through the admin tools with an audit trail (RSVP-04).

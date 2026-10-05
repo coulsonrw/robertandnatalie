@@ -17,7 +17,8 @@
     "test": "node --test scripts/test.mjs",
     "linkcheck": "node scripts/linkcheck.mjs",
     "images": "node scripts/images.mjs",
-    "capture:public": "node scripts/capture-public-site.mjs"
+    "capture:public": "node scripts/capture-public-site.mjs",
+    "rsvp:roster": "node backend/scripts/roster-from-sheet.mjs"
   },
   "license": "UNLICENSED",
   "devDependencies": {
