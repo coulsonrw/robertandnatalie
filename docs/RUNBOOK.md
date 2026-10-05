@@ -39,7 +39,7 @@ Guests correct their own response through their link or code until `rsvp.cutoffA
 
 ## 5. Issue, replace or revoke an invitation link
 
-Personal links carry a random token in the URL fragment (`/rsvp.html#t=…`). Until Cloudflare Access exists, import the guest sheet and issue one link per named guest with `POST /ops/roster/sync` (see `docs/RSVP_GUEST_LAUNCH.md`). After Access is on, use the admin credential endpoints in `backend/README.md` to issue a link or a short fallback code, to revoke one that was forwarded, and to issue a replacement. Revocation takes effect on the next request; the guest sees the neutral "no longer valid" message and the contact route (RSVP-01, SEC-02).
+Personal links carry a random token in the URL fragment (`/rsvp.html#t=…`). Until Cloudflare Access exists, download Natalie’s guest list as CSV and issue one link per named guest with `POST /ops/roster/sync` (see `docs/RSVP_GUEST_LAUNCH.md`; D1 is the default store). After Access is on, use the admin credential endpoints in `backend/README.md` to issue a link or a short fallback code, to revoke one that was forwarded, and to issue a replacement. Revocation takes effect on the next request; the guest sees the neutral "no longer valid" message and the contact route (RSVP-01, SEC-02).
 
 ## 6. Export attendance safely
 
