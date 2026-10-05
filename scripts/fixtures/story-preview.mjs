@@ -30,7 +30,7 @@ export function storyPreviewFixture(view) {
     fixture: true,
     layout: 'timeline',
     heading: 'Our Story',
-    title: 'Somewhere Between Cairo & Alabama',
+    title: 'Somewhere Between Africa & America',
     subtitle: 'A Love Without Borders',
     byline: `The Story of ${n1} & ${n2}`,
     paragraphs: [],

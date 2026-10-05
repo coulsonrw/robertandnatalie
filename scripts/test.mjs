@@ -198,7 +198,7 @@ test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real
   const index = b.read('index.html');
   assert.match(index, /<section id="our-story" class="section story story-timeline"/);
   assert.match(index, /href="#our-story">Our Story<\/a>/);
-  assert.match(index, /Somewhere Between Cairo &amp; Alabama/);
+  assert.match(index, /Somewhere Between Africa &amp; America/);
   assert.match(index, /A Love Without Borders/);
   for (const [n, title] of [['I', 'Two Worlds'], ['II', 'With love, from Cairo'], ['III', 'Cape Town'], ['IV', 'An African Safari like no other'], ['V', 'Closing the Distance'], ['VI', 'Around the globe in 40 Hours'], ['VII', 'The Land of the Sand'], ['VIII', 'From Jozi Girl'], ['IX', 'Back to Harvard'], ['X', 'Sweet Home Alabama']]) {
     assert.match(index, new RegExp(`Chapter ${n}`));
