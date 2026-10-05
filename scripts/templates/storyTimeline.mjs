@@ -1,6 +1,7 @@
-// Our Story chapter timeline (Eames / Figma). Photo-first: real photographs render
-// as static <picture> frames with no sketch overlay or sepia. Monogram and
-// coming-soon placeholders use the supplied RN artwork. No inline styles (CSP).
+// Our Story chapter timeline (Eames / Figma). Chapters 2–6 wrap the published
+// full-colour still in a .sketch frame and load a separate OpenCV/Potrace line
+// overlay; the photograph itself is unchanged (no sepia, no AI). Monogram and
+// coming-soon chapters stay photo-first. No inline styles (CSP).
 import { esc } from '../lib/html.mjs';
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
@@ -9,22 +10,32 @@ function roman(n) {
   return ROMAN[n] ?? String(n);
 }
 
-function chapterPicture(im, { eager = false } = {}) {
+function chapterPictureInner(im, { eager = false } = {}) {
   const sizes = '(min-width: 900px) 460px, 92vw';
+  const attrs = `width="${im.width}" height="${im.height}" alt="${esc(im.alt)}" decoding="async"${eager ? '' : ' loading="lazy"'}`;
+  if (im.sizes.length === 1 && im.sizes[0].src) {
+    return `<img class="photo-el" src="${im.sizes[0].src}" ${attrs}>`;
+  }
+  const fallback = im.sizes.find((s) => s.w === 800) ?? im.sizes[0];
+  return `<picture class="photo-el">
+      <source type="image/webp" srcset="${im.sizes.map((s) => `${esc(s.webp)} ${s.w}w`).join(', ')}" sizes="${sizes}">
+      <img src="${esc(fallback.jpg)}" srcset="${im.sizes.map((s) => `${esc(s.jpg)} ${s.w}w`).join(', ')}" sizes="${sizes}" ${attrs}>
+    </picture>`;
+}
+
+function chapterPicture(im, { eager = false } = {}) {
+  const picture = chapterPictureInner(im, { eager });
+  if (im.kind === 'photo' && im.sketch) {
+    const frame = ['sketch', 'is-real-photo'];
+    if (im.orientation) frame.push(`is-${im.orientation}`);
+    return `<div class="${frame.join(' ')}" data-sketch="${esc(im.sketch)}"><div class="sketch-photo">${picture}</div></div>`;
+  }
   const frame = ['photo-frame'];
   if (im.kind === 'photo') frame.push('is-real-photo');
   if (im.kind === 'monogram') frame.push('is-monogram');
   if (im.kind === 'placeholder') frame.push('is-placeholder-img');
   if (im.kind === 'photo' && im.orientation) frame.push(`is-${im.orientation}`);
-  const attrs = `width="${im.width}" height="${im.height}" alt="${esc(im.alt)}" decoding="async"${eager ? '' : ' loading="lazy"'}`;
-  if (im.sizes.length === 1 && im.sizes[0].src) {
-    return `<div class="${frame.join(' ')}"><img class="photo-el" src="${im.sizes[0].src}" ${attrs}></div>`;
-  }
-  const fallback = im.sizes.find((s) => s.w === 800) ?? im.sizes[0];
-  return `<div class="${frame.join(' ')}"><picture class="photo-el">
-      <source type="image/webp" srcset="${im.sizes.map((s) => `${esc(s.webp)} ${s.w}w`).join(', ')}" sizes="${sizes}">
-      <img src="${esc(fallback.jpg)}" srcset="${im.sizes.map((s) => `${esc(s.jpg)} ${s.w}w`).join(', ')}" sizes="${sizes}" ${attrs}>
-    </picture></div>`;
+  return `<div class="${frame.join(' ')}">${picture}</div>`;
 }
 
 function chapterParagraph(text) {
@@ -45,7 +56,7 @@ export function storyTimeline(view, { headingLevel = 2 } = {}) {
     const fig = ch.image
       ? `<figure class="chapter-figure">${chapterPicture(ch.image, { eager: i === 0 })}${ch.image.caption ? `<figcaption>${esc(ch.image.caption)}</figcaption>` : ''}</figure>`
       : '';
-    const cls = ['chapter', ch.comingSoon ? 'is-placeholder' : '', ch.image?.kind === 'photo' ? 'has-photo' : 'has-mark'].filter(Boolean).join(' ');
+    const cls = ['chapter', ch.comingSoon ? 'is-placeholder' : '', ch.image?.kind === 'photo' ? 'has-photo' : 'has-mark', ch.image?.sketch ? 'has-sketch' : ''].filter(Boolean).join(' ');
     return `<li class="${cls}" id="story-${esc(ch.id)}" aria-labelledby="story-${esc(ch.id)}-title">
   <span class="chapter-marker" aria-hidden="true">${esc(r)}</span>
   <div class="chapter-head chapter-text">

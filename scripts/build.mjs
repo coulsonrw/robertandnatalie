@@ -298,6 +298,8 @@ function storyImageView(im, d) {
     id: im.id, role: im.role, kind: im.kind ?? null, alt: im.alt, caption: im.caption ?? null,
     photographer: im.photographer ?? null, focal: im.focalPoint ?? { x: 0.5, y: 0.5 },
     width: d.width, height: d.height, orientation,
+    sketch: im.sketch ? `/img/story/${path.basename(im.sketch)}` : null,
+    sketchSource: im.sketch ?? null,
     sizes: d.sizes.map((sz) => ({ w: sz.w, h: sz.h, webp: `/img/story/${sz.webp}`, jpg: `/img/story/${sz.jpg}` })),
   };
 }
@@ -322,6 +324,11 @@ function validateStory(c) {
     if (!roles.includes(im.role)) fail(`${t}: role must be ${roles.join(', ')}`);
     if (im.kind != null && !['photo', 'monogram', 'placeholder'].includes(im.kind)) fail(`${t}: kind must be photo, monogram or placeholder`);
     if (!im.source || !/^assets\/story\/originals\//.test(im.source)) fail(`${t}: source must be a file under assets/story/originals/ (never copied to the public build)`);
+    if (im.sketch != null) {
+      if (im.kind !== 'photo') fail(`${t}: sketch overlays are allowed only on kind "photo"`);
+      if (!/^assets\/story\/sketches\/[A-Za-z0-9._-]+\.svg$/.test(im.sketch)) fail(`${t}: sketch must be an .svg under assets/story/sketches/`);
+      if (!fs.existsSync(path.join(ROOT, im.sketch))) fail(`${t}: sketch file ${im.sketch} is missing`);
+    }
     const fp = im.focalPoint;
     if (fp && !(fp.x >= 0 && fp.x <= 1 && fp.y >= 0 && fp.y <= 1)) fail(`${t}: focalPoint.x and .y must be between 0 and 1`);
   }
@@ -547,7 +554,10 @@ function emit(c, view) {
   if (view.story.published) {
     // Only the derivatives of published images are copied; originals and manifest never are.
     fs.mkdirSync(path.join(DIST, 'img', 'story'), { recursive: true });
-    for (const im of view.story.images) for (const sz of im.sizes) for (const k of ['webp', 'jpg']) fs.copyFileSync(path.join(STORY_DERIVATIVES, path.basename(sz[k])), path.join(DIST, 'img', 'story', path.basename(sz[k])));
+    for (const im of view.story.images) {
+      for (const sz of im.sizes) for (const k of ['webp', 'jpg']) fs.copyFileSync(path.join(STORY_DERIVATIVES, path.basename(sz[k])), path.join(DIST, 'img', 'story', path.basename(sz[k])));
+      if (im.sketchSource) fs.copyFileSync(path.join(ROOT, im.sketchSource), path.join(DIST, 'img', 'story', path.basename(im.sketchSource)));
+    }
   } else if (view.story.preview) {
     fs.writeFileSync(path.join(DIST, 'story-preview.html'), renderStoryPreview(view, storyPreviewFixture(view)));
   }

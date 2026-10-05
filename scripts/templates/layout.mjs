@@ -121,11 +121,11 @@ export function footer({ view }) {
 </footer>`;
 }
 
-export function shell({ view, title, description, bodyClass = '', bodyAttrs = '', body, scripts = [], stylesheets = [], canonicalPath = null }) {
+export function shell({ view, title, description, bodyClass = '', bodyAttrs = '', htmlAttrs = '', headExtra = '', body, scripts = [], stylesheets = [], canonicalPath = null }) {
   const p = view.basePath;
   const fullTitle = title ? `${title} — ${view.couple.displayName}` : `${view.couple.displayName} — ${view.longDate} — ${view.wedding.destination}`;
   return `<!DOCTYPE html>
-<html lang="en" class="no-js">
+<html lang="en" class="no-js"${htmlAttrs ? ' ' + htmlAttrs : ''}>
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy(view)}">
@@ -143,6 +143,7 @@ ${view.site.noindex ? '<meta name="robots" content="noindex, nofollow">\n' : ''}
 <link rel="preload" href="${p}/fonts/cormorant-garamond-variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${p}/styles/site.css">
 ${stylesheets.map((s) => `<link rel="stylesheet" href="${p}${s}">`).join('\n')}
+${headExtra}
 </head>
 <body class="${esc(bodyClass)}"${bodyAttrs ? ' ' + bodyAttrs : ''}>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -155,10 +156,10 @@ ${scripts.map((s) => `<script src="${p}${s}" defer></script>`).join('\n')}
 `;
 }
 
-export function page({ view, currentPage, title, description, bodyClass = '', main, scripts = [], stylesheets = [], canonicalPath = null }) {
+export function page({ view, currentPage, title, description, bodyClass = '', htmlAttrs = '', headExtra = '', main, scripts = [], stylesheets = [], canonicalPath = null }) {
   const body = `<span id="top"></span>
 ${header({ view, currentPage })}
 ${main}
 ${footer({ view })}`;
-  return shell({ view, title, description, bodyClass, body, scripts, stylesheets, canonicalPath });
+  return shell({ view, title, description, bodyClass, htmlAttrs, headExtra, body, scripts, stylesheets, canonicalPath });
 }
