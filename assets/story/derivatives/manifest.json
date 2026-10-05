@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-05T16:01:25.900Z",
+  "generatedAt": "2026-10-05T18:08:30.788Z",
   "images": {
     "monogram-rn": {
       "id": "monogram-rn",
@@ -205,6 +205,39 @@
           "jpg": "placeholder-monogram-1200.jpg",
           "bytesWebp": 30418,
           "bytesJpg": 62362
+        }
+      ]
+    },
+    "ch1-harvard-law": {
+      "id": "ch1-harvard-law",
+      "role": "chapter",
+      "source": "assets/story/originals/ch1-harvard-law.jpg",
+      "width": 1175,
+      "height": 1393,
+      "sizes": [
+        {
+          "w": 480,
+          "h": 569,
+          "webp": "ch1-harvard-law-480.webp",
+          "jpg": "ch1-harvard-law-480.jpg",
+          "bytesWebp": 37054,
+          "bytesJpg": 52878
+        },
+        {
+          "w": 800,
+          "h": 948,
+          "webp": "ch1-harvard-law-800.webp",
+          "jpg": "ch1-harvard-law-800.jpg",
+          "bytesWebp": 92362,
+          "bytesJpg": 138397
+        },
+        {
+          "w": 1175,
+          "h": 1393,
+          "webp": "ch1-harvard-law-1175.webp",
+          "jpg": "ch1-harvard-law-1175.jpg",
+          "bytesWebp": 188724,
+          "bytesJpg": 267526
         }
       ]
     }
