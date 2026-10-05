@@ -1,0 +1,212 @@
+{
+  "generatedAt": "2026-10-05T16:01:25.900Z",
+  "images": {
+    "monogram-rn": {
+      "id": "monogram-rn",
+      "role": "chapter",
+      "source": "assets/story/originals/monogram-rn.jpg",
+      "width": 1200,
+      "height": 1200,
+      "sizes": [
+        {
+          "w": 480,
+          "h": 480,
+          "webp": "monogram-rn-480.webp",
+          "jpg": "monogram-rn-480.jpg",
+          "bytesWebp": 8006,
+          "bytesJpg": 15756
+        },
+        {
+          "w": 800,
+          "h": 800,
+          "webp": "monogram-rn-800.webp",
+          "jpg": "monogram-rn-800.jpg",
+          "bytesWebp": 14820,
+          "bytesJpg": 30268
+        },
+        {
+          "w": 1200,
+          "h": 1200,
+          "webp": "monogram-rn-1200.webp",
+          "jpg": "monogram-rn-1200.jpg",
+          "bytesWebp": 27690,
+          "bytesJpg": 57078
+        }
+      ]
+    },
+    "ch2-cairo": {
+      "id": "ch2-cairo",
+      "role": "chapter",
+      "source": "assets/story/originals/ch2-cairo.jpg",
+      "width": 881,
+      "height": 1600,
+      "sizes": [
+        {
+          "w": 480,
+          "h": 872,
+          "webp": "ch2-cairo-480.webp",
+          "jpg": "ch2-cairo-480.jpg",
+          "bytesWebp": 70240,
+          "bytesJpg": 93778
+        },
+        {
+          "w": 800,
+          "h": 1453,
+          "webp": "ch2-cairo-800.webp",
+          "jpg": "ch2-cairo-800.jpg",
+          "bytesWebp": 126154,
+          "bytesJpg": 200655
+        },
+        {
+          "w": 881,
+          "h": 1600,
+          "webp": "ch2-cairo-881.webp",
+          "jpg": "ch2-cairo-881.jpg",
+          "bytesWebp": 166848,
+          "bytesJpg": 260693
+        }
+      ]
+    },
+    "ch3-boat": {
+      "id": "ch3-boat",
+      "role": "chapter",
+      "source": "assets/story/originals/ch3-boat.jpg",
+      "width": 480,
+      "height": 640,
+      "sizes": [
+        {
+          "w": 480,
+          "h": 640,
+          "webp": "ch3-boat-480.webp",
+          "jpg": "ch3-boat-480.jpg",
+          "bytesWebp": 45450,
+          "bytesJpg": 68404
+        }
+      ]
+    },
+    "ch4-engagement": {
+      "id": "ch4-engagement",
+      "role": "chapter",
+      "source": "assets/story/originals/ch4-engagement.jpg",
+      "width": 480,
+      "height": 640,
+      "sizes": [
+        {
+          "w": 480,
+          "h": 640,
+          "webp": "ch4-engagement-480.webp",
+          "jpg": "ch4-engagement-480.jpg",
+          "bytesWebp": 60964,
+          "bytesJpg": 79134
+        }
+      ]
+    },
+    "ch5-awards": {
+      "id": "ch5-awards",
+      "role": "chapter",
+      "source": "assets/story/originals/ch5-awards.jpg",
+      "width": 1080,
+      "height": 761,
+      "sizes": [
+        {
+          "w": 480,
+          "h": 338,
+          "webp": "ch5-awards-480.webp",
+          "jpg": "ch5-awards-480.jpg",
+          "bytesWebp": 29538,
+          "bytesJpg": 39803
+        },
+        {
+          "w": 800,
+          "h": 564,
+          "webp": "ch5-awards-800.webp",
+          "jpg": "ch5-awards-800.jpg",
+          "bytesWebp": 71630,
+          "bytesJpg": 98804
+        },
+        {
+          "w": 1080,
+          "h": 761,
+          "webp": "ch5-awards-1080.webp",
+          "jpg": "ch5-awards-1080.jpg",
+          "bytesWebp": 116216,
+          "bytesJpg": 154937
+        }
+      ]
+    },
+    "ch6-rooftop": {
+      "id": "ch6-rooftop",
+      "role": "chapter",
+      "source": "assets/story/originals/ch6-rooftop.jpg",
+      "width": 1500,
+      "height": 2000,
+      "sizes": [
+        {
+          "w": 480,
+          "h": 640,
+          "webp": "ch6-rooftop-480.webp",
+          "jpg": "ch6-rooftop-480.jpg",
+          "bytesWebp": 62210,
+          "bytesJpg": 81438
+        },
+        {
+          "w": 800,
+          "h": 1067,
+          "webp": "ch6-rooftop-800.webp",
+          "jpg": "ch6-rooftop-800.jpg",
+          "bytesWebp": 143014,
+          "bytesJpg": 200665
+        },
+        {
+          "w": 1200,
+          "h": 1600,
+          "webp": "ch6-rooftop-1200.webp",
+          "jpg": "ch6-rooftop-1200.jpg",
+          "bytesWebp": 226088,
+          "bytesJpg": 364360
+        },
+        {
+          "w": 1500,
+          "h": 2000,
+          "webp": "ch6-rooftop-1500.webp",
+          "jpg": "ch6-rooftop-1500.jpg",
+          "bytesWebp": 343644,
+          "bytesJpg": 557425
+        }
+      ]
+    },
+    "placeholder-monogram": {
+      "id": "placeholder-monogram",
+      "role": "chapter",
+      "source": "assets/story/originals/placeholder-monogram.jpg",
+      "width": 1200,
+      "height": 1200,
+      "sizes": [
+        {
+          "w": 480,
+          "h": 480,
+          "webp": "placeholder-monogram-480.webp",
+          "jpg": "placeholder-monogram-480.jpg",
+          "bytesWebp": 8668,
+          "bytesJpg": 16512
+        },
+        {
+          "w": 800,
+          "h": 800,
+          "webp": "placeholder-monogram-800.webp",
+          "jpg": "placeholder-monogram-800.jpg",
+          "bytesWebp": 16508,
+          "bytesJpg": 33059
+        },
+        {
+          "w": 1200,
+          "h": 1200,
+          "webp": "placeholder-monogram-1200.webp",
+          "jpg": "placeholder-monogram-1200.jpg",
+          "bytesWebp": 30418,
+          "bytesJpg": 62362
+        }
+      ]
+    }
+  }
+}

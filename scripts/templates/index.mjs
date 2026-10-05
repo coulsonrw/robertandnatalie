@@ -1,5 +1,6 @@
 import { esc, linesWithBreaks } from '../lib/html.mjs';
 import { shell, header, footer, icon, page, rsvpCta } from './layout.mjs';
+import { storyTimeline } from './storyTimeline.mjs';
 
 
 // The invitation card: live text, one DOM node that the entry script moves between the
@@ -151,6 +152,7 @@ function storyFigure(im, opts) {
 function storySection(view, { headingLevel = 2 } = {}) {
   const s = view.story;
   if (!s || (!s.published && !s.fixture)) return '';
+  if (s.layout === 'timeline' && s.chapters?.length) return storyTimeline(view, { headingLevel });
   const H = `h${headingLevel}`; // h2 under the home page's h1; h1 on the standalone preview page
   const M = `h${headingLevel + 1}`; // milestone titles sit one level below the section heading
   const lead = s.images.find((i) => i.role === 'lead');
@@ -178,13 +180,17 @@ function storySection(view, { headingLevel = 2 } = {}) {
 </section>`;
 }
 
+function storyAssets(view) {
+  return !!(view.story?.published || view.story?.fixture);
+}
+
 export function renderStoryPreview(view, fixture) {
   const v = { ...view, story: fixture };
   const main = `<main id="main" class="page-story-preview">
   <div class="container"><div class="notice preview-notice" role="note">${icon('i-info')}<span><strong>Protected preview.</strong> This is a synthetic layout fixture: the pictures are labelled placeholder graphics and the text is placeholder copy supplied by the build, not the couple's story or photographs. The page exists only in local and CI builds and is never part of the deployed site (audit IMP-12, QA-06). Publishing steps: docs/OUR_STORY_INTAKE.md.</span></div></div>
 ${storySection(v, { headingLevel: 1 })}
 </main>`;
-  return page({ view: v, currentPage: 'story-preview', title: 'Our Story (layout preview)', description: 'Layout preview with synthetic fixtures; not published.', main, bodyClass: 'story-preview' });
+  return page({ view: v, currentPage: 'story-preview', title: 'Our Story (layout preview)', description: 'Layout preview with synthetic fixtures; not published.', main, bodyClass: 'story-preview', stylesheets: ['/styles/story.css'], scripts: ['/js/story.js'] });
 }
 
 // The Details (direction A card layout in the site palette; Rob, 4 Oct 2026; Figma 67:584 / 67:706).
@@ -357,7 +363,11 @@ ${footer({ view })}
     <div class="dialog-slot" id="dialog-slot" tabindex="0" role="region" aria-label="Invitation, scrollable"></div>
   </div>
 </dialog>`;
-  return shell({ view, title: null, bodyClass: 'home', bodyAttrs: `data-start="${start}"`, body, canonicalPath: '/' });
+  return shell({
+    view, title: null, bodyClass: 'home', bodyAttrs: `data-start="${start}"`, body, canonicalPath: '/',
+    stylesheets: storyAssets(view) ? ['/styles/story.css'] : [],
+    scripts: storyAssets(view) ? ['/js/story.js'] : [],
+  });
 }
 
 export function renderIndex(view) { return renderHome(view, { start: 'closed' }); }

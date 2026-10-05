@@ -83,7 +83,7 @@ export function header({ view, currentPage }) {
   const rsvpButton = view.postEvent
     ? `<a class="btn btn-primary btn-rsvp" href="${home}#thank-you">Thank you</a>`
     : rsvpCta(view, { extraClass: 'btn-rsvp', current: currentPage === 'rsvp' });
-  return `${banner(view)}<header class="site-header${view.rsvpCta && !view.rsvpCta.open ? ' rsvp-pending' : ''}">
+  return `${banner(view)}<header class="site-header${view.rsvpCta && !view.rsvpCta.open ? ' rsvp-pending' : ''}${view.story?.published ? ' has-story-nav' : ''}">
   <div class="header-inner">
     <a class="brand" href="${home || p + '/'}#top" aria-label="${esc(view.couple.displayName)} — home">
       <picture>
@@ -121,7 +121,7 @@ export function footer({ view }) {
 </footer>`;
 }
 
-export function shell({ view, title, description, bodyClass = '', bodyAttrs = '', body, scripts = [], canonicalPath = null }) {
+export function shell({ view, title, description, bodyClass = '', bodyAttrs = '', body, scripts = [], stylesheets = [], canonicalPath = null }) {
   const p = view.basePath;
   const fullTitle = title ? `${title} — ${view.couple.displayName}` : `${view.couple.displayName} — ${view.longDate} — ${view.wedding.destination}`;
   return `<!DOCTYPE html>
@@ -142,6 +142,7 @@ ${view.site.noindex ? '<meta name="robots" content="noindex, nofollow">\n' : ''}
 <link rel="preload" href="${p}/fonts/cormorant-sc-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="${p}/fonts/cormorant-garamond-variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${p}/styles/site.css">
+${stylesheets.map((s) => `<link rel="stylesheet" href="${p}${s}">`).join('\n')}
 </head>
 <body class="${esc(bodyClass)}"${bodyAttrs ? ' ' + bodyAttrs : ''}>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -154,10 +155,10 @@ ${scripts.map((s) => `<script src="${p}${s}" defer></script>`).join('\n')}
 `;
 }
 
-export function page({ view, currentPage, title, description, bodyClass = '', main, scripts = [], canonicalPath = null }) {
+export function page({ view, currentPage, title, description, bodyClass = '', main, scripts = [], stylesheets = [], canonicalPath = null }) {
   const body = `<span id="top"></span>
 ${header({ view, currentPage })}
 ${main}
 ${footer({ view })}`;
-  return shell({ view, title, description, bodyClass, body, scripts, canonicalPath });
+  return shell({ view, title, description, bodyClass, body, scripts, stylesheets, canonicalPath });
 }

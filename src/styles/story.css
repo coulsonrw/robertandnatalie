@@ -1,0 +1,91 @@
+/* Our Story — vertical chapter timeline (Eames / Figma).
+   Loaded after site.css. Reuses site tokens. No inline styles (CSP style-src 'self').
+   Real photographs are photo-first: no sepia, no sketch overlay. */
+
+.story-timeline { --rail: var(--gold-rule); --rail-ink: var(--gold); border-top: 1px solid var(--gold-rule); }
+.story-hero { text-align: center; padding: 0 var(--gutter) clamp(24px, 4vw, 40px); max-width: 920px; margin: 0 auto; }
+.story-kicker { margin-bottom: 0.8em; }
+.story-kicker::before,
+.story-kicker::after { content: '·'; color: var(--gold); margin: 0 0.45em; }
+.story-title {
+  font-family: var(--font-script); font-weight: 400; color: var(--gold-text);
+  font-size: clamp(2.6rem, 8vw, 4.6rem); line-height: 1.05; margin: 0;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+.story-sub {
+  font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.1em;
+  font-size: clamp(1.05rem, 2.4vw, 1.3rem); color: var(--ink); margin: 0.7em 0 0;
+}
+.story-byline { font-style: italic; color: var(--ink-soft); font-size: 1.15rem; margin: 0.4em 0 0; }
+
+.timeline { position: relative; max-width: 1080px; margin: 0 auto; padding: 24px var(--gutter) 8px; list-style: none; }
+.timeline::before,
+.timeline::after { content: ''; position: absolute; top: 0; bottom: 0; left: calc(var(--gutter) + 15px); width: 2px; background: var(--rail); }
+.timeline::after { background: var(--rail-ink); transform-origin: top; transform: scaleY(var(--tp, 1)); }
+
+.chapter { position: relative; display: grid; gap: 16px; padding: 0 0 clamp(56px, 9vw, 112px) 52px; }
+.chapter-marker {
+  position: absolute; left: 0; top: 4px; width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--paper); border: 2px solid var(--rail);
+  font-family: var(--font-sc); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.04em; color: var(--gold-text);
+  transition: background-color 0.4s, border-color 0.4s, color 0.4s;
+}
+.chapter.is-seen .chapter-marker { background: var(--gold-text); border-color: var(--gold-text); color: var(--paper-light); }
+.chapter-text h2,
+.chapter-text h3 { font-size: clamp(1.7rem, 3.4vw, 2.3rem); color: var(--gold-text); font-weight: 600; line-height: 1.15; margin: 0 0 0.25em; }
+.chapter-head .chapter-when { margin-bottom: 0.2em; }
+.chapter-when { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.12em; font-size: 0.95rem; color: var(--ink-soft); margin: 0 0 1em; }
+.chapter-text p { font-size: 1.18rem; line-height: 1.6; margin: 0 0 0.75em; max-width: 60ch; }
+.chapter-text .scripture { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.1em; color: var(--gold-text); }
+.chapter-text .coda { font-family: var(--font-script); font-size: 1.9rem; color: var(--gold-text); line-height: 1.2; margin-top: 0.6em; }
+.chapter.is-placeholder .chapter-body { border: 1px dashed var(--gold); padding: 16px 18px; background: var(--paper-light); align-self: start; }
+
+.chapter-figure { margin: 0; }
+.chapter-figure figcaption { font-size: 0.95rem; color: var(--ink-soft); font-style: italic; margin-top: 8px; }
+
+.photo-frame {
+  position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: var(--radius);
+  background: var(--paper-light); box-shadow: var(--shadow-card);
+  outline: 1px solid var(--gold-rule); outline-offset: -1px;
+}
+.photo-frame.is-portrait { aspect-ratio: 3 / 4; max-width: 440px; margin-inline: auto; }
+.photo-frame.is-square { aspect-ratio: 1 / 1; max-width: 360px; margin-inline: auto; }
+.photo-el, .photo-el img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-frame.is-real-photo .photo-el img { filter: none; object-position: center 20%; }
+.photo-frame.is-portrait.is-real-photo .photo-el img { object-position: center 15%; }
+
+/* RN monogram / coming-soon artwork already includes the gold rings — show the full square, no crop. */
+.photo-frame.is-monogram,
+.photo-frame.is-placeholder-img {
+  aspect-ratio: 1 / 1; max-width: 360px; margin-inline: auto;
+  background: transparent; box-shadow: none; outline: none; overflow: visible;
+}
+.photo-frame.is-monogram .photo-el,
+.photo-frame.is-monogram .photo-el img,
+.photo-frame.is-placeholder-img .photo-el,
+.photo-frame.is-placeholder-img .photo-el img {
+  position: static; width: 100%; height: auto; object-fit: contain; filter: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .chapter-text > * { transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.45, 0.05, 0.25, 1); }
+  .reveal .chapter:not(.is-seen) .chapter-text > * { opacity: 0; transform: translateY(14px); }
+}
+
+@media (min-width: 900px) {
+  .timeline::before,
+  .timeline::after { left: 50%; margin-left: -1px; }
+  .chapter { grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; column-gap: 96px; row-gap: 0; padding-left: 0; align-items: start; }
+  .chapter-marker { left: 50%; margin-left: -18px; width: 36px; height: 36px; top: 0; }
+  .chapter-figure { grid-column: 1; grid-row: 1 / span 2; }
+  .chapter-head { grid-column: 2; grid-row: 1; }
+  .chapter-body { grid-column: 2; grid-row: 2; }
+  .chapter:nth-child(even) .chapter-figure { grid-column: 2; }
+  .chapter:nth-child(even) .chapter-head,
+  .chapter:nth-child(even) .chapter-body { grid-column: 1; }
+}
+
+@media print {
+  .timeline::after { display: none; }
+  .reveal .chapter .chapter-text > * { opacity: 1; transform: none; }
+}

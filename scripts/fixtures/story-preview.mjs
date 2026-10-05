@@ -2,6 +2,7 @@
 // (dist/story-preview.html in local and CI builds). Nothing here is the couple's story or a
 // photograph: the pictures are labelled placeholder graphics and the text says what it is.
 // The deployed build (SITE_PREVIEW=0) never renders this page (audit IMP-12, QA-06).
+// When the published story uses layout "timeline", this fixture mirrors that chapter form.
 
 function placeholder(label, w, h) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
@@ -13,33 +14,32 @@ function placeholder(label, w, h) {
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
 }
 
-function image(id, role, label, w, h) {
-  return { id, role, alt: `${label} (synthetic placeholder, not a photograph)`, caption: `${label} — placeholder caption`, photographer: null, focal: { x: 0.5, y: 0.5 }, width: w, height: h, sizes: [{ w, h, src: placeholder(label, w, h) }] };
+function image(id, role, label, w, h, kind = 'photo') {
+  const ratio = w / h;
+  const orientation = ratio < 0.85 ? 'portrait' : ratio > 1.15 ? 'landscape' : 'square';
+  return { id, role, kind, alt: `${label} (synthetic placeholder, not a photograph)`, caption: `${label} — placeholder caption`, photographer: null, focal: { x: 0.5, y: 0.5 }, width: w, height: h, orientation, sizes: [{ w, h, src: placeholder(label, w, h) }] };
 }
 
 export function storyPreviewFixture(view) {
   const [n1, n2] = view.couple.names;
-  const images = [
-    image('fixture-lead', 'lead', 'Lead image slot', 1200, 800),
-    image('fixture-1', 'supporting', 'Supporting image 1', 800, 600),
-    image('fixture-2', 'supporting', 'Supporting image 2', 600, 800),
-    image('fixture-3', 'supporting', 'Supporting image 3', 800, 600),
-    image('fixture-milestone', 'milestone', 'Milestone image slot', 800, 600),
-  ];
+  const mark = image('fixture-mark', 'chapter', 'Monogram slot', 800, 800, 'monogram');
+  const photo = image('fixture-photo', 'chapter', 'Chapter photograph slot', 800, 1066, 'photo');
+  const soon = image('fixture-soon', 'chapter', 'Coming soon slot', 800, 800, 'placeholder');
   return {
     published: false,
     fixture: true,
+    layout: 'timeline',
     heading: 'Our Story',
-    paragraphs: [
-      `Synthetic fixture, paragraph one: this preview shows where the first paragraph of ${n1} and ${n2}'s story will sit. It is placeholder text supplied by the build so that the owners can judge the layout; it says nothing about the couple.`,
-      'Synthetic fixture, paragraph two: the approved copy will be between 150 and 250 words in up to three short paragraphs, written in the couple\'s own voice. Nothing in this preview is drawn from private conversations, messages or photographs.',
-      'Synthetic fixture, paragraph three: this paragraph exists to show line length, spacing and how the narrative wraps beside the lead picture on wide screens and below it on phones.',
+    title: 'Somewhere Between Cairo & Alabama',
+    subtitle: 'A Love Without Borders',
+    byline: `The Story of ${n1} & ${n2}`,
+    paragraphs: [],
+    milestones: [],
+    images: [mark, photo, soon],
+    chapters: [
+      { id: 'ch1', number: 1, title: 'Chapter title (fixture)', when: null, place: 'Place names (optional)', paragraphs: [`Synthetic fixture: this preview shows where the first chapter of ${n1} and ${n2}'s story will sit. It is placeholder text supplied by the build so that the owners can judge the chapter timeline; it says nothing about the couple.`], comingSoon: false, image: mark },
+      { id: 'ch2', number: 2, title: 'Second chapter (fixture)', when: 'Month', place: 'City', paragraphs: ['Synthetic fixture, chapter two: a photograph sits opposite the copy on wide screens and below the title on phones. Nothing here is drawn from private conversations, messages or photographs.'], comingSoon: false, image: photo },
+      { id: 'ch3', number: 3, title: 'Coming-soon chapter (fixture)', when: null, place: null, paragraphs: ['Coming soon…'], comingSoon: true, image: soon },
     ],
-    milestones: [
-      { id: 'm1', title: 'Milestone title (fixture)', description: 'A short owner-approved description will appear here. Dates and places are optional and appear only when the couple wants them published.', when: 'Undated', place: null, image: images[4] },
-      { id: 'm2', title: 'Second milestone (fixture)', description: 'Milestones are optional; the section works without them.', when: null, place: 'Place name (optional)', image: null },
-      { id: 'm3', title: 'Third milestone (fixture)', description: 'At most a handful of milestones, in the order the couple chooses.', when: null, place: null, image: null },
-    ],
-    images,
   };
 }

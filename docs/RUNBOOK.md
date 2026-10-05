@@ -91,7 +91,7 @@ Set `rsvp.opensAt` in `content/site.config.json` to the approved date-time with 
 
 ## 14. Publish Our Story (audit IMP-12/13)
 
-Follow `docs/OUR_STORY_INTAKE.md`: originals into `assets/story/originals/` (git-ignored), entries in `story.images[]`, `npm run images`, then `story.enabled: true`, `story.visibility: "public"` and `story.approval.state: "approved"`. The build refuses to publish until every image records rights, subject and publication approval and has derivatives. To take the section down, set `story.enabled` to `false` and redeploy. The synthetic layout preview at `/story-preview.html` exists only in local and CI builds.
+Follow `docs/OUR_STORY_INTAKE.md`. The chapter timeline is published (Rob, 5 October 2026 via Babbage): `story.layout` is `"timeline"`, `story.enabled` is `true`, `story.visibility` is `"public"` and `story.approval.state` is `"approved"`. Originals stay in `assets/story/originals/` (git-ignored); `npm run images` writes derivatives. The build refuses to publish until every image records rights, subject and publication approval and has derivatives. To take the section down, set `story.enabled` to `false` and redeploy. The synthetic layout preview at `/story-preview.html` exists only in local and CI builds while the story is unpublished.
 
 ## 15. Public-site capture (read-only)
 

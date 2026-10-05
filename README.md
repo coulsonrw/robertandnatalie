@@ -74,7 +74,7 @@ GitHub Pages serves static files only. It cannot authorize a household, keep gue
 
 ## Our Story
 
-The section is built and switched off. Local and CI builds render a labelled synthetic layout preview at `/story-preview.html`; the deployed build contains no story text, images or navigation link until the owners supply and approve the copy and photographs (`docs/OUR_STORY_INTAKE.md`).
+The public chapter timeline is on (`story.enabled`, `visibility: "public"`, `approval.state: "approved"`). It is the first navigation item and sits on the home page between The Details and Wedding Day. Chapters 1–6 and 10 use the owner-approved copy; 7–9 stay “Coming soon…”. Photographs for chapters 2–6 are published; 1, 7–9 and 10 use the RN monogram until a photograph is chosen. Originals stay git-ignored; only `npm run images` derivatives are deployed. Intake and unpublishing: `docs/OUR_STORY_INTAKE.md`. Local and CI builds still render a labelled synthetic preview at `/story-preview.html` if the story is switched off; the deployed build never includes that page.
 
 ## Live-site audit (22 September 2026)
 
