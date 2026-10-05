@@ -127,26 +127,32 @@ test('QA-31 (build level): public routes and anchors exist and unpublished modul
   b.run();
   for (const f of ['index.html', 'celebration.html', 'rsvp.html', 'privacy.html', '404.html', 'calendar/ceremony.ics', 'calendar/reception.ics', 'CNAME', '.nojekyll']) assert.ok(b.exists(f), `${f} exists`);
   const index = b.read('index.html');
-  for (const id of ['wedding-day', 'travel-stay', 'questions', 'invitation', 'main', 'top']) assert.ok(index.includes(`id="${id}"`), `anchor #${id} exists`);
-  assert.ok(!index.includes('id="our-story"'), 'unpublished story section absent');
-  assert.ok(!index.includes('#our-story'), 'no navigation link to an unpublished story');
+  for (const id of ['wedding-day', 'travel-stay', 'questions', 'invitation', 'main', 'top', 'our-story']) assert.ok(index.includes(`id="${id}"`), `anchor #${id} exists`);
+  assert.match(index, /href="#our-story">Our Story<\/a>/);
   assert.ok(!b.exists('story-preview.html'), 'story preview absent from the deployed build');
-  assert.ok(!b.exists('img/story'), 'no story images in the deployed build');
+  assert.ok(b.exists('img/story'), 'published story derivatives are copied');
+  assert.ok(!b.exists('img/story/manifest.json'), 'story manifest is not published');
   assert.doesNotMatch(index, /Nearest/i, 'no proximity claim about airports (audit IMP-15)');
   assert.match(index, /rel="canonical" href="https:\/\/robertandnatalie\.wedding\/"/);
   fs.rmSync(b.tmp, { recursive: true, force: true });
 });
 
 test('QA-06 (build level): local and CI builds carry a labelled synthetic story preview that the deployed build omits', () => {
-  const b = buildWith(readConfig(), { preview: true });
-  b.run();
-  assert.ok(b.exists('story-preview.html'));
-  const html = b.read('story-preview.html');
+  const config = readConfig();
+  config.story = { ...config.story, enabled: false, visibility: null, approval: { ...config.story.approval, state: 'pending' } };
+  const local = buildWith(config, { preview: true });
+  local.run();
+  assert.ok(local.exists('story-preview.html'));
+  const html = local.read('story-preview.html');
   assert.match(html, /Protected preview/);
   assert.match(html, /synthetic layout fixture/i);
   assert.match(html, /id="our-story"/);
-  assert.ok(!b.read('index.html').includes('id="our-story"'), 'the home page still has no story section');
-  fs.rmSync(b.tmp, { recursive: true, force: true });
+  assert.ok(!local.read('index.html').includes('id="our-story"'), 'the home page still has no story section while unpublished');
+  fs.rmSync(local.tmp, { recursive: true, force: true });
+  const deployed = buildWith(config, { preview: false });
+  deployed.run();
+  assert.ok(!deployed.exists('story-preview.html'), 'story preview absent from the deployed build');
+  fs.rmSync(deployed.tmp, { recursive: true, force: true });
 });
 
 test('QA-07/08 (build level): the story is refused until every approval is recorded, then publishes with derivatives and a navigation link', () => {
@@ -184,6 +190,38 @@ test('QA-07/08 (build level): the story is refused until every approval is recor
   assert.ok(b.exists('img/story/lead-1200.webp') && !b.exists('img/story/manifest.json'), 'derivatives copied, manifest not');
   assert.ok(!b.exists('story-preview.html'));
   fs.rmSync(b.tmp, { recursive: true, force: true }); fs.rmSync(derivTmp, { recursive: true, force: true });
+});
+
+test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real photos on 2–6, placeholders elsewhere, and no sketch overlay', () => {
+  const b = buildWith(readConfig(), { preview: false });
+  b.run();
+  const index = b.read('index.html');
+  assert.match(index, /<section id="our-story" class="section story story-timeline"/);
+  assert.match(index, /href="#our-story">Our Story<\/a>/);
+  assert.match(index, /Somewhere Between Cairo &amp; Alabama/);
+  assert.match(index, /A Love Without Borders/);
+  for (const [n, title] of [['I', 'Two Worlds'], ['II', 'With love, from Cairo'], ['III', 'Cape Town'], ['IV', 'An African Safari like no other'], ['V', 'Closing the Distance'], ['VI', 'Around the globe in 40 Hours'], ['VII', 'The Land of the Sand'], ['VIII', 'From Jozi Girl'], ['IX', 'Back to Harvard'], ['X', 'Sweet Home Alabama']]) {
+    assert.match(index, new RegExp(`Chapter ${n}`));
+    assert.ok(index.includes(title), `chapter title ${title}`);
+  }
+  assert.equal((index.match(/id="story-ch\d+"/g) || []).length, 10);
+  assert.match(index, /Coming soon…/);
+  assert.equal((index.match(/Coming soon…/g) || []).length, 3);
+  assert.match(index, /is-real-photo/);
+  assert.match(index, /\/img\/story\/ch2-cairo-/);
+  assert.match(index, /\/img\/story\/ch3-boat-/);
+  assert.match(index, /\/img\/story\/ch4-engagement-/);
+  assert.match(index, /\/img\/story\/ch5-awards-/);
+  assert.match(index, /\/img\/story\/ch6-rooftop-/);
+  assert.match(index, /\/img\/story\/monogram-rn-/);
+  assert.match(index, /\/img\/story\/placeholder-monogram-/);
+  assert.doesNotMatch(index, /sketch-svg|sepia\(|class="sketch"/);
+  assert.doesNotMatch(index, /style="object-position/);
+  assert.match(index, /styles\/story\.css/);
+  assert.match(index, /js\/story\.js/);
+  assert.ok(b.exists('img/story/ch2-cairo-800.webp'));
+  assert.ok(!b.exists('story-preview.html'));
+  fs.rmSync(b.tmp, { recursive: true, force: true });
 });
 
 test('IMP-02/07: the opening date and the deadline appear only when set, and then everywhere at once', () => {

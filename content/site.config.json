@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "documentVersion": "1.2",
+  "documentVersion": "1.3",
   "lastReviewed": "2026-10-05",
   "site": {
     "name": "Robert and Natalie",
@@ -297,21 +297,323 @@
     }
   },
   "story": {
-    "enabled": false,
-    "visibility": null,
+    "enabled": true,
+    "visibility": "public",
     "heading": "Our Story",
+    "layout": "timeline",
+    "title": "Somewhere Between Cairo & Alabama",
+    "subtitle": "A Love Without Borders",
+    "byline": "The Story of Robert & Natalie",
     "narrative": {
-      "voice": null,
+      "voice": "third-person",
       "paragraphs": []
     },
+    "chapters": [
+      {
+        "id": "ch1",
+        "number": 1,
+        "title": "Two Worlds",
+        "when": null,
+        "place": "Mobile, Alabama · Johannesburg, South Africa",
+        "paragraphs": [
+          "Robert was born and raised in Mobile, Alabama. Natalie, on the other side of the Atlantic, in Johannesburg, South Africa.",
+          "Their worlds could hardly have seemed further apart. Yet both would find their way to Harvard, build accomplished careers, and remain deeply connected to the Harvard alumni community — a connection that would ultimately lead to their unexpected encounter.",
+          "Robert graduated from the Harvard Graduate School of Design in 2017 and built an established career as a highly regarded real estate investment strategist, focused on major cross-border projects. Natalie graduated from Harvard Law School in 2023 and built her career as a construction disputes and investigations partner at a multinational law firm, advising on major cross-border construction and infrastructure projects.",
+          "They each continued to serve their Harvard alumni communities — Robert in the UAE and Natalie in South Africa.",
+          "And then, Harvard brought them to the same place.",
+          "Cairo, Egypt."
+        ],
+        "imageId": "monogram-rn",
+        "textApproved": true,
+        "comingSoon": false
+      },
+      {
+        "id": "ch2",
+        "number": 2,
+        "title": "With love, from Cairo",
+        "when": "January",
+        "place": "Cairo",
+        "paragraphs": [
+          "In January, Robert and Natalie attended the inaugural Harvard Alumni Middle East & Africa Conference in Cairo.",
+          "Robert was seated just behind Natalie. A conversation with his business partner led to a life changing introduction that neither of them expected.",
+          "They exchanged contact details.",
+          "Then, throughout the conference, they kept finding one another — almost as if Cairo had decided they should.",
+          "Robert had not planned to join the excursion to the pyramids and Sphinx. Without her knowing, he rescheduled his flight to do so. They had to spend more time together.",
+          "And they did.",
+          "They shared a bus seat, sang along to the Back Street Boys’ hit “I Want It That Way” with fellow alumni, found themselves together at breakfast, and stood before the pyramids and Sphinx.",
+          "When Natalie was taking photographs, Robert called her back. “We didn’t take a picture together” he said. And in that moment when they did, something indelible happened which some may describe as a SPARK!",
+          "That evening, Robert rescheduled his flight again and had dinner with Natalie followed by a romantic stroll along the Nile river beneath the cool Cairo sky.",
+          "When Natalie was set to depart Cairo, she thought she might never see him again. That perhaps, it was all just a dream… She was wrong.",
+          "They both knew that they had fallen in love… in Cairo."
+        ],
+        "imageId": "ch2-cairo",
+        "textApproved": true,
+        "comingSoon": false
+      },
+      {
+        "id": "ch3",
+        "number": 3,
+        "title": "Cape Town",
+        "when": null,
+        "place": null,
+        "paragraphs": [
+          "By March, Cairo had become a long-distance romance.",
+          "Natalie was in Johannesburg. Robert was between Dubai and Riyadh. But they never lost contact. They made plans to reconnect in Cape Town — partly because Natalie had told him how beautiful it was, and importantly because they had to continue where they left off in Cairo.",
+          "With flights being cancelled amid the uncertainty of a new war in the region, Natalie waited anxiously and fundamentally concerned about his safety. Almost every flight to South Africa had been cancelled — except, miraculously, Robert’s. He boarded his flight, and Natalie waited at Cape Town International Airport, watching the arrivals doors, hoping to see him walk through.",
+          "Then she saw him.",
+          "Ray-Bans on. Eyes locked.",
+          "The distance disappeared instantaneously.",
+          "Together, they explored Cape Town — the Waterfront, Camps Bay, Clifton, Chapman’s Peak with the Southern Atlantic Ocean in the horizon, Simon’s Town to visit the penguins, and the Cape Winelands, with Table Mountain overlooking it all.",
+          "They shared their pasts, their present lives, their values, hopes and dreams, discovering a profound alignment between them. With each conversation, they became more certain that what they had experienced in Cairo was real — and that their paths were destined to continue together.",
+          "Meanwhile, Robert was planning something… something incredible."
+        ],
+        "imageId": "ch3-boat",
+        "textApproved": true,
+        "comingSoon": false
+      },
+      {
+        "id": "ch4",
+        "number": 4,
+        "title": "An African Safari like no other… She said YES!",
+        "when": null,
+        "place": null,
+        "paragraphs": [
+          "In May, Robert and Natalie reunited in Johannesburg.",
+          "Natalie showed him her city, the places that shaped her and the people closest to her.",
+          "Then came a surprise: a private safari in the Pilanesberg.",
+          "Among the wild beauty of South Africa and encounters with nearly all of the Big Five, Robert had one more surprise.",
+          "He played their favourite song and, overlooking an incredible sunset across the beautiful Pilanesberg mountains, created a private moment just for them. Then, with a beautiful ring engraved with a romantic phrase in Natalie’s native Tswana language, he asked her to marry him.",
+          "And of course, she said yes!"
+        ],
+        "imageId": "ch4-engagement",
+        "textApproved": true,
+        "comingSoon": false
+      },
+      {
+        "id": "ch5",
+        "number": 5,
+        "title": "Closing the Distance",
+        "when": null,
+        "place": null,
+        "paragraphs": [
+          "Eventually, the miles between them became too many.",
+          "They knew what they wanted and had chosen each other. Natalie made the extraordinary decision to leave her partnership at a multinational law firm so that they could begin building a life together. Although she longed to, the conditions of her employment following this decision made it impossible for her to travel to Robert even after escalating the request. She felt helpless and stuck.",
+          "And so enters technology to bridge the distance, several FaceTime virtual dates, some lasting several hours, WhatsApp texts, voice notes, video notes while juggling 6 to 9 hour time differences.",
+          "Because sometimes closing the distance begins with simply choosing to cross it.",
+          "He was up to something… once again!"
+        ],
+        "imageId": "ch5-awards",
+        "textApproved": true,
+        "comingSoon": false
+      },
+      {
+        "id": "ch6",
+        "number": 6,
+        "title": "Around the globe in 40 Hours",
+        "when": null,
+        "place": null,
+        "paragraphs": [
+          "Robert’s flight to Johannesburg, in August, via Houston and New Jersey was cancelled.",
+          "The next available route would take almost 40 hours — through Hong Kong, and even over the North Pole.",
+          "Across continents and time zones, Robert kept moving toward Johannesburg.",
+          "“Come hell or high water, I’m coming to see my fiancée” he said.",
+          "And he did! During her most challenging moment, he was there for her when she needed him the most!",
+          "TO BE CONTINUED …"
+        ],
+        "imageId": "ch6-rooftop",
+        "textApproved": true,
+        "comingSoon": false
+      },
+      {
+        "id": "ch7",
+        "number": 7,
+        "title": "The Land of the Sand: Welcome to Dubai, Habibi",
+        "when": null,
+        "place": null,
+        "paragraphs": [
+          "Coming soon…"
+        ],
+        "imageId": "placeholder-monogram",
+        "textApproved": true,
+        "comingSoon": true
+      },
+      {
+        "id": "ch8",
+        "number": 8,
+        "title": "From Jozi Girl to ‘Jersey Girl’",
+        "when": null,
+        "place": null,
+        "paragraphs": [
+          "Coming soon…"
+        ],
+        "imageId": "placeholder-monogram",
+        "textApproved": true,
+        "comingSoon": true
+      },
+      {
+        "id": "ch9",
+        "number": 9,
+        "title": "Back to Harvard & Road Tripping",
+        "when": null,
+        "place": null,
+        "paragraphs": [
+          "Coming soon…"
+        ],
+        "imageId": "placeholder-monogram",
+        "textApproved": true,
+        "comingSoon": true
+      },
+      {
+        "id": "ch10",
+        "number": 10,
+        "title": "Sweet Home Alabama, Becoming Mr. & Mrs RW Coulson",
+        "when": null,
+        "place": null,
+        "paragraphs": [
+          "Beyond the photographs, the journeys and the miles travelled, something else was happening.",
+          "Robert and Natalie laughed easily, danced, engaged intellectually, discovered how much they had in common, they had fun, were so playful and found in each other a rare happiness and freedom to be completely and unapologetically themselves. There was a familiarity between them that neither could quite explain. Not only were they in love, they were soul mates.",
+          "And So, Here We Are",
+          "What began unexpectedly in Cairo became a love that crossed oceans and continents.",
+          "This beautiful journey has led them here, to Robert’s home state of Alabama, surrounded by the people they love.",
+          "From Cairo to Alabama, they found their way to each other.",
+          "On December 19, 2026, they will stand before our Almighty God and those they love, exchange their vows, and become Mr. and Mrs. RW Coulson.",
+          "With God at the center, two hearts become one, and their greatest journey begins — together.",
+          "Colossians 3:14",
+          "Their Love Story Continues … It has only just begun"
+        ],
+        "imageId": "monogram-rn",
+        "textApproved": true,
+        "comingSoon": false
+      }
+    ],
     "milestones": [],
-    "images": [],
+    "images": [
+      {
+        "id": "monogram-rn",
+        "role": "chapter",
+        "kind": "monogram",
+        "source": "assets/story/originals/monogram-rn.jpg",
+        "alt": "RN monogram placeholder — photo forthcoming.",
+        "caption": null,
+        "photographer": null,
+        "rightsConfirmed": true,
+        "subjectsApproved": true,
+        "publicationApproved": true,
+        "visibility": "public",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      {
+        "id": "ch2-cairo",
+        "role": "chapter",
+        "kind": "photo",
+        "source": "assets/story/originals/ch2-cairo.jpg",
+        "alt": "Robert and Natalie at the Great Sphinx in Giza, Cairo.",
+        "caption": null,
+        "photographer": "Robert & Natalie",
+        "rightsConfirmed": true,
+        "subjectsApproved": true,
+        "publicationApproved": true,
+        "visibility": "public",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      {
+        "id": "ch3-boat",
+        "role": "chapter",
+        "kind": "photo",
+        "source": "assets/story/originals/ch3-boat.jpg",
+        "alt": "Sunset from a boat — Cape Town chapter.",
+        "caption": null,
+        "photographer": "Robert & Natalie",
+        "rightsConfirmed": true,
+        "subjectsApproved": true,
+        "publicationApproved": true,
+        "visibility": "public",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      {
+        "id": "ch4-engagement",
+        "role": "chapter",
+        "kind": "photo",
+        "source": "assets/story/originals/ch4-engagement.jpg",
+        "alt": "Engagement ring — safari proposal chapter.",
+        "caption": null,
+        "photographer": "Robert & Natalie",
+        "rightsConfirmed": true,
+        "subjectsApproved": true,
+        "publicationApproved": true,
+        "visibility": "public",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      {
+        "id": "ch5-awards",
+        "role": "chapter",
+        "kind": "photo",
+        "source": "assets/story/originals/ch5-awards.jpg",
+        "alt": "Hands with engagement ring at an awards evening.",
+        "caption": null,
+        "photographer": "Robert & Natalie",
+        "rightsConfirmed": true,
+        "subjectsApproved": true,
+        "publicationApproved": true,
+        "visibility": "public",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      {
+        "id": "ch6-rooftop",
+        "role": "chapter",
+        "kind": "photo",
+        "source": "assets/story/originals/ch6-rooftop.jpg",
+        "alt": "Rooftop toast — around the globe chapter.",
+        "caption": null,
+        "photographer": "Robert & Natalie",
+        "rightsConfirmed": true,
+        "subjectsApproved": true,
+        "publicationApproved": true,
+        "visibility": "public",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      {
+        "id": "placeholder-monogram",
+        "role": "chapter",
+        "kind": "placeholder",
+        "source": "assets/story/originals/placeholder-monogram.jpg",
+        "alt": "Coming soon — RN monogram placeholder.",
+        "caption": null,
+        "photographer": null,
+        "rightsConfirmed": true,
+        "subjectsApproved": true,
+        "publicationApproved": true,
+        "visibility": "public",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      }
+    ],
     "approval": {
-      "state": "pending",
-      "owner": "Robert / Natalie",
-      "source": null,
-      "reviewed": "2026-09-22",
-      "note": "Optional module requested by the live-site audit of 22 September 2026 (IMP-12/13). Nothing is published until enabled is true, approval.state is approved, visibility is public and every image records rightsConfirmed, subjectsApproved and publicationApproved with derivatives generated by npm run images. Intake instructions: docs/OUR_STORY_INTAKE.md. Local and CI builds render a synthetic-fixture layout preview at /story-preview.html; the deployed build never includes it."
+      "state": "approved",
+      "owner": "Robert",
+      "source": "Owner document (story.chapters.json) and Rob chat request via Babbage, 5 October 2026",
+      "reviewed": "2026-10-05",
+      "note": "Rob asked to add Our Story (5 October 2026 via Babbage). Chapter copy from the owner document is approved as-is for chapters 1–6 and 10. Chapters 7–9 remain Coming soon… with monogram placeholders. Photos for chapters 2–6 are approved for public site use. Chapters 1 and 10 use the RN monogram until photographs exist. No AI or sketch pipeline on people photos."
     }
   },
   "faqs": [

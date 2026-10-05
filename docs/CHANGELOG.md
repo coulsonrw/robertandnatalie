@@ -1,5 +1,11 @@
 # Change log
 
+## Repository changes (5 October 2026)
+
+| Change | Instruction or reason | Affected requirements | Approvals reopened |
+|---|---|---|---|
+| Published the Our Story chapter timeline on the home page (first nav item, between The Details and Wedding Day). `story.layout` is `"timeline"` with ten owner-doc chapters; 7–9 stay “Coming soon…”. Photographs for chapters 2–6 are EXIF-stripped derivatives; 1, 7–9 and 10 use the RN monogram. No AI or sketch overlay on people photos. Narrative layout remains available for the unpublished preview and QA-07/08. | Rob: “add our story” (5 October 2026 via Babbage). Treat as approval to publish. | CONTENT-01, DES-01, audit IMP-12/13, QA-06–08 | None; story approval recorded on the block |
+
 ## PRD v1.2 (22 September 2026) — from the PRD's own revision record
 
 Owner instruction of 22 September 2026: "add this to the PRD: 1) create a separate gallery for photo uploads and post-wedding pictures. 2) add a charity donation in lieu of gifts 3) add directions from the Chapel to The Grand both for passenger drop-off and parking and to the room." `docs/PRD_v1_2.md` is a complete reissue; `docs/PRD_v1_1.md` is retained for reference. All 63 v1.1 requirement IDs and 22 acceptance cases keep their number and meaning.

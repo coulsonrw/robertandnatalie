@@ -289,26 +289,55 @@ function storyManifest() {
 }
 function storyDerivatives(id) { return storyManifest()?.images?.[id] ?? null; }
 function storyPublished(c) { const s = c.story; return !!(s && s.enabled && s.approval?.state === 'approved' && s.visibility === 'public'); }
+function storyLayout(s) { return s?.layout === 'timeline' ? 'timeline' : 'narrative'; }
+
+function storyImageView(im, d) {
+  const ratio = d.width / d.height;
+  const orientation = ratio < 0.85 ? 'portrait' : ratio > 1.15 ? 'landscape' : 'square';
+  return {
+    id: im.id, role: im.role, kind: im.kind ?? null, alt: im.alt, caption: im.caption ?? null,
+    photographer: im.photographer ?? null, focal: im.focalPoint ?? { x: 0.5, y: 0.5 },
+    width: d.width, height: d.height, orientation,
+    sizes: d.sizes.map((sz) => ({ w: sz.w, h: sz.h, webp: `/img/story/${sz.webp}`, jpg: `/img/story/${sz.jpg}` })),
+  };
+}
 
 // Our Story (audit IMP-12/13, QA-06–08): nothing reaches the public build until the owners have
 // approved the copy, marked it public and recorded rights and subject approval for every picture.
+// layout "timeline" is the published Eames chapter form; "narrative" is the original short module
+// (kept for the synthetic QA-07/08 path and the unpublished preview fixture).
 function validateStory(c) {
   const s = c.story;
   if (!s) return;
   if (typeof s.enabled !== 'boolean') fail('story.enabled must be true or false');
   if (s.visibility != null && s.visibility !== 'public') fail('story.visibility must be "public" or null; a private story needs server-side access control, which static hosting cannot provide (docs/OUR_STORY_INTAKE.md)');
+  if (s.layout != null && !['narrative', 'timeline'].includes(s.layout)) fail('story.layout must be "narrative", "timeline" or omitted');
+  const layout = storyLayout(s);
   const imgs = s.images ?? [];
   const ids = new Set();
+  const roles = layout === 'timeline' ? ['lead', 'supporting', 'milestone', 'chapter'] : ['lead', 'supporting', 'milestone'];
   for (const im of imgs) {
     const t = `story.images[${im.id}]`;
     if (!im.id || ids.has(im.id)) fail(`${t}: id missing or duplicated`); ids.add(im.id);
-    if (!['lead', 'supporting', 'milestone'].includes(im.role)) fail(`${t}: role must be lead, supporting or milestone`);
+    if (!roles.includes(im.role)) fail(`${t}: role must be ${roles.join(', ')}`);
+    if (im.kind != null && !['photo', 'monogram', 'placeholder'].includes(im.kind)) fail(`${t}: kind must be photo, monogram or placeholder`);
     if (!im.source || !/^assets\/story\/originals\//.test(im.source)) fail(`${t}: source must be a file under assets/story/originals/ (never copied to the public build)`);
     const fp = im.focalPoint;
     if (fp && !(fp.x >= 0 && fp.x <= 1 && fp.y >= 0 && fp.y <= 1)) fail(`${t}: focalPoint.x and .y must be between 0 and 1`);
   }
   if (imgs.filter((i) => i.role === 'lead').length > 1) fail('story.images: only one image may have the role "lead"');
-  if (imgs.length > 6) fail('story.images: at most six images (audit §06 selection limit)');
+  if (layout === 'narrative' && imgs.length > 6) fail('story.images: at most six images (audit §06 selection limit)');
+  if (layout === 'timeline' && imgs.length > 12) fail('story.images: at most twelve images on the chapter timeline');
+  const chapters = s.chapters ?? [];
+  const chapterIds = new Set();
+  for (const ch of chapters) {
+    const t = `story.chapters[${ch.id}]`;
+    if (!ch.id || chapterIds.has(ch.id)) fail(`${t}: id missing or duplicated`); chapterIds.add(ch.id);
+    if (!ch.title) fail(`${t}: title is required`);
+    if (!Array.isArray(ch.paragraphs) || !ch.paragraphs.length || ch.paragraphs.some((x) => typeof x !== 'string' || !x.trim())) fail(`${t}: paragraphs must hold at least one non-empty string`);
+    if (ch.imageId && !ids.has(ch.imageId)) fail(`${t}: imageId "${ch.imageId}" is not in story.images`);
+    if (ch.comingSoon && (ch.paragraphs.length !== 1 || ch.paragraphs[0] !== 'Coming soon…')) fail(`${t}: coming-soon chapters must use the body "Coming soon…" only`);
+  }
   for (const m of s.milestones ?? []) {
     if (!m.id || !m.title || !m.description) fail(`story.milestones[${m.id}]: id, title and description are required`);
     if (m.imageId && !ids.has(m.imageId)) fail(`story.milestones[${m.id}]: imageId "${m.imageId}" is not in story.images`);
@@ -316,12 +345,21 @@ function validateStory(c) {
   if (!s.enabled) return;
   if (s.approval?.state !== 'approved') fail('story.enabled is true but story.approval.state is not "approved"; the section stays out of the public build until the owners approve the copy and photographs (audit IMP-12)');
   if (s.visibility !== 'public') fail('story.enabled is true but story.visibility is not "public" (owner visibility decision, audit IMP-03)');
-  const paras = s.narrative?.paragraphs ?? [];
-  if (!paras.length || paras.some((x) => typeof x !== 'string' || !x.trim())) fail('story.narrative.paragraphs must hold at least one non-empty paragraph when the story is enabled');
-  if (paras.length > 3) warn('story.narrative has more than three paragraphs; the audit brief suggests three short paragraphs');
-  const words = paras.join(' ').split(/\s+/).filter(Boolean).length;
-  if (words < 150 || words > 250) warn(`story.narrative is ${words} words; the audit brief targets 150–250`);
-  if (!imgs.some((i) => i.role === 'lead')) fail('story.images needs one image with the role "lead" when the story is enabled');
+  if (layout === 'timeline') {
+    if (!chapters.length) fail('story.chapters must hold at least one chapter when layout is "timeline"');
+    for (const ch of chapters) {
+      const t = `story.chapters[${ch.id}]`;
+      if (!ch.imageId) fail(`${t}: imageId is required when the story is enabled`);
+      if (ch.textApproved !== true && !ch.comingSoon) fail(`${t}: textApproved must be true before publication`);
+    }
+  } else {
+    const paras = s.narrative?.paragraphs ?? [];
+    if (!paras.length || paras.some((x) => typeof x !== 'string' || !x.trim())) fail('story.narrative.paragraphs must hold at least one non-empty paragraph when the story is enabled');
+    if (paras.length > 3) warn('story.narrative has more than three paragraphs; the audit brief suggests three short paragraphs');
+    const words = paras.join(' ').split(/\s+/).filter(Boolean).length;
+    if (words < 150 || words > 250) warn(`story.narrative is ${words} words; the audit brief targets 150–250`);
+    if (!imgs.some((i) => i.role === 'lead')) fail('story.images needs one image with the role "lead" when the story is enabled');
+  }
   for (const im of imgs) {
     const t = `story.images[${im.id}]`;
     if (!im.alt || !im.alt.trim()) fail(`${t}: alt text is required (audit §06)`);
@@ -335,18 +373,35 @@ function validateStory(c) {
 
 function storyView(c) {
   const s = c.story;
-  if (!storyPublished(c)) return { published: false, preview: PREVIEW_BUILD && !!s };
-  const images = (s.images ?? []).map((im) => {
-    const d = storyDerivatives(im.id);
-    return { id: im.id, role: im.role, alt: im.alt, caption: im.caption ?? null, photographer: im.photographer ?? null, focal: im.focalPoint ?? { x: 0.5, y: 0.5 }, width: d.width, height: d.height, sizes: d.sizes.map((sz) => ({ w: sz.w, h: sz.h, webp: `/img/story/${sz.webp}`, jpg: `/img/story/${sz.jpg}` })) };
-  });
-  return {
+  if (!storyPublished(c)) return { published: false, preview: PREVIEW_BUILD && !!s, layout: storyLayout(s) };
+  const images = (s.images ?? []).map((im) => storyImageView(im, storyDerivatives(im.id)));
+  const byId = Object.fromEntries(images.map((im) => [im.id, im]));
+  const layout = storyLayout(s);
+  const base = {
     published: true,
     preview: false,
+    layout,
     heading: s.heading || 'Our Story',
-    paragraphs: s.narrative.paragraphs,
-    milestones: (s.milestones ?? []).map((m) => ({ id: m.id, title: m.title, description: m.description, when: m.when ?? null, place: m.place ?? null, image: m.imageId ? images.find((i) => i.id === m.imageId) ?? null : null })),
+    title: s.title || s.heading || 'Our Story',
+    subtitle: s.subtitle ?? null,
+    byline: s.byline ?? null,
+    paragraphs: s.narrative?.paragraphs ?? [],
+    milestones: (s.milestones ?? []).map((m) => ({ id: m.id, title: m.title, description: m.description, when: m.when ?? null, place: m.place ?? null, image: m.imageId ? byId[m.imageId] ?? null : null })),
     images,
+  };
+  if (layout !== 'timeline') return base;
+  return {
+    ...base,
+    chapters: (s.chapters ?? []).map((ch, i) => ({
+      id: ch.id,
+      number: ch.number ?? i + 1,
+      title: ch.title,
+      when: ch.when ?? null,
+      place: ch.place ?? null,
+      paragraphs: ch.paragraphs,
+      comingSoon: !!ch.comingSoon,
+      image: ch.imageId ? byId[ch.imageId] ?? null : null,
+    })),
   };
 }
 

@@ -442,6 +442,9 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .keepsake.is-compact .keepsake-caption { font-size: 0.72rem; letter-spacing: 0.06em; margin-top: 4px; }
 /* With "Invitation" in the desktop menu, keep 768-1023px on one row. */
 @media (min-width: 768px) and (max-width: 1023.98px) { .nav-menu a { padding: 0 7px; letter-spacing: 0.06em; } }
+@media (min-width: 768px) and (max-width: 1255.98px) {
+  .has-story-nav .nav-menu a { padding: 0 6px; letter-spacing: 0.05em; font-size: 0.95rem; }
+}
 @media (min-width: 768px) and (max-width: 899.98px) { .brand-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; } }
 .keepsake-scale { transform-origin: top left; width: min(760px, calc(100vw - 40px)); pointer-events: none; }
 .keepsake-scale .invitation-card { box-shadow: 0 12px 30px rgba(41, 42, 40, 0.35); }
