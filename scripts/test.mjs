@@ -252,15 +252,19 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   assert.match(d, /<h2 id="details-title">The Details<\/h2>/);
   assert.deepEqual([...d.matchAll(/<li>(.*?)<\/li>/g)].map((m) => text(m[1])), ['Saturday, December 19, 2026', '2:00 p.m. · Ceremony', '4:00 p.m. · Reception']);
   const cards = [...d.matchAll(/<article class="details-card([^"]*)"[\s\S]*?<\/article>/g)].map((m) => ({ full: /--full/.test(m[1]), title: text(m[0].match(/<h3[^>]*>(.*?)<\/h3>/)[1]), body: [...m[0].matchAll(/<p class="details-card-body">(.*?)<\/p>/g)].map((x) => text(x[1])), tbd: (m[0].match(/<span class="tbd-note">(.*?)<\/span>/) || [])[1] ?? null, badgeHidden: /<span class="tbd-badge" aria-hidden="true">TBD<\/span>/.test(m[0]) }));
-  assert.deepEqual(cards.map((c) => c.title), ['Dress Code', 'Between Ceremony & Reception', 'Transport & Parking', 'Room Block', 'Children', 'Charity', 'Contact Us']);
-  assert.deepEqual(cards.map((c) => c.tbd), ['Dress code TBD.', 'Plans for the time between TBD.', 'Parking and shuttle details TBD.', 'Room block rate, booking code and cut-off TBD.', 'Children policy TBD.', 'TBD', 'Email and phone TBD.']);
+  assert.deepEqual(cards.map((c) => c.title), ['Dress Code', 'Between Ceremony & Reception', 'Transport & Parking', 'Children', 'Charity', 'Contact Us']);
+  assert.deepEqual(cards.map((c) => c.tbd), ['Dress code TBD.', 'Plans for the time between TBD.', 'Parking and shuttle details TBD.', 'Children policy TBD.', 'TBD', 'Email and phone TBD.']);
   assert.ok(cards.every((c) => c.badgeHidden), 'the badge is visual only; the note carries the word TBD');
-  assert.deepEqual(cards.map((c) => c.full), [false, false, false, false, false, false, true], 'Contact Us spans the grid');
+  assert.deepEqual(cards.map((c) => c.full), [false, false, false, false, false, true], 'Contact Us spans the grid');
   assert.deepEqual(cards[1].body, ['Ceremony 2:00 p.m. at Saint Francis Chapel, reception 4:00 p.m. at The Grand Hotel — about two hours apart.']);
-  assert.deepEqual(cards[2].body, ['Saint Francis Chapel: 17280 Scenic Highway 98, Fairhope, Alabama 36532. The Grand Hotel: One Grand Boulevard, Point Clear, Alabama 36564.']);
-  assert.deepEqual(cards[3].body, ['The Grand Hotel — general reservations (251) 928-9201.']);
+  assert.deepEqual(cards[2].body, [
+    'Saint Francis Chapel: 17280 Scenic Highway 98, Fairhope, Alabama 36532. The Grand Hotel: One Grand Boulevard, Point Clear, Alabama 36564.',
+    'The Grand Hotel — general reservations (251) 928-9201 · Reservations website.',
+  ]);
   assert.match(d, /<a href="tel:\+12519289201">\(251\) 928-9201<\/a>/);
-  for (const i of [0, 4, 5, 6]) assert.deepEqual(cards[i].body, [], `${cards[i].title} has no body until the owners supply it`);
+  assert.match(d, /<a href="https:\/\/www\.marriott\.com\/en-us\/hotels\/ptlak-the-grand-hotel-golf-resort-and-spa-autograph-collection\/overview\/" rel="noopener">Reservations website<\/a>/);
+  assert.doesNotMatch(d, /Room Block|Room block rate/, 'no Room Block card or TBD');
+  for (const i of [0, 3, 4, 5]) assert.deepEqual(cards[i].body, [], `${cards[i].title} has no body until the owners supply it`);
   assert.doesNotMatch(d, /Registry|celebrate with you|Everything you need/i, 'no registry and no copy in the couple\'s voice');
   assert.doesNotMatch(b.read('styles/site.css').split('The Details (direction A')[1].split('*/').slice(1).join('').replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-f]{3,8}\b|Playfair|Inter\b|teal/i, 'the details styles use site tokens only');
   const css = b.read('styles/site.css');
@@ -313,9 +317,10 @@ test('One place per fact (Rob, Q12): addresses, the hotel number and the contact
         for (const f of FACTS) assert.equal(count(d, f), 1, `${f} lives in The Details`);
         for (const id of ['wedding-day', 'travel-stay', 'questions']) for (const f of FACTS) assert.ok(!visible(section(html, id)).includes(f), `${f} is not repeated in #${id}`);
         assert.match(section(html, 'wedding-day'), /See <a href="#details-transport">Transport &amp; Parking in The Details<\/a> for both venue addresses\./);
-        assert.match(section(html, 'travel-stay'), /See <a href="#details-transport">Transport &amp; Parking<\/a> and <a href="#details-room-block">Room Block in The Details<\/a> for the hotel's address and general reservations number\./);
+        assert.match(section(html, 'travel-stay'), /See <a href="#details-transport">Transport &amp; Parking in The Details<\/a> for the hotel's address, general reservations number and reservations website\./);
         assert.match(section(html, 'questions'), /see <a href="#details-contact">Contact Us in The Details<\/a> for how to reach us\./);
-        for (const id of ['details-transport', 'details-room-block', 'details-contact']) assert.match(html, new RegExp(`id="${id}"`), `pointer target #${id} exists`);
+        for (const id of ['details-transport', 'details-contact']) assert.match(html, new RegExp(`id="${id}"`), `pointer target #${id} exists`);
+        assert.doesNotMatch(html, /details-room-block|Room Block/, 'no Room Block pointer or card');
       } else {
         assert.doesNotMatch(html, /see-details|#details-/, 'no pointers when the Details section is off');
       }
@@ -349,8 +354,9 @@ test('IMP-15: only airports with their own non-pending approval are published, e
   const index = b.read('index.html');
   assert.match(index, /Mobile Regional Airport<\/strong> \(MOB\)/);
   assert.match(index, /href="https:\/\/www\.mobileairportauthority\.com\/"/);
-  assert.doesNotMatch(index, /Pensacola International Airport/);
-  assert.doesNotMatch(index, /flyjka\.com/);
+  assert.match(index, /Pensacola International Airport<\/strong> \(PNS\)/);
+  assert.match(index, /href="https:\/\/www\.flypensacola\.com\/"/);
+  assert.doesNotMatch(index, /Jack Edwards|flyjka\.com|\(JKA\)/);
   fs.rmSync(b.tmp, { recursive: true, force: true });
 });
 

@@ -191,7 +191,11 @@ ${storySection(v, { headingLevel: 1 })}
 // Content comes from view.details (scripts/build.mjs detailsView): facts derived from config, TBD rows otherwise.
 // The TBD badge is visual only; the note beside it carries the word "TBD", so it is announced once.
 function detailsInline(parts) {
-  return parts.map((x) => (typeof x === 'string' ? esc(x) : `<a href="${esc(x.href)}">${esc(x.text)}</a>`)).join('');
+  return parts.map((x) => {
+    if (typeof x === 'string') return esc(x);
+    const rel = /^https?:\/\//i.test(x.href) ? ' rel="noopener"' : '';
+    return `<a href="${esc(x.href)}"${rel}>${esc(x.text)}</a>`;
+  }).join('');
 }
 
 function detailsCard(c) {
@@ -225,9 +229,10 @@ function detailsSection(view) {
 </section>`;
 }
 
-// One place per fact (Rob, Q12, 4 Oct 2026): while The Details is on, venue addresses, the hotel's reservations
-// number and the guest contact route are shown only there; Wedding Day, Travel & Stay and Questions keep their own
-// content and point to the Details card that holds the fact. With details.enabled false the facts render in place.
+// One place per fact (Rob, Q12, 4 Oct 2026; hotel phone + reservations website folded into Transport & Parking on
+// 5 Oct 2026): while The Details is on, venue addresses, the hotel's general reservations and the guest contact
+// route are shown only there; Wedding Day, Travel & Stay and Questions keep their own content and point to the
+// Details card that holds the fact. With details.enabled false the facts render in place.
 function detailsPointer(view, html) {
   return view.details ? `<p class="see-details">${html}</p>` : '';
 }
@@ -265,10 +270,10 @@ function travelSection(view) {
         <h3 id="hotel-title">${esc(hotel.name)}</h3>
         <p>${esc(hotel.intro)}</p>
         ${view.details
-    ? detailsPointer(view, 'See <a href="#details-transport">Transport &amp; Parking</a> and <a href="#details-room-block">Room Block in The Details</a> for the hotel\'s address and general reservations number.')
-    : (hotel.phoneDisplay ? `<address><a href="tel:${esc(hotel.phoneTel)}">${icon('i-phone')} ${esc(hotel.phoneDisplay)}</a></address>` : '')}
+    ? detailsPointer(view, 'See <a href="#details-transport">Transport &amp; Parking in The Details</a> for the hotel\'s address, general reservations number and reservations website.')
+    : `${hotel.phoneDisplay || hotel.links?.reservations ? `<address>${hotel.phoneDisplay ? `<a href="tel:${esc(hotel.phoneTel)}">${icon('i-phone')} ${esc(hotel.phoneDisplay)}</a>` : ''}${hotel.phoneDisplay && hotel.links?.reservations ? ' <span class="dot" aria-hidden="true">·</span> ' : ''}${hotel.links?.reservations ? `<a href="${esc(hotel.links.reservations)}" rel="noopener">Reservations website</a>` : ''}</address>` : ''}`}
         <div class="card-actions">
-          <a class="btn btn-secondary" href="${esc(hotel.links.website)}" rel="noopener">View hotel &amp; general reservations</a>
+          <a class="btn btn-secondary" href="${esc(hotel.links.website)}" rel="noopener">View hotel website</a>
           ${roomBlock ? `<a class="btn btn-primary" href="${esc(roomBlock.url)}" rel="noopener">Book our wedding room block</a>` : ''}
         </div>
         ${roomBlock ? `<div class="room-block"><p class="kicker">Wedding room block</p><dl class="room-block-terms">${roomBlock.rows.map((r) => `<div><dt>${esc(r.label)}</dt><dd>${esc(r.value)}</dd></div>`).join('')}</dl></div>` : ''}
