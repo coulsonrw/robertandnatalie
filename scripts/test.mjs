@@ -192,7 +192,7 @@ test('QA-07/08 (build level): the story is refused until every approval is recor
   fs.rmSync(b.tmp, { recursive: true, force: true }); fs.rmSync(derivTmp, { recursive: true, force: true });
 });
 
-test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real photos on 1–6, sketches on 2–6, placeholders elsewhere', () => {
+test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real photos on 1–6, sketches on 1–6, placeholders elsewhere', () => {
   const b = buildWith(readConfig(), { preview: false });
   b.run();
   const index = b.read('index.html');
@@ -218,8 +218,7 @@ test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real
   assert.match(index, /\/img\/story\/monogram-rn-/);
   assert.match(index, /\/img\/story\/placeholder-monogram-/);
   assert.match(index, /data-draw="scrub"/);
-  assert.match(index, /class="chapter has-photo" id="story-ch1"/);
-  for (const n of [2, 3, 4, 5, 6]) {
+  for (const n of [1, 2, 3, 4, 5, 6]) {
     assert.match(index, new RegExp(`class="chapter has-photo has-sketch" id="story-ch${n}"`));
     assert.match(index, new RegExp(`data-sketch="/img/story/ch${n}-sketch\\.svg"`));
     assert.ok(b.exists(`img/story/ch${n}-sketch.svg`), `ch${n} sketch copied`);
@@ -234,7 +233,8 @@ test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real
   assert.match(chapterHtml('ch1'), /ch1-harvard-law-/);
   assert.match(chapterHtml('ch10'), /monogram-rn-/);
   assert.doesNotMatch(chapterHtml('ch10'), /ch1-harvard-law-/);
-  for (const id of ['ch1', 'ch7', 'ch8', 'ch9', 'ch10']) {
+  assert.match(chapterHtml('ch1'), /data-sketch="\/img\/story\/ch1-sketch\.svg"/);
+  for (const id of ['ch7', 'ch8', 'ch9', 'ch10']) {
     const html = chapterHtml(id);
     assert.doesNotMatch(html, /data-sketch|class="sketch"|has-sketch/);
   }

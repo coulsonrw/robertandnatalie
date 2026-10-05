@@ -1,7 +1,7 @@
 /* Our Story — vertical chapter timeline (Eames / Figma).
    Loaded after site.css. Reuses site tokens. No inline styles (CSP style-src 'self').
-   Chapters 2–6: scroll-drawn line overlay, then the published full-colour still
-   (no cream / greyscale / sepia on the photograph). Ch 1, 7–9, 10 stay photo-first. */
+   Chapters 1–6: scroll-drawn line overlay, then the published full-colour still
+   (no cream / greyscale / sepia on the photograph). Ch 7–9 and 10 stay photo-first. */
 
 .story-timeline {
   --rail: var(--gold-rule); --rail-ink: var(--gold);

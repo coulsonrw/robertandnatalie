@@ -1,4 +1,4 @@
-// Our Story: chapter markers, gold rail, and the Ch2–6 scroll-sketch → colour reveal.
+// Our Story: chapter markers, gold rail, and the Ch1–6 scroll-sketch → colour reveal.
 // Modes (html data-draw="scrub|once", or ?draw=): scrub follows the scrollbar; once draws
 // when seen and stays drawn. Sketch SVGs are fetched into .sketch[data-sketch] so the
 // homepage HTML stays the colour still (the no-JS / reduced-motion resting state).

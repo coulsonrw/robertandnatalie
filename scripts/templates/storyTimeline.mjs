@@ -1,4 +1,4 @@
-// Our Story chapter timeline (Eames / Figma). Chapters 2–6 wrap the published
+// Our Story chapter timeline (Eames / Figma). Chapters 1–6 wrap the published
 // full-colour still in a .sketch frame and load a separate OpenCV/Potrace line
 // overlay; the photograph itself is unchanged (no sepia, no AI). Monogram and
 // coming-soon chapters stay photo-first. No inline styles (CSP).
