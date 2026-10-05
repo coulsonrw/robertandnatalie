@@ -75,7 +75,7 @@ GitHub Pages serves static files only. Household authorization and responses liv
 
 ## Our Story
 
-The public chapter timeline is on (`story.enabled`, `visibility: "public"`, `approval.state: "approved"`). It is the first navigation item and sits on the home page between The Details and Wedding Day. Chapters 1–6 and 10 use the owner-approved copy; 7–9 stay “Coming soon…”. Photographs for chapters 2–6 are published; 1, 7–9 and 10 use the RN monogram until a photograph is chosen. Originals stay git-ignored; only `npm run images` derivatives are deployed. Intake and unpublishing: `docs/OUR_STORY_INTAKE.md`. Local and CI builds still render a labelled synthetic preview at `/story-preview.html` if the story is switched off; the deployed build never includes that page.
+The public chapter timeline is on (`story.enabled`, `visibility: "public"`, `approval.state: "approved"`). It is the first navigation item and sits on the home page between The Details and Wedding Day. Chapters 1–6 and 10 use the owner-approved copy; 7–9 stay “Coming soon…”. Photographs for chapters 1–6 are published (chapter 1 is Natalie’s Harvard Law graduation portrait, photo only; 2–6 have scroll-sketch overlays). Chapters 7–9 and 10 use the RN monogram until a photograph is chosen. Originals stay git-ignored; only `npm run images` derivatives are deployed. Intake and unpublishing: `docs/OUR_STORY_INTAKE.md`. Local and CI builds still render a labelled synthetic preview at `/story-preview.html` if the story is switched off; the deployed build never includes that page.
 
 ## Live-site audit (22 September 2026)
 

@@ -323,7 +323,7 @@
           "And then, Harvard brought them to the same place.",
           "Cairo, Egypt."
         ],
-        "imageId": "monogram-rn",
+        "imageId": "ch1-harvard-law",
         "textApproved": true,
         "comingSoon": false
       },
@@ -506,6 +506,23 @@
         }
       },
       {
+        "id": "ch1-harvard-law",
+        "role": "chapter",
+        "kind": "photo",
+        "source": "assets/story/originals/ch1-harvard-law.jpg",
+        "alt": "Natalie in Harvard Law School graduation gown and mortarboard, holding a diploma portfolio and gavel.",
+        "caption": null,
+        "photographer": "Robert & Natalie",
+        "rightsConfirmed": true,
+        "subjectsApproved": true,
+        "publicationApproved": true,
+        "visibility": "public",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.38
+        }
+      },
+      {
         "id": "ch2-cairo",
         "role": "chapter",
         "kind": "photo",
@@ -616,9 +633,9 @@
     "approval": {
       "state": "approved",
       "owner": "Robert",
-      "source": "Owner document (story.chapters.json); Rob chat request via Babbage, 5 October 2026; owner approval to ship scroll-sketch → colour reveal on chapters 2–6",
+      "source": "Owner document (story.chapters.json); Rob chat request via Babbage, 5 October 2026; owner approval to ship scroll-sketch → colour reveal on chapters 2–6; Rob attached Natalie’s Harvard Law graduation portrait for chapter 1 (5 October 2026 via Babbage)",
       "reviewed": "2026-10-05",
-      "note": "Rob asked to add Our Story (5 October 2026 via Babbage). Chapter copy from the owner document is approved as-is for chapters 1–6 and 10. Chapters 7–9 remain Coming soon… with monogram placeholders. Photos for chapters 2–6 are approved for public site use. Chapters 1 and 10 use the RN monogram until photographs exist. Rob (owner) approved shipping scroll-sketch → full-colour photo reveal on chapters 2–6 only. Sketches are separate OpenCV/Potrace line-art overlays traced from the published photo derivatives; the photographs themselves are unchanged (no AI, no cream/greyscale/sepia on the photos)."
+      "note": "Rob asked to add Our Story (5 October 2026 via Babbage). Chapter copy from the owner document is approved as-is for chapters 1–6 and 10. Chapters 7–9 remain Coming soon… with monogram placeholders. Photos for chapters 1–6 are approved for public site use. Chapter 1 is Natalie’s Harvard Law graduation portrait (photo only, no sketch). Chapter 10 uses the RN monogram until a photograph exists. Rob (owner) approved shipping scroll-sketch → full-colour photo reveal on chapters 2–6 only. Sketches are separate OpenCV/Potrace line-art overlays traced from the published photo derivatives; the photographs themselves are unchanged (no AI, no cream/greyscale/sepia on the photos)."
     }
   },
   "faqs": [
