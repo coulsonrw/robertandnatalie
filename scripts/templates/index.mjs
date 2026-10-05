@@ -1,5 +1,5 @@
 import { esc, linesWithBreaks } from '../lib/html.mjs';
-import { shell, header, footer, icon, page } from './layout.mjs';
+import { shell, header, footer, icon, page, rsvpCta } from './layout.mjs';
 
 
 // The invitation card: live text, one DOM node that the entry script moves between the
@@ -32,7 +32,7 @@ function entryStage(view) {
     <span class="entry-brand">${esc(view.couple.displayName)}</span>
     <div class="entry-bar-actions">
       <a class="entry-skip" href="#main" data-action="enter">Skip to the wedding details</a>
-      ${view.postEvent ? '' : `<a class="btn btn-primary btn-rsvp" href="${p}/rsvp.html">RSVP</a>`}
+      ${view.rsvpCta?.open ? rsvpCta(view, { extraClass: 'btn-rsvp' }) : ''}
     </div>
   </div>
   <div class="entry-stage">
@@ -55,12 +55,15 @@ function entryStage(view) {
     </div>
     <div class="entry-open" id="entry-open" hidden>
       <div class="entry-card-slot" id="entry-card-slot"></div>
-      <p class="entry-hint" id="entry-open-hint">Tap the invitation to continue to the website.</p>
-      <div class="actions">
-        <button class="btn btn-primary" type="button" data-action="enter">Continue to the website</button>
-        ${view.postEvent ? '' : `<a class="btn btn-secondary" href="${p}/rsvp.html">RSVP</a>`}
+      <div class="entry-open-aside">
+        <p class="entry-enlarge"><button class="text-button" type="button" data-action="enlarge-invitation" aria-haspopup="dialog">Enlarge the invitation</button></p>
+        <div class="actions">
+          <button class="btn btn-primary" type="button" data-action="enter">Continue to the website</button>
+          ${rsvpCta(view, { openClass: 'btn btn-secondary' })}
+        </div>
       </div>
     </div>
+    <button class="btn btn-secondary entry-skip-animation" id="entry-skip-animation" type="button" data-action="skip-animation" hidden>Skip animation</button>
   </div>
 </main>`;
 }
@@ -81,8 +84,10 @@ function heroSection(view) {
     <p class="glance-line"><span>${esc(view.longDate)}</span><span class="dot" aria-hidden="true">·</span><span>${esc(view.wedding.destination)}</span></p>
     <p class="glance-times">${times}</p>
     <div class="actions">
-      ${view.postEvent ? `<a class="btn btn-primary" href="#thank-you">${esc(view.postEvent.heading)}</a>` : `<a class="btn btn-primary" href="${p}/rsvp.html">RSVP</a>`}
-      <a class="btn btn-secondary" href="#wedding-day">View Wedding Day</a>
+      ${view.postEvent ? `<a class="btn btn-primary" href="#thank-you">${esc(view.postEvent.heading)}</a>
+      <a class="btn btn-secondary" href="#wedding-day">View Wedding Day</a>` : view.rsvpCta.open ? `${rsvpCta(view)}
+      <a class="btn btn-secondary" href="#wedding-day">View Wedding Day</a>` : `<a class="btn btn-primary" href="#wedding-day">View Wedding Day</a>
+      ${rsvpCta(view)}`}
     </div>
     ${view.rsvp.mode === 'coming-soon' && !view.postEvent ? `<p class="hero-note">Responses are not open yet${view.rsvp.opensAtLabel ? `; they open on ${esc(view.rsvp.opensAtLabel)}` : ''}.</p>` : ''}
     <p class="hero-keepsake js-only"><button class="text-button" type="button" data-action="view-invitation">View the invitation</button></p>
@@ -113,7 +118,7 @@ function eventCard(view, ev) {
   <dl class="event-facts">
     <div><dt>${icon('i-calendar')}<span class="sr-only">Date</span></dt><dd>${esc(ev.longDate)}</dd></div>
     <div><dt>${icon('i-clock')}<span class="sr-only">Time</span></dt><dd><time datetime="${esc(ev.startsAt)}">${esc(ev.clock)}</time> ${esc(ev.tzLabel)}</dd></div>
-    <div><dt>${icon('i-pin')}<span class="sr-only">Address</span></dt><dd>${ev.addressLines.map(esc).join('<br>')}</dd></div>
+    ${view.details ? '' : `<div><dt>${icon('i-pin')}<span class="sr-only">Address</span></dt><dd>${ev.addressLines.map(esc).join('<br>')}</dd></div>`}
   </dl>
   ${notes ? `<ul class="event-notes">${notes}</ul>` : ''}
   <div class="card-actions">
@@ -182,6 +187,51 @@ ${storySection(v, { headingLevel: 1 })}
   return page({ view: v, currentPage: 'story-preview', title: 'Our Story (layout preview)', description: 'Layout preview with synthetic fixtures; not published.', main, bodyClass: 'story-preview' });
 }
 
+// The Details (direction A card layout in the site palette; Rob, 4 Oct 2026; Figma 67:584 / 67:706).
+// Content comes from view.details (scripts/build.mjs detailsView): facts derived from config, TBD rows otherwise.
+// The TBD badge is visual only; the note beside it carries the word "TBD", so it is announced once.
+function detailsInline(parts) {
+  return parts.map((x) => (typeof x === 'string' ? esc(x) : `<a href="${esc(x.href)}">${esc(x.text)}</a>`)).join('');
+}
+
+function detailsCard(c) {
+  return `<article class="details-card${c.full ? ' details-card--full' : ''}" id="details-${esc(c.id)}" aria-labelledby="details-${esc(c.id)}-title">
+        <div class="details-card-head"><span class="details-icon">${icon(c.icon)}</span><h3 id="details-${esc(c.id)}-title">${esc(c.title)}</h3></div>
+        ${(c.body ?? []).map((p) => `<p class="details-card-body">${detailsInline(p)}</p>`).join('\n        ')}
+        ${c.tbd ? `<p class="tbd-row"><span class="tbd-badge" aria-hidden="true">TBD</span><span class="tbd-note">${esc(c.tbd)}</span></p>` : ''}
+      </article>`;
+}
+
+function detailsSection(view) {
+  const d = view.details;
+  if (!d) return '';
+  const divider = '<div class="details-divider" aria-hidden="true"><span></span><span class="diamond"></span><span></span></div>';
+  return `<section id="details" class="details" aria-labelledby="details-title">
+  <header class="details-band">
+    <svg class="details-waves" aria-hidden="true" focusable="false"><use href="#d-waves"/></svg>
+    <h2 id="details-title">${esc(d.heading)}</h2>
+    <svg class="details-flourish" aria-hidden="true" focusable="false"><use href="#ornament-flourish"/></svg>
+  </header>
+  <div class="details-body">
+    <ul class="glance">
+      ${d.glance.map((g) => `<li><time datetime="${esc(g.datetime)}">${esc(g.time)}</time>${g.label ? ` <span aria-hidden="true">·</span> ${esc(g.label)}` : ''}</li>`).join('\n      ')}
+    </ul>
+    ${divider}
+    <div class="details-grid">
+      ${d.cards.map(detailsCard).join('\n      ')}
+    </div>
+    ${divider}
+  </div>
+</section>`;
+}
+
+// One place per fact (Rob, Q12, 4 Oct 2026): while The Details is on, venue addresses, the hotel's reservations
+// number and the guest contact route are shown only there; Wedding Day, Travel & Stay and Questions keep their own
+// content and point to the Details card that holds the fact. With details.enabled false the facts render in place.
+function detailsPointer(view, html) {
+  return view.details ? `<p class="see-details">${html}</p>` : '';
+}
+
 function weddingDaySection(view) {
   return `<section id="wedding-day" class="section" aria-labelledby="wedding-day-title">
   <div class="container">
@@ -189,6 +239,7 @@ function weddingDaySection(view) {
       <h2 id="wedding-day-title">Wedding Day</h2>
       <svg class="ornament" aria-hidden="true" focusable="false"><use href="#ornament-rule"/></svg>
       <p class="section-intro">${esc(view.weddingDay.intro)}</p>
+      ${detailsPointer(view, 'See <a href="#details-transport">Transport &amp; Parking in The Details</a> for both venue addresses.')}
     </header>
     <div class="event-grid">
       ${view.events.map((ev) => eventCard(view, ev)).join('\n      ')}
@@ -213,9 +264,9 @@ function travelSection(view) {
         <p class="kicker">Where to stay</p>
         <h3 id="hotel-title">${esc(hotel.name)}</h3>
         <p>${esc(hotel.intro)}</p>
-        <address>
-          ${hotel.addressLines.map(esc).join('<br>')}${hotel.phoneDisplay ? `<br><a href="tel:${esc(hotel.phoneTel)}">${icon('i-phone')} ${esc(hotel.phoneDisplay)}</a>` : ''}
-        </address>
+        ${view.details
+    ? detailsPointer(view, 'See <a href="#details-transport">Transport &amp; Parking</a> and <a href="#details-room-block">Room Block in The Details</a> for the hotel\'s address and general reservations number.')
+    : (hotel.phoneDisplay ? `<address><a href="tel:${esc(hotel.phoneTel)}">${icon('i-phone')} ${esc(hotel.phoneDisplay)}</a></address>` : '')}
         <div class="card-actions">
           <a class="btn btn-secondary" href="${esc(hotel.links.website)}" rel="noopener">View hotel &amp; general reservations</a>
           ${roomBlock ? `<a class="btn btn-primary" href="${esc(roomBlock.url)}" rel="noopener">Book our wedding room block</a>` : ''}
@@ -261,7 +312,9 @@ function questionsSection(view) {
     </div>` : ''}
     <div class="card contact-card">
       <p class="kicker">Get in touch</p>
-      ${contactBlock(view)}
+      ${view.details
+    ? `${view.contact?.note ? `<p>${esc(view.contact.note)}</p>` : ''}${detailsPointer(view, 'If your question isn\'t answered here, see <a href="#details-contact">Contact Us in The Details</a> for how to reach us.')}`
+    : contactBlock(view)}
     </div>
   </div>
 </section>`;
@@ -279,6 +332,7 @@ ${header({ view, currentPage })}
 </section>
 ${heroSection(view)}
 ${thankYouSection(view)}
+${detailsSection(view)}
 ${storySection(view)}
 ${weddingDaySection(view)}
 ${travelSection(view)}
@@ -293,6 +347,7 @@ ${footer({ view })}
 </div>
 <dialog class="invitation-dialog" id="invitation-dialog" aria-label="Your invitation">
   <div class="dialog-frame">
+    <button class="dialog-zoom" type="button" data-action="zoom-invitation">Enlarge text</button>
     <button class="dialog-close" type="button" data-action="close-invitation" aria-label="Close the invitation">${icon('i-minus')}<span class="sr-only">Close</span></button>
     <div class="dialog-slot" id="dialog-slot" tabindex="0" role="region" aria-label="Invitation, scrollable"></div>
   </div>

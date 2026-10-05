@@ -205,6 +205,145 @@ test('IMP-02/07: the opening date and the deadline appear only when set, and the
   fs.rmSync(after.tmp, { recursive: true, force: true });
 });
 
+test('P2 #4: RSVP calls to action follow rsvp.mode: outlined "opens soon" until live, solid RSVP only when live', () => {
+  const ctas = (html) => [...html.matchAll(/<a class="(btn [^"]*)" href="\/rsvp\.html"[^>]*>([^<]*)<\/a>/g)].map((m) => ({ cls: m[1], label: m[2] }));
+  const soon = buildWith(readConfig(), { preview: false }); soon.run();
+  const idx = ctas(soon.read('index.html'));
+  assert.equal(idx.length, 3, 'header, hero and opened invitation (none in the entry bar while closed)');
+  for (const c of idx) { assert.match(c.cls, /btn-pending/); assert.doesNotMatch(c.cls, /btn-primary/); assert.equal(c.label, 'RSVP opens soon'); }
+  assert.match(soon.read('index.html'), /<a class="btn btn-primary" href="#wedding-day">View Wedding Day<\/a>/);
+  assert.equal(ctas(soon.read('privacy.html'))[0].label, 'RSVP opens soon');
+  fs.rmSync(soon.tmp, { recursive: true, force: true });
+
+  const dated = readConfig(); dated.rsvp.opensAt = '2026-10-15T09:00:00-05:00';
+  const d = buildWith(dated, { preview: false }); d.run();
+  assert.ok(ctas(d.read('index.html')).every((c) => c.label === 'RSVP opens October 15'));
+  fs.rmSync(d.tmp, { recursive: true, force: true });
+
+  const live = readConfig(); live.rsvp.mode = 'live'; live.rsvp.apiBaseUrl = 'https://script.google.com/macros/s/TEST-deployment-id/exec';
+  const l = buildWith(live, { preview: false }); l.run();
+  const lc = ctas(l.read('index.html'));
+  assert.equal(lc.length, 4, 'entry bar, header, hero and opened invitation');
+  assert.ok(lc.every((c) => c.label === 'RSVP' && !/btn-pending/.test(c.cls)));
+  assert.ok(lc.some((c) => /btn-primary/.test(c.cls)));
+  fs.rmSync(l.tmp, { recursive: true, force: true });
+
+  const closed = readConfig(); closed.rsvp.mode = 'closed';
+  const c = buildWith(closed, { preview: false }); c.run();
+  assert.ok(ctas(c.read('index.html')).every((x) => x.label === 'RSVP closed' && /btn-pending/.test(x.cls)));
+  fs.rmSync(c.tmp, { recursive: true, force: true });
+});
+
+test('P2 #6: the menu carries an "Invitation" link on every page (it replaces the parked keepsake below 1256px)', () => {
+  const b = buildWith(readConfig(), { preview: false }); b.run();
+  assert.match(b.read('index.html'), /<li class="nav-invitation"><a href="#invitation">Invitation<\/a><\/li>/);
+  assert.match(b.read('rsvp.html'), /<li class="nav-invitation"><a href="\/#invitation">Invitation<\/a><\/li>/);
+  assert.match(b.read('styles/site.css'), /@media \(max-width: 1255\.98px\) \{\s*\.keepsake \{ visibility: hidden; pointer-events: none; \}/);
+  fs.rmSync(b.tmp, { recursive: true, force: true });
+});
+
+test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD rows for every unknown and no invented copy', () => {
+  const section = (html) => html.slice(html.indexOf('<section id="details"'), html.indexOf('</section>', html.indexOf('<section id="details"')));
+  const text = (h) => h.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  const b = buildWith(readConfig(), { preview: false }); b.run();
+  const html = b.read('index.html');
+  const d = section(html);
+  assert.ok(html.indexOf('id="details"') > html.indexOf('class="hero"') && html.indexOf('id="details"') < html.indexOf('id="wedding-day"'), 'between the hero and Wedding Day');
+  assert.match(d, /<h2 id="details-title">The Details<\/h2>/);
+  assert.deepEqual([...d.matchAll(/<li>(.*?)<\/li>/g)].map((m) => text(m[1])), ['Saturday, December 19, 2026', '2:00 p.m. · Ceremony', '4:00 p.m. · Reception']);
+  const cards = [...d.matchAll(/<article class="details-card([^"]*)"[\s\S]*?<\/article>/g)].map((m) => ({ full: /--full/.test(m[1]), title: text(m[0].match(/<h3[^>]*>(.*?)<\/h3>/)[1]), body: [...m[0].matchAll(/<p class="details-card-body">(.*?)<\/p>/g)].map((x) => text(x[1])), tbd: (m[0].match(/<span class="tbd-note">(.*?)<\/span>/) || [])[1] ?? null, badgeHidden: /<span class="tbd-badge" aria-hidden="true">TBD<\/span>/.test(m[0]) }));
+  assert.deepEqual(cards.map((c) => c.title), ['Dress Code', 'Between Ceremony & Reception', 'Transport & Parking', 'Room Block', 'Children', 'Charity', 'Contact Us']);
+  assert.deepEqual(cards.map((c) => c.tbd), ['Dress code TBD.', 'Plans for the time between TBD.', 'Parking and shuttle details TBD.', 'Room block rate, booking code and cut-off TBD.', 'Children policy TBD.', 'TBD', 'Email and phone TBD.']);
+  assert.ok(cards.every((c) => c.badgeHidden), 'the badge is visual only; the note carries the word TBD');
+  assert.deepEqual(cards.map((c) => c.full), [false, false, false, false, false, false, true], 'Contact Us spans the grid');
+  assert.deepEqual(cards[1].body, ['Ceremony 2:00 p.m. at Saint Francis Chapel, reception 4:00 p.m. at The Grand Hotel — about two hours apart.']);
+  assert.deepEqual(cards[2].body, ['Saint Francis Chapel: 17280 Scenic Highway 98, Fairhope, Alabama 36532. The Grand Hotel: One Grand Boulevard, Point Clear, Alabama 36564.']);
+  assert.deepEqual(cards[3].body, ['The Grand Hotel — general reservations (251) 928-9201.']);
+  assert.match(d, /<a href="tel:\+12519289201">\(251\) 928-9201<\/a>/);
+  for (const i of [0, 4, 5, 6]) assert.deepEqual(cards[i].body, [], `${cards[i].title} has no body until the owners supply it`);
+  assert.doesNotMatch(d, /Registry|celebrate with you|Everything you need/i, 'no registry and no copy in the couple\'s voice');
+  assert.doesNotMatch(b.read('styles/site.css').split('The Details (direction A')[1].split('*/').slice(1).join('').replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-f]{3,8}\b|Playfair|Inter\b|teal/i, 'the details styles use site tokens only');
+  const css = b.read('styles/site.css');
+  assert.match(css, /\.details-band \{[^}]*background: var\(--ink\);/, 'the title band is the footer\'s dark ink (Rob, 3:22 PM ET)');
+  assert.doesNotMatch(css.match(/\.details-band \{[^}]*\}/)[0], /border/, 'no hairline under the dark band');
+  for (const sel of ['\\.details-band h2', '\\.details-waves', '\\.details-flourish']) assert.match(css, new RegExp(`${sel} \\{[^}]*var\\(--gold-footer\\)`), `${sel} uses --gold-footer on the dark band`);
+  assert.doesNotMatch([...css.matchAll(/\.details-(?:band|waves|flourish)[^{]*\{[^}]*\}/g)].map((m) => m[0]).join(''), /--gold-text|--gold\)/, 'no --gold or --gold-text on the band');
+  assert.match(css, /\.footer-names \{[^}]*color: var\(--gold-footer\)/, 'the footer names share the variable');
+  fs.rmSync(b.tmp, { recursive: true, force: true });
+
+  // Supplying a fact removes its TBD row and shows the fact; nothing else changes.
+  const c = readConfig();
+  c.details.dressCode = { ...c.details.dressCode, text: 'Example dress code.', approval: { ...c.details.dressCode.approval, state: 'approved' } };
+  c.contact = { ...c.contact, email: 'hello@example.invalid', approval: { ...c.contact.approval, state: 'approved' } };
+  c.travel.betweenVenues = { text: 'Example plans.', approval: { ...c.travel.betweenVenues.approval, state: 'approved' } };
+  const s = buildWith(c, { preview: false }); s.run();
+  const d2 = section(s.read('index.html'));
+  assert.match(d2, /<p class="details-card-body">Example dress code\.<\/p>/);
+  assert.match(d2, /<a href="mailto:hello@example\.invalid">hello@example\.invalid<\/a>/);
+  assert.match(d2, /<p class="details-card-body">Example plans\.<\/p>/);
+  for (const gone of ['Dress code TBD.', 'Email and phone TBD.', 'Plans for the time between TBD.']) assert.ok(!d2.includes(gone), `${gone} removed`);
+  assert.ok(d2.includes('Parking and shuttle details TBD.'), 'parking stays TBD until a venue confirms it');
+  fs.rmSync(s.tmp, { recursive: true, force: true });
+
+  // details.enabled false omits the section; a TBD note without the word TBD is refused.
+  const off = readConfig(); off.details.enabled = false;
+  const o = buildWith(off, { preview: false }); o.run();
+  assert.ok(!o.read('index.html').includes('id="details"'));
+  fs.rmSync(o.tmp, { recursive: true, force: true });
+  const bad = readConfig(); bad.details.tbdNotes.contact = 'Coming soon.';
+  const x = buildWith(bad, { preview: false });
+  assert.throws(() => x.run(), /details\.tbdNotes\.contact must be a string containing the word "TBD"/);
+  fs.rmSync(x.tmp, { recursive: true, force: true });
+});
+
+test('One place per fact (Rob, Q12): addresses, the hotel number and the contact route appear once, in The Details', () => {
+  const visible = (html) => html.replace(/<(script|style|svg)\b[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
+  const count = (hay, needle) => hay.split(needle).length - 1;
+  const section = (html, id) => { const i = html.indexOf(`<section id="${id}"`); return html.slice(i, html.indexOf('</section>', i)); };
+  const FACTS = ['17280 Scenic Highway 98', 'Fairhope, Alabama 36532', 'One Grand Boulevard', 'Point Clear, Alabama 36564', '(251) 928-9201', 'hello@example.invalid', '(555) 010-0199'];
+  const withContact = (cfg) => { cfg.contact = { ...cfg.contact, email: 'hello@example.invalid', phone: '+15550100199', phoneDisplay: '(555) 010-0199', approval: { ...cfg.contact.approval, state: 'approved' } }; return cfg; };
+  for (const enabled of [true, false]) {
+    const cfg = withContact(readConfig()); cfg.details.enabled = enabled;
+    const b = buildWith(cfg, { preview: false }); b.run();
+    for (const file of ['index.html', 'celebration.html']) {
+      const html = b.read(file); const text = visible(html);
+      for (const f of FACTS) assert.equal(count(text, f), 1, `${f} appears once on ${file} (details.enabled=${enabled})`);
+      if (enabled) {
+        const d = visible(section(html, 'details'));
+        for (const f of FACTS) assert.equal(count(d, f), 1, `${f} lives in The Details`);
+        for (const id of ['wedding-day', 'travel-stay', 'questions']) for (const f of FACTS) assert.ok(!visible(section(html, id)).includes(f), `${f} is not repeated in #${id}`);
+        assert.match(section(html, 'wedding-day'), /See <a href="#details-transport">Transport &amp; Parking in The Details<\/a> for both venue addresses\./);
+        assert.match(section(html, 'travel-stay'), /See <a href="#details-transport">Transport &amp; Parking<\/a> and <a href="#details-room-block">Room Block in The Details<\/a> for the hotel's address and general reservations number\./);
+        assert.match(section(html, 'questions'), /see <a href="#details-contact">Contact Us in The Details<\/a> for how to reach us\./);
+        for (const id of ['details-transport', 'details-room-block', 'details-contact']) assert.match(html, new RegExp(`id="${id}"`), `pointer target #${id} exists`);
+      } else {
+        assert.doesNotMatch(html, /see-details|#details-/, 'no pointers when the Details section is off');
+      }
+    }
+    // Wedding Day keeps its own content: times, directions, calendar files and venue links.
+    const wd = section(b.read('index.html'), 'wedding-day');
+    for (const keep of ['Directions', 'Add to calendar', 'Open in Apple Maps', 'Venue website', '2:00 p.m.', '4:00 p.m.']) assert.ok(wd.includes(keep), `Wedding Day keeps ${keep}`);
+    fs.rmSync(b.tmp, { recursive: true, force: true });
+  }
+});
+
+test('Times read "2:00 p.m." everywhere (Rob, Q13): no AM/PM variants in any rendered page', () => {
+  const visible = (html) => html.replace(/<(script|style|svg)\b[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  const cfg = readConfig(); cfg.events[0].startsAt = '2026-12-19T10:30:00-06:00'; cfg.events[0].formalDayPart = 'Morning';
+  cfg.rsvp.opensAt = '2026-10-15T09:00:00-05:00'; cfg.rsvp.cutoffAt = '2026-11-15T23:59:00-06:00';
+  const b = buildWith(cfg, { preview: true }); b.run();
+  const pages = fs.readdirSync(b.dist).filter((f) => f.endsWith('.html'));
+  for (const f of pages) {
+    const text = visible(b.read(f));
+    assert.doesNotMatch(text, /\d{1,2}(:\d{2})?\s?(AM|PM|A\.M\.|P\.M\.|am|pm)\b/, `${f}: no AM/PM clock strings`);
+    for (const m of text.match(/\d{1,2}:\d{2}\s?[ap]\.?m\.?/gi) ?? []) assert.match(m, /^\d{1,2}:\d{2} [ap]\.m\.$/, `${f}: "${m}" is in the 2:00 p.m. style`);
+  }
+  const index = b.read('index.html');
+  assert.match(index, /<time datetime="2026-12-19T10:30:00-06:00">10:30 a\.m\.<\/time> <span aria-hidden="true">·<\/span> Ceremony<\/li>/, 'Details pill');
+  assert.match(index, /Ceremony 10:30 a\.m\. at Saint Francis Chapel, reception 4:00 p\.m\. at The Grand Hotel/, 'Details between card');
+  fs.rmSync(b.tmp, { recursive: true, force: true });
+});
+
 test('IMP-15: only airports with their own non-pending approval are published, each with its official site', () => {
   const b = buildWith(readConfig(), { preview: false }); b.run();
   const index = b.read('index.html');

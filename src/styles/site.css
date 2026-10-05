@@ -11,6 +11,7 @@
   --gold-text: #856119;
   --gold-deep: #6E4F12;
   --gold-rule: #D9C89A;
+  --gold-footer: #D9B968; /* light gold for text and ornaments on the dark --ink surfaces (footer names, Details band): 7.6:1 on --ink */
   --navy: #152B45;
   --font-script: 'Pinyon Script', 'Snell Roundhand', 'Apple Chancery', 'URW Chancery L', cursive;
   --font-serif: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
@@ -80,6 +81,13 @@ a:hover { color: var(--ink); }
 .btn-secondary:hover { background: var(--ink); color: var(--paper); }
 .btn-tertiary { background: transparent; color: var(--gold-deep); border-color: var(--gold-deep); }
 .btn-tertiary:hover { color: var(--ink); border-color: var(--ink); }
+/* RSVP while responses are not open (rsvp.mode coming-soon or closed): a quiet dashed outline so it never
+   reads as a live call to action (review P2 #4). gold-deep on paper is 6.8:1. */
+.btn-pending { background: transparent; color: var(--gold-deep); border: 1.5px dashed var(--gold-deep); }
+.btn-pending:hover { color: var(--ink); border-color: var(--ink); background: var(--paper-light); }
+.btn-pending.btn-rsvp { white-space: nowrap; padding-inline: 14px; letter-spacing: 0.06em; }
+/* The longer label needs the room the couple's name takes in the header between 480 and 1023px; the crest stays. */
+@media (max-width: 1023.98px) { .rsvp-pending .brand-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; } }
 .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.55; cursor: progress; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 
@@ -198,6 +206,7 @@ a:hover { color: var(--ink); }
 .section-head h2, .section-head h1, .page-title { font-size: clamp(2.1rem, 4vw, 2.8rem); color: var(--gold-text); font-weight: 600; letter-spacing: 0.01em; }
 .ornament { display: block; width: 170px; height: 14px; margin: 12px auto 18px; color: var(--gold); fill: none; stroke: currentColor; stroke-width: 1.2; }
 .section-intro { font-size: 1.15rem; color: var(--ink-soft); margin: 0; }
+.section-head .see-details { font-size: 1.15rem; color: var(--ink-soft); margin: 0.6em 0 0; } /* pointer to the Details card that holds a fact (Q12) */
 .card { background: var(--paper-light); border: 1px solid var(--gold-rule); border-radius: var(--radius); padding: clamp(22px, 3.5vw, 36px); box-shadow: var(--shadow-card); }
 .card > :last-child { margin-bottom: 0; }
 .kicker { font-family: var(--font-sc); font-weight: 600; font-size: 0.95rem; letter-spacing: 0.16em; color: var(--gold-text); margin: 0 0 0.5em; }
@@ -246,7 +255,7 @@ address { font-style: normal; margin: 0.6em 0 1em; }
 
 /* ---------- Footer ---------- */
 .site-footer { background: var(--ink); color: var(--paper); padding: 48px 0; margin-top: 32px; text-align: center; }
-.footer-names { font-family: var(--font-script); font-size: 2.3rem; color: #D9B968; margin: 0 0 0.15em; }
+.footer-names { font-family: var(--font-script); font-size: 2.3rem; color: var(--gold-footer); margin: 0 0 0.15em; }
 .footer-meta { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.1em; font-size: 1rem; color: #E9E2D3; margin: 0 0 1em; }
 .footer-links { margin: 0; }
 .site-footer a { color: var(--paper); }
@@ -346,7 +355,7 @@ legend { padding: 0 8px; margin-bottom: 4px; }
   .site-header, .site-footer, .actions, .card-actions, .skip-link, .btn, .entry-bar, .entry-hint, .keepsake-btn, .keepsake-caption, .hero-keepsake { display: none !important; }
   .invitation-card { box-shadow: none; animation: none; }
   /* Print the docked invitation at full size wherever it currently lives. */
-  .keepsake { position: static; width: auto !important; height: auto !important; margin: 0 0 24px; }
+  .keepsake { position: static; width: auto !important; height: auto !important; margin: 0 0 24px; visibility: visible; }
   .keepsake-scale { transform: none !important; width: auto; }
   .invitation-dialog { position: static; display: block; width: auto; }
   .invitation-dialog::backdrop { display: none; }
@@ -367,7 +376,10 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .entry-brand { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.1em; font-size: 1.1rem; margin-right: auto; }
 .entry-bar-actions { display: flex; align-items: center; gap: 14px; }
 .entry-skip { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.08em; font-size: 1rem; color: var(--ink); display: inline-flex; align-items: center; min-height: 44px; }
-.entry-stage { flex: 1; display: grid; min-width: 0; }
+.entry-stage { flex: 1; display: grid; min-width: 0; position: relative; }
+/* Shown only while the envelope is opening (review P2 #7). */
+.entry-skip-animation { position: absolute; z-index: 6; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--paper-light); white-space: nowrap; }
+.is-skipping *, .is-skipping *::before, .is-skipping *::after { transition: none !important; animation: none !important; }
 .entry-stage > * { min-width: 0; }
 .entry-scene, .entry-open { grid-area: 1 / 1; }
 .entry-scene { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: clamp(24px, 5vw, 56px) var(--gutter); transition: opacity 0.5s; }
@@ -377,7 +389,24 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .entry-open { display: flex; flex-direction: column; align-items: center; padding: clamp(20px, 4vw, 48px) var(--gutter) clamp(40px, 6vw, 72px); }
 .entry-open .entry-hint { margin: 22px 0 16px; }
 .entry-card-slot { width: 100%; max-width: 760px; }
-.entry-card-slot .invitation-card { cursor: pointer; }
+.entry-card-slot .invitation-card { cursor: zoom-in; }
+.entry-open-aside { display: flex; flex-direction: column; align-items: center; max-width: 100%; }
+/* Desktop and tablet (review P2 #5): size the opened card by the viewport height so "Continue to the
+   website" stays above the fold. 70px is the entry bar; --open-reserve is the padding, the enlarge
+   button and the buttons around the card. 0.8 is the artwork's aspect ratio (1122 / 1402). */
+@media (min-width: 768px) {
+  .entry-open { --open-reserve: 200px; }
+  .entry-card-slot { width: min(100%, 760px, calc((100vh - 70px - var(--open-reserve)) * 0.8)); width: min(100%, 760px, calc((100svh - 70px - var(--open-reserve)) * 0.8)); min-width: min(100%, 320px); }
+}
+/* Wide landscape screens (1280x720, 1366x768, 1440x900 ...): the buttons sit beside the card, so the
+   card can use the full height and stays as large (and as readable) as possible. */
+@media (min-width: 1024px) and (min-aspect-ratio: 5/4) {
+  .entry-open { --open-reserve: 48px; flex-direction: row; justify-content: center; align-items: center; gap: clamp(32px, 4vw, 64px); padding-top: 24px; padding-bottom: 24px; }
+  .entry-card-slot { flex: 0 0 auto; }
+  .entry-open-aside { flex: 0 1 300px; }
+  .entry-open-aside .entry-enlarge { margin: 0 0 16px; }
+  .entry-open-aside .actions { flex-direction: column; align-items: stretch; width: 100%; }
+}
 @media (max-width: 479.98px) { .entry-brand { display: none; } .entry-skip { letter-spacing: 0.04em; } }
 
 /* Envelope */
@@ -400,8 +429,20 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .envelope.is-open .seal { opacity: 0; pointer-events: none; }
 
 /* Keepsake (docked invitation, bottom-left) and dialog */
-.keepsake { position: fixed; left: 12px; bottom: 12px; z-index: 40; width: 110px; }
-@media (max-width: 479.98px) { .keepsake { left: 6px; bottom: 8px; } .keepsake-caption { font-size: 0.72rem; letter-spacing: 0.06em; margin-top: 4px; } }
+.keepsake { position: fixed; left: 12px; bottom: 12px; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 40; width: 110px; }
+/* Review P2 #6: the floating keepsake needs a free left gutter. The content column (1160px plus a 40px
+   gutter) leaves too little room below 1256px, so on phones, tablets and smaller laptops it covered body
+   text. There it is parked out of view (still laid out, so the card has somewhere to live) and the
+   invitation is reached from "View the invitation" in the hero and "Invitation" in the menu. */
+.nav-invitation { display: none; }
+@media (max-width: 1255.98px) {
+  .keepsake { visibility: hidden; pointer-events: none; }
+  .nav-invitation { display: list-item; }
+}
+.keepsake.is-compact .keepsake-caption { font-size: 0.72rem; letter-spacing: 0.06em; margin-top: 4px; }
+/* With "Invitation" in the desktop menu, keep 768-1023px on one row. */
+@media (min-width: 768px) and (max-width: 1023.98px) { .nav-menu a { padding: 0 7px; letter-spacing: 0.06em; } }
+@media (min-width: 768px) and (max-width: 899.98px) { .brand-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; } }
 .keepsake-scale { transform-origin: top left; width: min(760px, calc(100vw - 40px)); pointer-events: none; }
 .keepsake-scale .invitation-card { box-shadow: 0 12px 30px rgba(41, 42, 40, 0.35); }
 .keepsake-btn { position: absolute; inset: 0; background: transparent; border: 2px solid transparent; border-radius: 4px; cursor: pointer; padding: 0; }
@@ -421,6 +462,25 @@ legend { padding: 0 8px; margin-bottom: 4px; }
 .dialog-close::after { content: ''; position: absolute; width: 2px; height: 22px; background: currentColor; transform: rotate(-45deg); }
 .dialog-close .icon { display: none; }
 .dialog-close:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+/* Invitation viewer (review P2 #3): the card's wording is live text sized in cqw, so laying the card out
+   wider makes the text larger and stays sharp. "Enlarge text" (or a tap on the card) widens it to
+   680px on phones (about 17px text) and up to the artwork's native 1122px on larger screens. */
+.dialog-zoom {
+  position: absolute; top: 8px; left: 12px; z-index: 2; min-height: 44px; padding: 0 18px;
+  border-radius: 22px; border: 1.5px solid var(--paper); background: var(--ink); color: var(--paper);
+  font-family: var(--font-sc); font-weight: 600; font-size: 1rem; letter-spacing: 0.08em; cursor: pointer;
+}
+.dialog-zoom:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+.dialog-slot .invitation-card { cursor: zoom-in; }
+.invitation-dialog.is-zoomed { width: 100vw; }
+.invitation-dialog.is-zoomed .dialog-slot { overscroll-behavior: contain; }
+.invitation-dialog.is-zoomed .dialog-slot .invitation-card { width: min(1122px, max(680px, 100vw - 32px)); max-width: none; cursor: zoom-out; }
+.dialog-slot:focus-visible { outline: 3px solid var(--paper); outline-offset: -3px; }
+.entry-enlarge { margin: 14px 0 10px; text-align: center; font-size: 1.05rem; }
+@media (max-width: 479.98px) {
+  /* Give the card the full phone width (it was inset by the 20px gutter on each side). */
+  .entry-open { padding-left: 8px; padding-right: 8px; }
+}
 body.is-entry .site { display: none; }
 .invitation-section.is-empty { display: none; }
 .card-moving { will-change: transform; }
@@ -471,3 +531,43 @@ body.is-entry .site { display: none; }
 /* Airports (audit IMP-15): a list of official sites, no proximity ranking */
 .airport-list { padding-left: 1.2em; margin: 0.4em 0 1em; }
 .airport-list li { margin-bottom: 0.5em; }
+
+/* ---------- The Details (direction A card layout in the site palette; Rob, 4 Oct 2026; Figma 67:584 / 67:706) ----------
+   Site tokens only: no new font families. On the light surfaces, gold that carries text is --gold-text or
+   --gold-deep only and --gold (#B38A39) is the decorative diamond alone. The title band is the footer's dark --ink
+   (Rob, 3:22 PM ET), so everything on it is --gold-footer; --gold and --gold-text never sit on the band. */
+.details { background: var(--paper); }
+.details-band { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 80px 20px; background: var(--ink); color: var(--gold-footer); text-align: center; }
+.details-band h2 { font-family: var(--font-serif); font-weight: 600; font-size: 2.8rem; line-height: 1.15; letter-spacing: 0.01em; color: var(--gold-footer); }
+.details-waves { width: 36px; height: 36px; fill: none; stroke: var(--gold-footer); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.details-flourish { width: 240px; height: 24px; fill: none; stroke: var(--gold-footer); stroke-width: 1.2; stroke-linecap: round; color: var(--gold-footer); }
+.details-body { display: flex; flex-direction: column; align-items: center; gap: 36px; max-width: calc(1040px + 2 * var(--gutter)); margin-inline: auto; padding: 64px var(--gutter); }
+.glance { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; list-style: none; margin: 0; padding: 0; }
+.glance li { font-family: var(--font-sc); font-weight: 600; font-size: 16px; line-height: normal; letter-spacing: 0.1em; color: var(--gold-deep); background: var(--paper-light); border: 1px solid var(--gold-rule); border-radius: 999px; padding: 10px 18px; white-space: nowrap; }
+.details-divider { display: flex; align-items: center; justify-content: center; gap: 12px; height: 17px; }
+.details-divider > span:not(.diamond) { width: 202px; height: 1px; background: var(--gold-rule); }
+.details-divider .diamond { width: 7px; height: 7px; background: var(--gold); transform: rotate(45deg); margin: 0 1.5px; }
+.details-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; width: 100%; }
+@media (min-width: 760px) { .details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; } }
+.details-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 24px; background: var(--paper-light); border: 1px solid var(--gold-rule); border-radius: var(--radius); box-shadow: var(--shadow-card); }
+.details-card--full { grid-column: 1 / -1; }
+.details-card-head { display: flex; align-items: center; gap: 14px; }
+.details-icon { display: flex; flex: 0 0 42px; width: 42px; height: 42px; padding: 10px; background: var(--paper-deep); border-radius: var(--radius); color: var(--gold-text); }
+.details-icon .icon { width: 22px; height: 22px; stroke-width: 2; vertical-align: 0; }
+.details-card h3 { flex: 1 1 0; min-width: 0; font-family: var(--font-sc); font-weight: 600; font-size: 20px; line-height: 24px; letter-spacing: 0.04em; color: var(--ink); }
+.details-card-body { margin: 0; font-family: var(--font-serif); font-weight: 500; font-size: 18.5px; line-height: 1.5; color: var(--ink); overflow-wrap: break-word; }
+.tbd-row { display: flex; align-items: flex-start; gap: 8px; margin: 0; }
+/* Only Cormorant SC 500/600 ship with the site, so the badge uses 600 rather than a synthesised 700. */
+.tbd-badge { flex: 0 0 auto; margin-top: 1px; padding: 4px 10px; border-radius: 999px; background: var(--gold-rule); color: var(--ink); font-family: var(--font-sc); font-weight: 600; font-size: 13px; line-height: normal; letter-spacing: 0.08em; font-synthesis: none; }
+.tbd-note { flex: 1 1 0; min-width: 0; font-family: var(--font-serif); font-style: italic; font-weight: 500; font-size: 17.5px; line-height: 1.45; color: var(--ink-soft); }
+@media (max-width: 759.98px) {
+  .details-band { padding-block: 48px; }
+  .details-band h2 { font-size: 2.1rem; }
+  .details-body { gap: 24px; padding-block: 32px; }
+  .glance { flex-direction: column; align-items: center; }
+  .details-divider > span:not(.diamond) { width: 122px; }
+  .details-card h3 { font-size: 19px; line-height: 22.8px; }
+  .details-card-body { font-size: 18px; }
+  .tbd-note { font-size: 17px; }
+}
+@media (max-width: 359.98px) { .glance li { white-space: normal; text-align: center; } }

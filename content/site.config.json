@@ -135,6 +135,56 @@
       "note": "Wording drafted by the implementation team; owner approval required."
     }
   },
+  "details": {
+    "enabled": true,
+    "heading": "The Details",
+    "dressCode": {
+      "text": null,
+      "tbdNote": "Dress code TBD.",
+      "approval": {
+        "state": "pending",
+        "owner": "Robert / Natalie",
+        "source": null,
+        "reviewed": "2026-10-04",
+        "note": "Dress code not yet decided (PRD §16). Until text is supplied and approved the Details card shows a TBD row; the attire FAQ stays unpublished."
+      }
+    },
+    "children": {
+      "text": null,
+      "tbdNote": "Children policy TBD.",
+      "approval": {
+        "state": "pending",
+        "owner": "Robert / Natalie",
+        "source": null,
+        "reviewed": "2026-10-04",
+        "note": "Children and plus-one policy still to be confirmed. Until then the Details card shows a TBD row."
+      }
+    },
+    "charity": {
+      "text": null,
+      "tbdNote": "TBD",
+      "approval": {
+        "state": "pending",
+        "owner": "Robert / Natalie",
+        "source": null,
+        "reviewed": "2026-10-04",
+        "note": "PRD v1.2 plans a charity note in lieu of gifts; charity and wording TBD. Replaces any Registry card. Until then the Details card shows a TBD row."
+      }
+    },
+    "tbdNotes": {
+      "between": "Plans for the time between TBD.",
+      "transport": "Parking and shuttle details TBD.",
+      "roomBlock": "Room block rate, booking code and cut-off TBD.",
+      "contact": "Email and phone TBD."
+    },
+    "approval": {
+      "state": "draft",
+      "owner": "Robert / Natalie",
+      "source": "Layout: direction A card layout in the site palette, decided by Rob on 4 October 2026 (3:12 PM ET); title band switched to the footer's dark --ink with --gold-footer content (3:22 PM ET). Figma h9O9RkNe6T5hdTB1oviAXl nodes 67:584 / 67:706. Facts are derived from events, travel.hotel, travel.betweenVenues and contact.",
+      "reviewed": "2026-10-04",
+      "note": "Heading, card titles and TBD notes follow the build spec; no copy in the couple's voice. Each TBD row disappears once its source key (details.dressCode/children/charity.text, travel.betweenVenues.text, events[].venue.parking, travel.hotel.roomBlock, contact.email/phone) is supplied and approved. Set enabled to false to omit the section."
+    }
+  },
   "banner": {
     "active": false,
     "message": null,
@@ -164,10 +214,6 @@
     "hotel": {
       "name": "The Grand Hotel",
       "intro": "The reception is held at The Grand Hotel on Mobile Bay. Guests who would like to stay at the hotel may make general reservations directly with the resort.",
-      "addressLines": [
-        "One Grand Boulevard",
-        "Point Clear, Alabama 36564"
-      ],
       "phoneDisplay": "(251) 928-9201",
       "phoneTel": "+12519289201",
       "links": {
