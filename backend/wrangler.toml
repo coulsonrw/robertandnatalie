@@ -52,11 +52,10 @@ WEDDING_DATE = "2026-12-19"
 EVENT_TIMEZONE = "America/Chicago"
 WEDDING_DESTINATION = "Point Clear, Alabama"
 
-# RSVP cutoff (RSVP-04). ISO 8601 with the event-local offset, e.g. "2026-11-20T23:59:59-06:00".
-# Empty = not yet approved (DATA-01): guests may respond, and the README lists this as a launch
-# blocker. The value can be overridden without a redeploy through the owner-only
-# /admin/content/rsvp-settings endpoint; keep content/site.config.json rsvp.cutoffAt identical.
-RSVP_CUTOFF_AT = ""
+# RSVP cutoff (RSVP-04). ISO 8601 with the event-local offset. Proposed 15 Nov 2026 end of day
+# America/Chicago (CST is UTC−6). Keep content/site.config.json rsvp.cutoffAt identical (DATA-01).
+# Overridable without a redeploy through /admin/content/rsvp-settings once Access exists.
+RSVP_CUTOFF_AT = "2026-11-15T23:59:59-06:00"
 
 # Retention (SEC-06): mirrors privacy.retentionDaysAfterWedding in content/site.config.json.
 RETENTION_DAYS_AFTER_WEDDING = "90"
@@ -93,9 +92,18 @@ COORDINATOR_EMAILS = ""
 # x-dev-access-email header. Ignored whenever ENVIRONMENT = "production".
 ACCESS_DEV_BYPASS = "false"
 
+# Google Sheet for answers (optional). Empty spreadsheet id means Sheets sync is skipped and
+# RSVPs still save to D1. The answers tab name must not match the original guest-list tab.
+GOOGLE_SHEETS_ID = ""
+GOOGLE_SHEETS_SOURCE_TAB = ""
+GOOGLE_SHEETS_ANSWERS_TAB = "RSVP Answers"
+
 # Secrets (set with `wrangler secret put NAME`, never in this file):
 #   CREDENTIAL_PEPPER   32+ random bytes, hex/base64. HMAC key for credential digests.
 #   SESSION_SECRET      32+ random bytes. HMAC key for session-cookie digests.
 #   MAIL_WEBHOOK_URL    only for MAIL_PROVIDER = "webhook".
 #   MAIL_WEBHOOK_TOKEN  only for MAIL_PROVIDER = "webhook".
+#   OPS_BOOTSTRAP_TOKEN owner bootstrap for /ops/roster/sync (issue links without Access).
+#   GOOGLE_SERVICE_ACCOUNT_JSON  full service-account JSON (or GOOGLE_SERVICE_ACCOUNT_EMAIL
+#                                plus GOOGLE_PRIVATE_KEY). Share the sheet with that client_email.
 # See .dev.vars.example for local development values.

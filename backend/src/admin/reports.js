@@ -9,7 +9,7 @@ const ROWS_SQL = `
          g.id AS guest_id, g.kind AS guest_kind, g.display_name, g.plus_one_name, g.host_guest_id, g.sort_order AS guest_order,
          ie.id AS entitlement_id, ie.event_id, ev.label AS event_label, ev.sort_order AS event_order,
          COALESCE(r.status, 'pending') AS status, r.meal_value, r.submitted_at, r.origin,
-         hr.revision, hr.reference, hr.last_submitted_at
+         hr.revision, hr.reference, hr.last_submitted_at, hr.hotel_stay
     FROM invitation_entitlement ie
     JOIN guest g ON g.id = ie.guest_id
     JOIN household h ON h.id = g.household_id
@@ -109,12 +109,13 @@ export async function generalExportCsv(db, { exportedAt, exportedBy }) {
     if (!byHousehold.has(r.household_id)) byHousehold.set(r.household_id, []);
     byHousehold.get(r.household_id).push(r);
   }
-  const header = ['household_id', 'household_label', 'household_status', 'contact_email', 'guest_id', 'guest_kind', 'guest_name', 'host_guest_id', 'event_id', 'event_label', 'status', 'meal', 'submitted_at', 'origin', 'reference', 'exported_at', 'exported_by'];
+  const header = ['household_id', 'household_label', 'household_status', 'contact_email', 'hotel_stay', 'guest_id', 'guest_kind', 'guest_name', 'host_guest_id', 'event_id', 'event_label', 'status', 'meal', 'submitted_at', 'origin', 'reference', 'exported_at', 'exported_by'];
   const out = rows.map((r) => ({
     household_id: r.household_id,
     household_label: r.household_label,
     household_status: householdStatus(byHousehold.get(r.household_id)),
     contact_email: r.contact_email || '',
+    hotel_stay: r.hotel_stay || '',
     guest_id: r.guest_id,
     guest_kind: r.guest_kind,
     guest_name: guestName(r),

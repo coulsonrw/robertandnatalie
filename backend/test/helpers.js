@@ -102,6 +102,7 @@ export function fullAnswer(snapshot, status = 'attending', overrides = {}) {
     plusOneNames: status === 'attending' ? { g_alex_guest: 'Casey Example' } : {},
     contactEmail: status === 'attending' ? 'alex@example.invalid' : '',
     notes: status === 'attending' ? 'Vegetarian, please.' : '',
+    hotelStay: status === 'attending' ? 'yes' : null,
     ...overrides,
   };
 }

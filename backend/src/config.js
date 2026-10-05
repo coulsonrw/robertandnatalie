@@ -6,6 +6,28 @@ function int(value, fallback) {
   return Number.isFinite(n) && n >= 0 ? n : fallback;
 }
 
+function readSheetsConfig(env) {
+  let email = env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
+  let privateKey = env.GOOGLE_PRIVATE_KEY || '';
+  const raw = env.GOOGLE_SERVICE_ACCOUNT_JSON || '';
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      email = parsed.client_email || email;
+      privateKey = parsed.private_key || privateKey;
+    } catch {
+      // Keep the split fields if the JSON secret is malformed; sheetsConfigured() then stays false.
+    }
+  }
+  return {
+    spreadsheetId: env.GOOGLE_SHEETS_ID || '',
+    sourceTab: env.GOOGLE_SHEETS_SOURCE_TAB || '',
+    answersTab: env.GOOGLE_SHEETS_ANSWERS_TAB || 'RSVP Answers',
+    serviceAccountEmail: email,
+    privateKey: typeof privateKey === 'string' ? privateKey.replace(/\\n/g, '\n') : '',
+  };
+}
+
 function list(value) {
   return String(value || '')
     .split(',')
@@ -52,6 +74,8 @@ export function readConfig(env) {
       credentialPepper: env.CREDENTIAL_PEPPER || '',
       sessionSecret: env.SESSION_SECRET || '',
     },
+    opsBootstrapToken: env.OPS_BOOTSTRAP_TOKEN || '',
+    sheets: readSheetsConfig(env),
   };
   if (cfg.isProduction && (!cfg.secrets.credentialPepper || !cfg.secrets.sessionSecret)) {
     throw new Error('CREDENTIAL_PEPPER and SESSION_SECRET must be set in production');

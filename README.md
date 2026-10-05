@@ -66,11 +66,12 @@ On every run the workflow reads the Pages settings, switches **Settings → Page
 
 ## RSVP status
 
-GitHub Pages serves static files only. It cannot authorize a household, keep guest data private or store a response, and the PRD rules out a client-only or email-only RSVP as the final design. So:
+GitHub Pages serves static files only. Household authorization and responses live on the RSVP API.
 
-- `rsvp.mode` is `coming-soon`: guests see a clear message and no form.
-- The full guest-facing RSVP flow is already built (`src/js/rsvp.js`) against the API in `docs/RSVP_API_CONTRACT.md`. Review it with synthetic guests at `/rsvp.html?preview=1` (code `PREVIEW`); a banner states that nothing is saved.
-- The backend that implements the contract is deployed on Cloudflare Workers + D1 at `https://api.robertandnatalie.wedding` (`/health` answers `{"ok":true,"environment":"production"}`). To go live: complete backend README steps 6–7 (Cloudflare Access with MFA, admin emails, mail provider, cutoff), run AT-04 to AT-13 against it, then set `rsvp.apiBaseUrl` to `https://api.robertandnatalie.wedding`, `rsvp.mode: "live"`, `rsvp.cutoffAt`, name Cloudflare in `privacy.rsvpProvider`, and rebuild. The full checklist is `docs/DELIVERY_PLAN.md`.
+- `rsvp.mode` is `live`, `rsvp.apiBaseUrl` is `https://api.robertandnatalie.wedding`, and `rsvp.cutoffAt` is `2026-11-15T23:59:59-06:00` (America/Chicago). Guests use a private household link (`/rsvp.html#t=<token>`); plus-ones answer on the host’s link and cannot add extra people.
+- Review the form with synthetic guests at `/rsvp.html?preview=1` (codes `PREVIEW`, `SOLO`, `FAMILY`); a banner states that nothing is saved.
+- Answers save to D1. When Google Sheet secrets are set, each save also upserts a row on a new **RSVP Answers** tab. Natalie’s original guest-list tab is never written. How to set secrets, import the roster and issue links: `docs/RSVP_GUEST_LAUNCH.md`.
+- Mail is still the `stub` provider (confirmations are recorded, not delivered). Cloudflare Access is still unset; roster import and link issue use `POST /ops/roster/sync` with `OPS_BOOTSTRAP_TOKEN` until Access exists.
 
 ## Our Story
 

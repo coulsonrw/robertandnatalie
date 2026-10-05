@@ -41,7 +41,7 @@ export async function applyRetention(env, cfg, { force = false, actor = { kind: 
     stmt(db, 'UPDATE access_credential SET revoked_at = COALESCE(revoked_at, ?)', now),
     stmt(db, 'UPDATE guest SET plus_one_name = NULL, updated_at = ? WHERE plus_one_name IS NOT NULL', now),
     stmt(db, 'UPDATE household SET contact_email = NULL, updated_at = ? WHERE contact_email IS NOT NULL', now),
-    stmt(db, 'UPDATE household_response SET first_submitted_at = NULL, last_submitted_at = NULL, last_origin = NULL, last_email_queued = 0'),
+    stmt(db, 'UPDATE household_response SET first_submitted_at = NULL, last_submitted_at = NULL, last_origin = NULL, last_email_queued = 0, hotel_stay = NULL'),
     audit(db, { at: now, actorKind: actor.kind, actorId: actor.id, action: 'retention.apply', details: { dueAt, forced: force, deleted: before } }),
   ]);
 

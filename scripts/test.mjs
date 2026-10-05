@@ -225,13 +225,24 @@ test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real
 });
 
 test('IMP-02/07: the opening date and the deadline appear only when set, and then everywhere at once', () => {
-  const before = buildWith(readConfig(), { preview: false }); before.run();
+  const live = buildWith(readConfig(), { preview: false }); live.run();
+  assert.match(live.read('rsvp.html'), /"cutoffAt":"2026-11-15T23:59:59-06:00"/);
+  assert.match(live.read('index.html'), /Please respond by Sunday, November 15, 2026 at 11:59 p\.m\. Central Time \(CST\)\./);
+  assert.doesNotMatch(live.read('index.html'), /Responses are not open yet/);
+  fs.rmSync(live.tmp, { recursive: true, force: true });
+
+  const soon = readConfig();
+  soon.rsvp.mode = 'coming-soon';
+  soon.rsvp.opensAt = null;
+  soon.rsvp.cutoffAt = null;
+  const before = buildWith(soon, { preview: false }); before.run();
   assert.match(before.read('rsvp.html'), /Not yet open/);
   assert.doesNotMatch(before.read('rsvp.html'), /Responses open on/);
   assert.match(before.read('index.html'), /Responses are not open yet\./);
   assert.match(before.read('index.html'), /deadline will be published here/);
   fs.rmSync(before.tmp, { recursive: true, force: true });
   const config = readConfig();
+  config.rsvp.mode = 'coming-soon';
   config.rsvp.opensAt = '2026-10-01T09:00:00-05:00';
   config.rsvp.cutoffAt = '2026-11-15T23:59:00-06:00';
   const after = buildWith(config, { preview: false }); after.run();
@@ -245,7 +256,8 @@ test('IMP-02/07: the opening date and the deadline appear only when set, and the
 
 test('P2 #4: RSVP calls to action follow rsvp.mode: outlined "opens soon" until live, solid RSVP only when live', () => {
   const ctas = (html) => [...html.matchAll(/<a class="(btn [^"]*)" href="\/rsvp\.html"[^>]*>([^<]*)<\/a>/g)].map((m) => ({ cls: m[1], label: m[2] }));
-  const soon = buildWith(readConfig(), { preview: false }); soon.run();
+  const soonCfg = readConfig(); soonCfg.rsvp.mode = 'coming-soon'; soonCfg.rsvp.opensAt = null;
+  const soon = buildWith(soonCfg, { preview: false }); soon.run();
   const idx = ctas(soon.read('index.html'));
   assert.equal(idx.length, 3, 'header, hero and opened invitation (none in the entry bar while closed)');
   for (const c of idx) { assert.match(c.cls, /btn-pending/); assert.doesNotMatch(c.cls, /btn-primary/); assert.equal(c.label, 'RSVP opens soon'); }
@@ -253,12 +265,12 @@ test('P2 #4: RSVP calls to action follow rsvp.mode: outlined "opens soon" until 
   assert.equal(ctas(soon.read('privacy.html'))[0].label, 'RSVP opens soon');
   fs.rmSync(soon.tmp, { recursive: true, force: true });
 
-  const dated = readConfig(); dated.rsvp.opensAt = '2026-10-15T09:00:00-05:00';
+  const dated = readConfig(); dated.rsvp.mode = 'coming-soon'; dated.rsvp.opensAt = '2026-10-15T09:00:00-05:00';
   const d = buildWith(dated, { preview: false }); d.run();
   assert.ok(ctas(d.read('index.html')).every((c) => c.label === 'RSVP opens October 15'));
   fs.rmSync(d.tmp, { recursive: true, force: true });
 
-  const live = readConfig(); live.rsvp.mode = 'live'; live.rsvp.apiBaseUrl = 'https://script.google.com/macros/s/TEST-deployment-id/exec';
+  const live = readConfig(); live.rsvp.mode = 'live'; live.rsvp.apiBaseUrl = 'https://api.robertandnatalie.wedding';
   const l = buildWith(live, { preview: false }); l.run();
   const lc = ctas(l.read('index.html'));
   assert.equal(lc.length, 4, 'entry bar, header, hero and opened invitation');
@@ -270,6 +282,17 @@ test('P2 #4: RSVP calls to action follow rsvp.mode: outlined "opens soon" until 
   const c = buildWith(closed, { preview: false }); c.run();
   assert.ok(ctas(c.read('index.html')).every((x) => x.label === 'RSVP closed' && /btn-pending/.test(x.cls)));
   fs.rmSync(c.tmp, { recursive: true, force: true });
+});
+
+test('live RSVP: private-link API origin is in CSP and the form asks about The Grand Hotel', () => {
+  const b = buildWith(readConfig(), { preview: false }); b.run();
+  const rsvp = b.read('rsvp.html');
+  assert.match(rsvp, /connect-src 'self' https:\/\/api\.robertandnatalie\.wedding/);
+  assert.match(rsvp, /"apiBaseUrl":"https:\/\/api\.robertandnatalie\.wedding"/);
+  assert.match(rsvp, /"mode":"live"/);
+  assert.match(b.read('js/rsvp.js'), /Will you stay at The Grand Hotel\?/);
+  assert.match(b.read('js/rsvp.js'), /hotelStay/);
+  fs.rmSync(b.tmp, { recursive: true, force: true });
 });
 
 test('P2 #6: the menu carries an "Invitation" link on every page (it replaces the parked keepsake below 1256px)', () => {

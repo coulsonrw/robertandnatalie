@@ -4,6 +4,7 @@
 
 | Change | Instruction or reason | Affected requirements | Approvals reopened |
 |---|---|---|---|
+| Private-link RSVP ready for guests: `rsvp.mode` live against `https://api.robertandnatalie.wedding`, cutoff `2026-11-15T23:59:59-06:00` (America/Chicago). One household per guest-sheet row, one link per named guest, plus-ones only through the host link. Grand Hotel stay collected. Answers upsert a new Google Sheet tab when secrets exist; Natalie’s original tab is never written. Roster import and link issue work via `POST /ops/roster/sync` without Cloudflare Access. Mail stays stub. Contact on Details stays TBD. | Rob: finish and ship the wedding RSVP private-link system (5 October 2026). | RSVP-01–07, SEC-02/05, ADMIN-02, DATA-01/03 | RSVP and privacy blocks remain pending/draft until Rob confirms issued links and the Answers tab |
 | Published the Our Story chapter timeline on the home page (first nav item, between The Details and Wedding Day). `story.layout` is `"timeline"` with ten owner-doc chapters; 7–9 stay “Coming soon…”. Photographs for chapters 2–6 are EXIF-stripped derivatives; 1, 7–9 and 10 use the RN monogram. No AI or sketch overlay on people photos. Narrative layout remains available for the unpublished preview and QA-07/08. | Rob: “add our story” (5 October 2026 via Babbage). Treat as approval to publish. | CONTENT-01, DES-01, audit IMP-12/13, QA-06–08 | None; story approval recorded on the block |
 
 ## PRD v1.2 (22 September 2026) — from the PRD's own revision record

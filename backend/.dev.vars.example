@@ -14,5 +14,14 @@ MAIL_PROVIDER=stub
 # MAIL_WEBHOOK_TOKEN=replace-me
 
 # Optional local overrides
-# RSVP_CUTOFF_AT=2026-11-20T23:59:59-06:00
+RSVP_CUTOFF_AT=2026-11-15T23:59:59-06:00
 # SITE_ORIGIN=http://127.0.0.1:8080
+
+# Owner bootstrap (local only). Production: wrangler secret put OPS_BOOTSTRAP_TOKEN
+# OPS_BOOTSTRAP_TOKEN=replace-with-64-hex-characters-from-the-command-above
+
+# Google Sheets answers tab (optional). Leave unset to skip sheet writes.
+# GOOGLE_SHEETS_ID=1MzBwUQpLq78eIH6tmUFSM4PcojktZRJe
+# GOOGLE_SHEETS_SOURCE_TAB=
+# GOOGLE_SHEETS_ANSWERS_TAB=RSVP Answers
+# GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","client_email":"...","private_key":"-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n"}

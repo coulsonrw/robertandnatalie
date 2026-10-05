@@ -57,6 +57,7 @@ export function buildSnapshot(loaded, window) {
       return r;
     }),
     notes: notes || '',
+    hotelStay: state.hotel_stay || null,
     revision: state.revision,
     reference: state.reference || null,
     submittedAt: state.last_submitted_at || null,

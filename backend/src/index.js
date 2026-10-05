@@ -7,6 +7,7 @@ import { requestLog } from './log.js';
 import { postSession, getSession, deleteSession } from './session.js';
 import { putResponse } from './response.js';
 import { handleAdmin } from './admin/index.js';
+import { handleOps } from './ops.js';
 import { currentContent } from './admin/content.js';
 import { processOutbox } from './mail/outbox.js';
 import { applyRetention } from './retention.js';
@@ -36,6 +37,11 @@ async function route(request, env, cfg, url) {
   if (path === '/content/urgent-banner' && method === 'GET') {
     const current = await currentContent(env.DB, 'urgent-banner');
     return json(200, { key: current.key, version: current.version, body: current.body, updatedAt: current.updatedAt }, { 'Cache-Control': 'public, max-age=60' });
+  }
+
+  if (path === '/ops' || path.startsWith('/ops/')) {
+    assertSameSite(request, cfg.siteOrigin);
+    return await handleOps(request, env, cfg, url);
   }
 
   if (path === '/admin' || path.startsWith('/admin/')) {

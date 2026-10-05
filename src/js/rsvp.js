@@ -75,7 +75,7 @@
       if (!stores[hh.id]) stores[hh.id] = {
         revision: 0,
         responses: hh.entitlements.map(function (e) { return { guestId: e.guestId, eventId: e.eventId, status: 'pending', meal: null }; }),
-        plusOneNames: {}, contactEmail: hh.contactEmail || '', notes: '', reference: null, submittedAt: null, seen: {}
+        plusOneNames: {}, contactEmail: hh.contactEmail || '', notes: '', hotelStay: null, reference: null, submittedAt: null, seen: {}
       };
       return stores[hh.id];
     }
@@ -88,7 +88,7 @@
         },
         entitlements: hh.entitlements,
         responses: store.responses.map(function (r) { return { guestId: r.guestId, eventId: r.eventId, status: r.status, meal: r.meal || null }; }),
-        notes: store.notes, revision: store.revision, reference: store.reference, submittedAt: store.submittedAt,
+        notes: store.notes, hotelStay: store.hotelStay || null, revision: store.revision, reference: store.reference, submittedAt: store.submittedAt,
         emailQueued: false, rsvp: { open: true, cutoffAt: cfg.cutoffAt }
       };
     }
@@ -121,6 +121,7 @@
           store.plusOneNames = Object.assign({}, p.plusOneNames || {});
           store.contactEmail = p.contactEmail || '';
           store.notes = p.notes || '';
+          store.hotelStay = p.hotelStay || null;
           store.revision += 1;
           store.reference = store.reference || ('PREVIEW-' + uuid().replace(/-/g, '').slice(0, 6).toUpperCase());
           store.submittedAt = new Date().toISOString();
@@ -177,7 +178,7 @@
 
   // ---------- state ----------
   var state = {
-    step: 'access', session: null, answers: {}, plusOneNames: {}, contactEmail: '', notes: '', meals: {},
+    step: 'access', session: null, answers: {}, plusOneNames: {}, contactEmail: '', notes: '', hotelStay: null, meals: {},
     requestId: null, busy: false, notice: null, errors: {}, focusHeading: false
   };
   var mealCfg = cfg.mealChoices && cfg.mealChoices.eventId && cfg.mealChoices.options && cfg.mealChoices.options.length ? cfg.mealChoices : null;
@@ -199,6 +200,7 @@
     Object.keys(localNames).forEach(function (k) { if (localNames[k]) state.plusOneNames[k] = localNames[k]; });
     if (!sameHousehold || !state.contactEmail) state.contactEmail = session.household.contactEmail || '';
     if (!sameHousehold || !state.notes) state.notes = session.notes || '';
+    if (!sameHousehold || !state.hotelStay) state.hotelStay = session.hotelStay || null;
   }
   function guests() { return state.session.household.guests; }
   function entitlementsFor(gid) { return state.session.entitlements.filter(function (x) { return x.guestId === gid; }).map(function (x) { return x.eventId; }); }
@@ -337,6 +339,17 @@
       el('p', { class: 'hint', id: 'email-hint', text: 'Used to confirm your response and reach you if plans change. Not shared with anyone else.' }),
       state.errors.contactEmail ? el('p', { class: 'error-text', id: 'email-error' }, icon('i-alert'), el('span', { text: state.errors.contactEmail })) : null
     ));
+    var hotelErr = !!state.errors.hotelStay;
+    append(form, el('fieldset', { class: 'event-row' + (hotelErr ? ' is-invalid' : '') },
+      el('legend', { text: 'Will you stay at The Grand Hotel?' }),
+      el('p', { class: 'hint', id: 'hotel-hint', text: 'General reservations only — there is no wedding room block. This helps us plan who will be at the resort.' }),
+      el('div', { class: 'choice-group' },
+        choice('hotelStay', 'yes', 'Yes', state.hotelStay === 'yes', hotelErr ? 'hotel-error' : 'hotel-hint'),
+        choice('hotelStay', 'no', 'No', state.hotelStay === 'no', hotelErr ? 'hotel-error' : 'hotel-hint'),
+        choice('hotelStay', 'undecided', 'Not sure yet', state.hotelStay === 'undecided', hotelErr ? 'hotel-error' : 'hotel-hint')
+      ),
+      el('p', { class: 'error-text', id: 'hotel-error', hidden: hotelErr ? null : true }, icon('i-alert'), el('span', { text: state.errors.hotelStay || '' }))
+    ));
     if (mealCfg) {
       var mealEvent = eventById[mealCfg.eventId] || { label: mealCfg.eventId };
       var mealGuests = guests().filter(function (g) { return mealAsked(g.id); });
@@ -394,7 +407,8 @@
     var details = el('dl', { class: 'review-details' });
     if (anyoneAttending()) {
       append(details, el('div', {}, el('dt', { text: 'Contact email' }), el('dd', { text: state.contactEmail || '—' })));
-      append(details, el('div', {}, el('dt', { text: 'Notes' }), el('dd', { text: state.notes || 'None' })));
+      append(details, el('div', {}, el('dt', { text: 'Grand Hotel stay' }), el('dd', { text: state.hotelStay === 'yes' ? 'Yes' : state.hotelStay === 'no' ? 'No' : state.hotelStay === 'undecided' ? 'Not sure yet' : '—' })));
+      append(details, el('div', {}, el('dt', { text: 'Dietary or access notes' }), el('dd', { text: state.notes || 'None' })));
     }
     var actions = el('div', { class: 'form-actions' },
       el('div', { class: 'actions' },
@@ -473,7 +487,7 @@
         if ((m = /^responses\.([^.]+)\.([^.]+)\.status$/.exec(path))) { mapped[key(m[1], m[2])] = f.message; attendance = true; return; }
         if ((m = /^responses\.([^.]+)\.([^.]+)\.meal$/.exec(path))) { mapped['meal:' + m[1]] = f.message; details = true; return; }
         if ((m = /^plusOneNames\.([^.]+)$/.exec(path))) { mapped['name:' + m[1]] = f.message; attendance = true; return; }
-        if (path === 'contactEmail' || path === 'notes') { mapped[path] = f.message; details = true; }
+        if (path === 'contactEmail' || path === 'notes' || path === 'hotelStay') { mapped[path] = f.message; details = true; }
       });
       if (attendance || details) {
         state.step = attendance ? 'attendance' : 'details';
@@ -527,7 +541,7 @@
 
   function onNotMine() {
     adapter.endSession().then(function () {
-      state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = ''; state.meals = {};
+      state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = ''; state.hotelStay = null; state.meals = {};
       go('access');
       setNotice('info', 'You have been signed out of that invitation. Enter the code from your own invitation to continue.');
     });
@@ -535,13 +549,18 @@
 
   function onSignOut() {
     adapter.endSession().then(function () {
-      state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = ''; state.meals = {};
+      state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = ''; state.hotelStay = null; state.meals = {};
       go('access');
       setNotice('success', 'Thank you. You have been signed out of this invitation.');
     });
   }
 
   function onAnswer(k, value) {
+    if (k === 'hotelStay') {
+      state.hotelStay = value;
+      if (state.errors.hotelStay) { delete state.errors.hotelStay; render(); }
+      return;
+    }
     state.answers[k] = value;
     var gid = k.split('|')[0];
     var nameField = document.getElementById('plusone-' + gid);
@@ -586,6 +605,13 @@
     }
     state.contactEmail = email;
     state.notes = (state.notes || '').slice(0, 500);
+    if (!state.hotelStay) {
+      state.errors.hotelStay = 'Please say whether you will stay at The Grand Hotel.';
+      render();
+      var hotelYes = document.getElementById('c-hotelStay-yes');
+      if (hotelYes) hotelYes.focus();
+      return;
+    }
     if (mealCfg) {
       var firstMeal = null;
       guests().forEach(function (g) { if (mealAsked(g.id) && !state.meals[g.id]) { state.errors['meal:' + g.id] = 'Please choose a meal for ' + guestLabel(g) + '.'; firstMeal = firstMeal || ('meal-' + g.id); } });
@@ -604,7 +630,8 @@
       responses: [],
       plusOneNames: {},
       contactEmail: anyoneAttending() ? state.contactEmail : (state.contactEmail || ''),
-      notes: anyoneAttending() ? state.notes : ''
+      notes: anyoneAttending() ? state.notes : '',
+      hotelStay: anyoneAttending() ? state.hotelStay : null
     };
     guests().forEach(function (g) {
       entitlementsFor(g.id).forEach(function (eid) {

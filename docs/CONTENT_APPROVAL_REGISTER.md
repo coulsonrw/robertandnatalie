@@ -35,21 +35,19 @@ Approval states: **approved** (owner-approved), **draft** (wording drafted by th
 | `config.faqs[access-needs]` | draft | Robert / Natalie | PRD CONTENT-04, SEC-05 | 2026-09-21 |  |
 | `config.faqs[contact]` | pending | Robert / Natalie | — | 2026-09-21 | Contact route not yet supplied. The contact block is rendered from the contact section once set. |
 | `config.contact` | pending | Robert / Natalie | — | 2026-09-21 | Private contact route required before guest launch (PRD §03 exception path, CONTENT-04). |
-| `config.rsvp` | pending | Robert / Natalie / technical lead | PRD §08–§11 | 2026-09-22 | The RSVP service is deployed at https://api.robertandnatalie.wedding (23 September 2026); credential delivery, the cutoff, the mail provider and the Access admin accounts are undecided, so the block stays pending. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. Synthetic fixtures (PRD §14): PREVIEW = couple with a plus-one slot and a reception-only guest; SOLO = an individual; FAMILY = a named family including children as named invitees. |
-| `config.privacy` | draft | Robert / Natalie | PRD SEC-04, SEC-06 | 2026-09-21 | Retention period and RSVP provider require owner approval before launch. The notice does not claim legal compliance. |
+| `config.rsvp` | pending | Robert / Natalie / technical lead | PRD §08–§11 | 2026-10-05 | Private-link RSVP is wired to https://api.robertandnatalie.wedding with cutoff 2026-11-15T23:59:59-06:00 (America/Chicago). Guests need an issued household link; the roster is imported through /ops/roster/sync when OPS_BOOTSTRAP_TOKEN (and optionally the Google service account) are set. Mail stays stub and Access is still unset. Approval stays pending until Rob confirms the issued links and the RSVP Answers tab. Synthetic preview fixtures (PRD §14) are unchanged. |
+| `config.privacy` | draft | Robert / Natalie | PRD SEC-04, SEC-06 | 2026-10-05 | RSVP provider named as Cloudflare Workers and D1 in the owners' account (deployed 23 September 2026). Proposed retention remains 90 days after the wedding. Formal wording approval still sits with Robert / Natalie; the notice does not claim legal compliance. |
 
 ## Launch readiness
 
 | Level | Item | Detail |
 |---|---|---|
 | blocker | Guest release (G3) not recorded | site.launchApproved is false. Set it to true only when RELEASE-01 is satisfied and the owners have approved release; `npm run build -- --strict` fails while any blocker remains. |
-| blocker | RSVP is not live | rsvp.mode is "coming-soon"; guests see the coming-soon message. A backend service and rsvp.apiBaseUrl are required (PRD §08–§11). |
-| blocker | RSVP cutoff not set | rsvp.cutoffAt is null (PRD §16, RSVP-04). |
 | blocker | No private contact route | contact.email / contact.phone are null (PRD CONTENT-04, §03 exception path). |
-| blocker | RSVP provider not named in the privacy notice | privacy.rsvpProvider is null (PRD SEC-04). |
-| review | Saint Francis Chapel: entrance unconfirmed | events[ceremony].venue.entrance is null; omitted from the page (PRD CONTENT-02, §16). |
+| blocker | Saint Francis Chapel: entrance unconfirmed | events[ceremony].venue.entrance is null; omitted from the page (PRD CONTENT-02, §16). Essential for guest launch (PRD §15 risk controls). |
+| blocker | Saint Francis Chapel: venue details not confirmed | events[ceremony].approval.state is "carried-forward"; the coordinator must confirm the address before RSVP goes live (PRD §15 risk controls, §16). |
+| blocker | The Grand Hotel: entrance unconfirmed | events[reception].venue.entrance is null; omitted from the page (PRD CONTENT-02, §16). Essential for guest launch (PRD §15 risk controls). |
 | review | Saint Francis Chapel: parking unconfirmed | events[ceremony].venue.parking is null; omitted from the page (PRD CONTENT-02, §16). |
-| review | The Grand Hotel: entrance unconfirmed | events[reception].venue.entrance is null; omitted from the page (PRD CONTENT-02, §16). |
 | review | The Grand Hotel: parking unconfirmed | events[reception].venue.parking is null; omitted from the page (PRD CONTENT-02, §16). |
 | review | Synthetic RSVP preview is enabled | rsvp.allowPreview is true, so /rsvp.html?preview=1 shows the labeled synthetic household. Set it to false before guest launch (PRD RELEASE-01). |
 | review | The Details: 6 TBD row(s) shown to guests | Dress Code, Between Ceremony & Reception, Transport & Parking, Children, Charity, Contact Us. Each TBD row disappears once its source key is supplied and approved (details.*, travel.betweenVenues, events[].venue.parking, contact). |
@@ -76,10 +74,9 @@ Approval states: **approved** (owner-approved), **draft** (wording drafted by th
 | review | config.faqs[access-needs]: draft | PRD CONTENT-04, SEC-05 |
 | review | config.faqs[contact]: pending, not published | Contact route not yet supplied. The contact block is rendered from the contact section once set. |
 | review | config.contact: pending, not published | Private contact route required before guest launch (PRD §03 exception path, CONTENT-04). |
-| review | config.rsvp: pending, not published | The RSVP service is deployed at https://api.robertandnatalie.wedding (23 September 2026); credential delivery, the cutoff, the mail provider and the Access admin accounts are undecided, so the block stays pending. The page shows the coming-soon state to guests; the labeled preview uses synthetic guests only. Synthetic fixtures (PRD §14): PREVIEW = couple with a plus-one slot and a reception-only guest; SOLO = an individual; FAMILY = a named family including children as named invitees. |
-| review | config.privacy: draft | Retention period and RSVP provider require owner approval before launch. The notice does not claim legal compliance. |
+| review | config.rsvp: pending, not published | Private-link RSVP is wired to https://api.robertandnatalie.wedding with cutoff 2026-11-15T23:59:59-06:00 (America/Chicago). Guests need an issued household link; the roster is imported through /ops/roster/sync when OPS_BOOTSTRAP_TOKEN (and optionally the Google service account) are set. Mail stays stub and Access is still unset. Approval stays pending until Rob confirms the issued links and the RSVP Answers tab. Synthetic preview fixtures (PRD §14) are unchanged. |
+| review | config.privacy: draft | RSVP provider named as Cloudflare Workers and D1 in the owners' account (deployed 23 September 2026). Proposed retention remains 90 days after the wedding. Formal wording approval still sits with Robert / Natalie; the notice does not claim legal compliance. |
 | info | Urgent logistics banner is off | Set banner.active with an approved message to publish wedding-day logistics above every page (ADMIN-04, OPS-02). |
 | info | No wedding room block published | travel.hotel.roomBlock is null; only general hotel information is shown (PRD CONTENT-03). |
-| info | RSVP opening date not announced | rsvp.opensAt is null; the not-yet-open state names no date. Set it only once the owners approve an opening date (audit IMP-02). |
 
 A **blocker** prevents guest launch (PRD RELEASE-01). A **review** item is published or omitted safely but still needs an owner or coordinator decision. **Info** items are recorded for completeness.
