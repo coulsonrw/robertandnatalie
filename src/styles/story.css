@@ -3,7 +3,7 @@
    Real photographs are photo-first: no sepia, no sketch overlay. */
 
 .story-timeline { --rail: var(--gold-rule); --rail-ink: var(--gold); border-top: 1px solid var(--gold-rule); }
-.story-hero { text-align: center; padding: 0 var(--gutter) clamp(24px, 4vw, 40px); max-width: 920px; margin: 0 auto; }
+.story-hero { text-align: center; padding: clamp(8px, 2vw, 16px) var(--gutter) clamp(32px, 5vw, 56px); max-width: 920px; margin: 0 auto; }
 .story-kicker { margin-bottom: 0.8em; }
 .story-kicker::before,
 .story-kicker::after { content: '·'; color: var(--gold); margin: 0 0.45em; }
@@ -34,17 +34,17 @@
 .chapter-text h2,
 .chapter-text h3 { font-size: clamp(1.7rem, 3.4vw, 2.3rem); color: var(--gold-text); font-weight: 600; line-height: 1.15; margin: 0 0 0.25em; }
 .chapter-head .chapter-when { margin-bottom: 0.2em; }
-.chapter-when { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.12em; font-size: 0.95rem; color: var(--ink-soft); margin: 0 0 1em; }
+.chapter-when { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.08em; font-size: 0.9rem; color: var(--ink-soft); margin: 0 0 1em; }
 .chapter-text p { font-size: 1.18rem; line-height: 1.6; margin: 0 0 0.75em; max-width: 60ch; }
 .chapter-text .scripture { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.1em; color: var(--gold-text); }
 .chapter-text .coda { font-family: var(--font-script); font-size: 1.9rem; color: var(--gold-text); line-height: 1.2; margin-top: 0.6em; }
-.chapter.is-placeholder .chapter-body { border: 1px dashed var(--gold); padding: 16px 18px; background: var(--paper-light); align-self: start; }
+.chapter.is-placeholder .chapter-body p { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.08em; color: var(--gold-text); }
 
 .chapter-figure { margin: 0; }
 .chapter-figure figcaption { font-size: 0.95rem; color: var(--ink-soft); font-style: italic; margin-top: 8px; }
 
 .photo-frame {
-  position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: var(--radius);
+  position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 16px;
   background: var(--paper-light); box-shadow: var(--shadow-card);
   outline: 1px solid var(--gold-rule); outline-offset: -1px;
 }
