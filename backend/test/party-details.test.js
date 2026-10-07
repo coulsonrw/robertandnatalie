@@ -25,14 +25,14 @@ describe('party details: names, contact, extra guests', () => {
     expect(snap.household.guests.find((g) => g.id === 'g_jordan').dietary).toBe('No shellfish');
     expect(snap.household.contactPhone).toBe('251-555-0100');
     expect(snap.household.mailingAddress).toBe('1 Sample Way\nFairhope, AL');
-    expect(snap.extraGuestCap).toBe(4);
+    expect(snap.extraGuestCap).toBe(2);
     expect(snap.household.contactEmail).toBe('alex@example.invalid');
     const row = await env.DB.prepare("SELECT display_name, origin FROM guest WHERE id = 'g_alex'").first();
     expect(row.display_name).toBe('Alex Rivera');
     expect(row.origin).toBe('roster');
   });
 
-  it('adds an extra guest, keeps them on reopen, and honors the cap of 4 extras', async () => {
+  it('adds an extra guest, keeps them on reopen, and honors the cap of 2 extras', async () => {
     const first = extraAnswer(s.snapshot, {
       addedGuests: [{
         name: 'Casey Added',
@@ -52,7 +52,7 @@ describe('party details: names, contact, extra guests', () => {
     expect(added.kind).toBe('plus-one');
     expect(added.dietary).toBe('Peanuts');
     expect(snap.responses.filter((r) => r.guestId === added.id)).toHaveLength(2);
-    expect(snap.extraGuestsRemaining).toBe(2); // roster plus-one + this extra = 2 of 4
+    expect(snap.extraGuestsRemaining).toBe(0); // roster plus-one + this extra = 2 of 2
 
     const again = await (await guest(s.cookie, 'GET', '/session')).json();
     expect(again.household.guests.find((g) => g.id === added.id).name).toBe('Casey Added');
@@ -115,13 +115,13 @@ describe('party details: names, contact, extra guests', () => {
 });
 
 describe('extra guests on a single-name party', () => {
-  it('allows four extras on a household with no roster plus-one', async () => {
+  it('allows two extras on a household with no roster plus-one and refuses a third', async () => {
     await resetDb();
     await seedEvents();
     await importRoster();
     const opened = await openParty('hh_solo');
     expect(opened.res.status).toBe(200);
-    const extras = [1, 2, 3, 4].map((n) => ({
+    const extras = [1, 2].map((n) => ({
       name: `Guest ${n}`,
       dietary: '',
       responses: [
@@ -141,7 +141,26 @@ describe('extra guests on a single-name party', () => {
     const res = await guest(opened.cookie, 'PUT', '/response', payload);
     expect(res.status).toBe(200);
     const snap = await res.json();
-    expect(snap.household.guests.filter((g) => g.added)).toHaveLength(4);
+    expect(snap.household.guests.filter((g) => g.added)).toHaveLength(2);
     expect(snap.extraGuestsRemaining).toBe(0);
+
+    const third = {
+      requestId: crypto.randomUUID(),
+      revision: snap.revision,
+      responses: snap.entitlements.map((e) => ({ guestId: e.guestId, eventId: e.eventId, status: 'attending' })),
+      addedGuests: [{
+        name: 'Guest 3',
+        dietary: '',
+        responses: [
+          { eventId: 'ceremony', status: 'attending' },
+          { eventId: 'reception', status: 'attending' },
+        ],
+      }],
+      contactEmail: 'taylor@example.invalid',
+      hotelStay: 'no',
+    };
+    const blocked = await guest(opened.cookie, 'PUT', '/response', third);
+    expect(blocked.status).toBe(400);
+    expect((await blocked.json()).error.fields.some((f) => f.path === 'addedGuests')).toBe(true);
   });
 });

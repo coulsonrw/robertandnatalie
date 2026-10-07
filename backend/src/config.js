@@ -47,7 +47,7 @@ export function readConfig(env) {
     eventTimezone: env.EVENT_TIMEZONE || 'America/Chicago',
     weddingDestination: env.WEDDING_DESTINATION || 'Point Clear, Alabama',
     rsvpCutoffAt: env.RSVP_CUTOFF_AT || null,
-    extraGuestCap: Math.min(20, int(env.EXTRA_GUEST_CAP, 4)),
+    extraGuestCap: Math.min(20, int(env.EXTRA_GUEST_CAP, 2)),
     retentionDaysAfterWedding: int(env.RETENTION_DAYS_AFTER_WEDDING, 90),
     sessionTtlMs: int(env.SESSION_TTL_HOURS, 24) * 3600 * 1000,
     rateLimit: {

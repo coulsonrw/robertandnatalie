@@ -57,7 +57,7 @@ WEDDING_DESTINATION = "Point Clear, Alabama"
 # Overridable without a redeploy through /admin/content/rsvp-settings once Access exists.
 RSVP_CUTOFF_AT = "2026-11-15T23:59:59-06:00"
 # Extra guests a party may add on the RSVP form (beyond named roster guests).
-EXTRA_GUEST_CAP = "4"
+EXTRA_GUEST_CAP = "2"
 
 # Retention (SEC-06): mirrors privacy.retentionDaysAfterWedding in content/site.config.json.
 RETENTION_DAYS_AFTER_WEDDING = "90"

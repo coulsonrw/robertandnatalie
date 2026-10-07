@@ -41,7 +41,7 @@ export async function rsvpWindow(db, cfg, now = Date.now()) {
 
 export function extraGuestCapOf(cfg) {
   const n = Number.parseInt(cfg && cfg.extraGuestCap, 10);
-  return Number.isFinite(n) && n >= 0 && n <= 20 ? n : 4;
+  return Number.isFinite(n) && n >= 0 && n <= 20 ? n : 2;
 }
 
 export function buildSnapshot(loaded, window, cfg = {}) {

@@ -54,8 +54,8 @@ A `400 validation` body may also carry `error.fields`, an array of `{ "path", "m
   "responses":    [ { "guestId": "g_01", "eventId": "ceremony", "status": "pending" } ],
   "notes": "",
   "hotelStay": null,
-  "extraGuestCap": 4,
-  "extraGuestsRemaining": 3,
+  "extraGuestCap": 2,
+  "extraGuestsRemaining": 1,
   "revision": 0,
   "reference": null,
   "submittedAt": null,
@@ -72,7 +72,7 @@ A `400 validation` body may also carry `error.fields`, an array of `{ "path", "m
 - `revision` increments on every committed save and is used for optimistic concurrency (RSVP-05).
 - `hotelStay` (optional, household-level) is `yes`, `no` or `undecided` when anyone is attending, and `null` when the household declines. It is required on a guest save if anyone attends. Headcount is derived from attending guests and is not a separate payload field.
 - `contactPhone` and `mailingAddress` are household-level, optional, and appear only on the session snapshot — never on `GET /guests`.
-- `extraGuestCap` (default **4**, `EXTRA_GUEST_CAP` / `rsvp.extraGuestCap`) is how many plus-one / guest-added people a party may have. `addedGuests` creates `origin=guest` plus-one rows; `removedGuestIds` may revoke only those. Roster plus-one slots cannot be removed.
+- `extraGuestCap` (default **2**, `EXTRA_GUEST_CAP` / `rsvp.extraGuestCap`) is how many plus-one / guest-added people a party may have. `addedGuests` creates `origin=guest` plus-one rows; `removedGuestIds` may revoke only those. Roster plus-one slots cannot be removed. The page hides **Add a guest** when remaining is 0; the Worker also rejects over-cap saves.
 
 ## Response payload
 

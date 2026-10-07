@@ -13,11 +13,11 @@ Set in both `content/site.config.json` → `rsvp.cutoffAt` and `backend/wrangler
 ## What guests see
 
 1. They click **RSVP** on the site (`/rsvp.html`).
-2. The page loads a dropdown of **party labels** from the Worker (`GET /guests`) — one row per household, sorted A to Z. A search box narrows the list.
+2. The page loads a collapsed native dropdown of **party labels** from the Worker (`GET /guests`) — one row per household, sorted A to Z. It starts at “- Select -”; Continue stays disabled until they pick a party.
 3. Choosing a label opens that **party** page — one form per invitation row in the roster.
-4. They answer attending / declining for each person and event, can edit each full name, add extra guests (up to 4), and fill dietary notes, contact email/phone, optional mailing address, Grand Hotel stay, and a message to the couple.
+4. They answer attending / declining for each person and event, can edit each full name, add extra guests (up to 2), and fill dietary notes, contact email/phone, optional mailing address, Grand Hotel stay, and a message to the couple.
 
-A forwarded or bookmarked party URL (`/rsvp.html?party=<id>`) opens the same household form. Plus-ones (named or unnamed) answer on the host household’s page. The form cannot add more people than the row already allows.
+A forwarded or bookmarked party URL (`/rsvp.html?party=<id>`) opens the same household form. Plus-ones (named or unnamed) answer on the host household’s page. Parties can add extra guests up to `extraGuestCap` (default 2). The **Add a guest** control is hidden once the party is at that cap.
 
 If that household has already RSVPed, the page shows the saved answers and they can update them until the cutoff. Two devices editing at once use the existing revision check (409 + latest snapshot) so a second save does not silently overwrite the first; after reviewing the latest answers, the next save wins.
 
@@ -57,7 +57,7 @@ npm run migrate:remote
 
 (`0003_hotel_stay.sql` adds `household_response.hotel_stay` if that migration has not already been applied. `0004_party_details.sql` adds `household.contact_phone`, `household.mailing_address`, and `guest.origin`.)
 
-Parties can add up to **4 extra guests** (`rsvp.extraGuestCap` / `EXTRA_GUEST_CAP`). That cap is one number for every household. `GET /guests` still returns only party labels and ids — never emails, phones, addresses, notes or answers.
+Parties can add up to **2 extra guests** (`rsvp.extraGuestCap` / `EXTRA_GUEST_CAP`, Rob 7 October 2026). That cap is one number for every household. The form hides **Add a guest** at the limit; the Worker rejects a third extra. `GET /guests` still returns only party labels and ids — never emails, phones, addresses, notes or answers.
 
 ## Import the roster
 

@@ -94,8 +94,8 @@
         entitlements: hh.entitlements,
         responses: store.responses.map(function (r) { return { guestId: r.guestId, eventId: r.eventId, status: r.status, meal: r.meal || null }; }),
         notes: store.notes, hotelStay: store.hotelStay || null, revision: store.revision, reference: store.reference, submittedAt: store.submittedAt,
-        extraGuestCap: cfg.extraGuestCap || 4,
-        extraGuestsRemaining: Math.max(0, (cfg.extraGuestCap || 4) - hh.guests.filter(function (g) { return g.kind === 'plus-one' || g.added; }).length),
+        extraGuestCap: cfg.extraGuestCap || 2,
+        extraGuestsRemaining: Math.max(0, (cfg.extraGuestCap || 2) - hh.guests.filter(function (g) { return g.kind === 'plus-one' || g.added; }).length),
         emailQueued: false, rsvp: { open: true, cutoffAt: cfg.cutoffAt }
       };
     }
@@ -271,7 +271,7 @@
   function hostName(g) { var h = guests().filter(function (x) { return x.id === g.hostGuestId; })[0]; return h ? guestLabel(h) : 'your household'; }
   function guestDisplayName(g) { return (state.guestNames[g.id] || state.plusOneNames[g.id] || g.name || '').trim(); }
   function guestLabel(g) { return guestDisplayName(g) || (g.kind === 'plus-one' ? ('Guest of ' + hostName(g)) : 'Guest'); }
-  function extraGuestCap() { return (state.session && state.session.extraGuestCap) || cfg.extraGuestCap || 4; }
+  function extraGuestCap() { return (state.session && state.session.extraGuestCap) || cfg.extraGuestCap || 2; }
   function extraCount() { return guests().filter(function (g) { return g.kind === 'plus-one' || g.added; }).length; }
   function canAddGuest() { return extraCount() < extraGuestCap(); }
   function isAddedGuest(g) { return !!(g.added || (g.kind === 'plus-one' && String(g.id).indexOf('new-') === 0)); }
