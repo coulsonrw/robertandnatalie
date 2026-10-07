@@ -39,16 +39,29 @@ export async function rsvpWindow(db, cfg, now = Date.now()) {
   return window;
 }
 
-export function buildSnapshot(loaded, window) {
-  const { household, guests, entitlements, state, notes } = loaded;
+export function extraGuestCapOf(cfg) {
+  const n = Number.parseInt(cfg && cfg.extraGuestCap, 10);
+  return Number.isFinite(n) && n >= 0 && n <= 20 ? n : 2;
+}
+
+export function buildSnapshot(loaded, window, cfg = {}) {
+  const { household, guests, entitlements, state, notes, dietary } = loaded;
+  const extraGuestCap = extraGuestCapOf(cfg);
+  const extraCount = guests.filter((g) => g.kind === 'plus-one').length;
   return {
     household: {
       id: household.id,
       label: household.label,
       contactEmail: household.contact_email || '',
-      guests: guests.map((g) => (g.kind === 'plus-one'
-        ? { id: g.id, kind: 'plus-one', hostGuestId: g.host_guest_id, name: g.plus_one_name || null }
-        : { id: g.id, kind: 'named', name: g.display_name })),
+      contactPhone: household.contact_phone || '',
+      mailingAddress: household.mailing_address || '',
+      guests: guests.map((g) => {
+        const row = g.kind === 'plus-one'
+          ? { id: g.id, kind: 'plus-one', hostGuestId: g.host_guest_id, name: g.plus_one_name || null, added: (g.origin || 'roster') === 'guest' }
+          : { id: g.id, kind: 'named', name: g.display_name, added: false };
+        row.dietary = (dietary && dietary[g.id]) || '';
+        return row;
+      }),
     },
     entitlements: entitlements.map((e) => ({ guestId: e.guest_id, eventId: e.event_id })),
     responses: entitlements.map((e) => {
@@ -58,6 +71,8 @@ export function buildSnapshot(loaded, window) {
     }),
     notes: notes || '',
     hotelStay: state.hotel_stay || null,
+    extraGuestCap,
+    extraGuestsRemaining: Math.max(0, extraGuestCap - extraCount),
     revision: state.revision,
     reference: state.reference || null,
     submittedAt: state.last_submitted_at || null,

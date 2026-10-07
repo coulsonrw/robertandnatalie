@@ -2,7 +2,7 @@
 
 This directory is a reference backend for the RSVP contract in `../docs/RSVP_API_CONTRACT.md`, written against PRD v1.1 Sections 08–12 (unchanged in PRD v1.2). PRD v1.2 adds ARCH-07 and GALLERY-02/03/05 (guest uploads, moderation and retention through this service); none of that is implemented here yet. The static site on GitHub Pages calls it from `src/js/rsvp.js`; nothing in the static site stores guest data.
 
-**Status (5 October 2026):** built and tested locally in the Workers runtime with a local D1 database (see "Tests"); verified against the external audit's acceptance scenarios QA-10..QA-22 in `../docs/audit/BACKEND_QA_MATRIX.md`. **Deployed on 23 September 2026 to the owners' Cloudflare account at `https://api.robertandnatalie.wedding`**. Cutoff is `2026-11-15T23:59:59-06:00`. The default launch path is `OPS_BOOTSTRAP_TOKEN` + a CSV POST to `POST /ops/roster/sync` + D1 (`docs/RSVP_GUEST_LAUNCH.md`) so Cloudflare Access is not a blocker. No Access application exists yet, no mail provider is connected (`stub`), and D1 stays empty until Rob runs that CSV sync. Google Sheets is optional later and is not required to issue links or collect answers. Everything about Cloudflare's hosted behaviour below is labelled *publisher claim* or *not verified* unless it was observed here or during the deployment.
+**Status (5 October 2026):** built and tested locally in the Workers runtime with a local D1 database (see "Tests"); verified against the external audit's acceptance scenarios QA-10..QA-22 in `../docs/audit/BACKEND_QA_MATRIX.md`. **Deployed on 23 September 2026 to the owners' Cloudflare account at `https://api.robertandnatalie.wedding`**. Cutoff is `2026-11-15T23:59:59-06:00`. The default launch path is `OPS_BOOTSTRAP_TOKEN` + a CSV POST to `POST /ops/roster/sync` + D1 (`docs/RSVP_GUEST_LAUNCH.md`) so Cloudflare Access is not a blocker. No Access application exists yet, no mail provider is connected (`stub`), and D1 stays empty until Rob runs that CSV sync. Google Sheets is optional later and is not required to collect answers. Guests choose their invitation from `GET /guests` (one party label per household) and open a household with `POST /session` `{ partyId }`. Everything about Cloudflare's hosted behaviour below is labelled *publisher claim* or *not verified* unless it was observed here or during the deployment.
 
 ## Layout
 
@@ -11,7 +11,7 @@ This directory is a reference backend for the RSVP contract in `../docs/RSVP_API
 | `wrangler.toml` | Worker configuration: D1 binding `DB`, cron trigger, custom domain route, plain variables. No secrets. Every binding is commented. |
 | `migrations/0001_init.sql`, `migrations/0002_meal_options.sql`, `migrations/0003_hotel_stay.sql` | Schema for every PRD §10 entity with the invariants as constraints, plus meal options and the household Grand Hotel stay column. Applied with `wrangler d1 migrations apply`. |
 | `src/index.js` | Entry point: `fetch` (routing, CORS, security headers, redacted request log) and `scheduled` (mail outbox + retention). |
-| `src/session.js`, `src/response.js`, `src/snapshot.js` | Guest endpoints `POST/GET/DELETE /session`, `PUT /response`, the session snapshot. |
+| `src/session.js`, `src/directory.js`, `src/response.js`, `src/snapshot.js` | Guest endpoints `GET /guests`, `POST/GET/DELETE /session`, `PUT /response`, the session snapshot. |
 | `src/admin/*` | `/admin` routes: Access JWT check, CSV import (preview/commit), reports, exports, credentials, corrections, content versions. |
 | `src/mail/*` | Outbox worker, provider adapter interface (`stub`, `webhook`), plain-text templates. |
 | `src/retention.js` | Retention rule (SEC-06), idempotent, re-runnable after a restore. |
@@ -151,7 +151,7 @@ Legend: **met** (implemented and covered by a test here), **partly** (implemente
 
 | ID | Status | How / what remains |
 |---|---|---|
-| RSVP-01 | met | Per-household link tokens and fallback codes, digests only, revocable; `POST /session` neutral errors; snapshot exposes one household. Credential delivery method remains an owner decision (PRD §16). |
+| RSVP-01 | met | Public name directory (`GET /guests`) plus `POST /session` `{ partyId }`; optional admin-issued link tokens and fallback codes remain, digests only, revocable; snapshot exposes one household. |
 | RSVP-02 | met | Server-side entitlement check per guest and event; plus-one is a slot whose name is required only when attending; children only as named invitees from the import. |
 | RSVP-03 | met | Declining households need no email; notes cleared when nobody attends; no meal questions (none configured). |
 | RSVP-04 | met | Every entitled pair must be answered; no "maybe"; `423 closed` after the cutoff or when `rsvp-settings.open` is false; audited owner correction with `response_history`. |

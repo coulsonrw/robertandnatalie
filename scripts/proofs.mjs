@@ -105,8 +105,9 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   const page = await context.newPage();
   await page.goto(base + '/rsvp.html?preview=1', { waitUntil: 'networkidle' });
   await settle(page);
-  await page.fill('#code', 'PREVIEW');
-  await page.click('button[type=submit]');
+  await page.waitForSelector('#guest-name');
+  await page.selectOption('#guest-name', 'hh_preview');
+  await page.click('[data-action="open-party"]');
   await page.waitForSelector('[data-step="invitees"]');
   await page.screenshot({ path: path.join(OUT, `rsvp-preview-invitees-${vp.width}.png`), fullPage: true });
   await page.click('[data-action="continue"]');
@@ -128,6 +129,7 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   await page.click('[data-action="continue"]');
   await page.waitForSelector('[data-step="details"]');
   await page.fill('#contactEmail', 'alex@example.com');
+  await page.check('#c-hotelStay-yes');
   await page.fill('#notes', 'Vegetarian, please.');
   await page.screenshot({ path: path.join(OUT, `rsvp-preview-details-${vp.width}.png`), fullPage: true });
   await page.click('[data-action="continue"]');
@@ -145,8 +147,9 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   const page = await context.newPage();
   await page.goto(base + '/rsvp.html?preview=1', { waitUntil: 'networkidle' });
   await settle(page);
-  await page.fill('#code', 'SOLO');
-  await page.click('button[type=submit]');
+  await page.waitForSelector('#guest-name');
+  await page.selectOption('#guest-name', 'hh_preview_solo');
+  await page.click('[data-action="open-party"]');
   await page.waitForSelector('[data-step="invitees"]');
   await page.click('[data-action="continue"]');
   await page.waitForSelector('[data-step="attendance"]');
@@ -163,19 +166,23 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   await context.close();
 }
 
-// Private-link access (IA-02, SEC-02): token read from the fragment, stripped from the address bar,
-// exchanged only on an explicit action. Uses the synthetic preview code as the token.
+// Name-picker access: dropdown of synthetic party labels, then the household form.
 {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
-  await page.goto(base + '/rsvp.html?preview=1#t=PREVIEW', { waitUntil: 'networkidle' });
+  await page.goto(base + '/rsvp.html?preview=1', { waitUntil: 'networkidle' });
   await settle(page);
-  const before = await page.evaluate(() => ({ url: location.href, button: !!document.querySelector('[data-action="open-link"]') }));
-  await page.screenshot({ path: path.join(OUT, 'rsvp-link-token-390.png'), fullPage: true });
-  await page.locator('[data-action="open-link"]').click({ timeout: 10000 });
+  await page.waitForSelector('#guest-name');
+  const before = await page.evaluate(() => ({
+    url: location.href,
+    names: Array.from(document.querySelectorAll('#guest-name option')).map((o) => o.textContent).filter((t) => t && t !== '- Select -'),
+  }));
+  await page.screenshot({ path: path.join(OUT, 'rsvp-name-picker-390.png'), fullPage: true });
+  await page.selectOption('#guest-name', 'hh_preview');
+  await page.click('[data-action="open-party"]');
   await page.waitForSelector('[data-step="invitees"]', { timeout: 10000 });
   const after = await page.evaluate(() => ({ url: location.href, step: document.querySelector('[data-step]').getAttribute('data-step') }));
-  results.linkToken = { tokenStrippedBeforeAction: !before.url.includes('t=PREVIEW'), buttonShown: before.button, stepAfter: after.step, urlAfter: after.url };
+  results.namePicker = { names: before.names, stepAfter: after.step, partyInUrl: after.url.includes('party=hh_preview') };
   await context.close();
 }
 
@@ -210,8 +217,9 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   await page.screenshot({ path: path.join(OUT, 'detail-invitation-390@2x.png'), fullPage: false });
   await page.goto(base + '/rsvp.html?preview=1', { waitUntil: 'networkidle' });
   await settle(page);
-  await page.fill('#code', 'PREVIEW');
-  await page.click('button[type=submit]');
+  await page.waitForSelector('#guest-name');
+  await page.selectOption('#guest-name', 'hh_preview');
+  await page.click('[data-action="open-party"]');
   await page.waitForSelector('[data-step="invitees"]');
   await page.click('[data-action="continue"]');
   await page.waitForSelector('[data-step="attendance"]');

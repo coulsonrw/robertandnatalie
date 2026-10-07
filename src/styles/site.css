@@ -88,7 +88,8 @@ a:hover { color: var(--ink); }
 .btn-pending.btn-rsvp { white-space: nowrap; padding-inline: 14px; letter-spacing: 0.06em; }
 /* The longer label needs the room the couple's name takes in the header between 480 and 1023px; the crest stays. */
 @media (max-width: 1023.98px) { .rsvp-pending .brand-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; } }
-.btn[disabled], .btn[aria-disabled="true"] { opacity: 0.55; cursor: progress; }
+.btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+.btn[aria-disabled="true"] { opacity: 0.55; cursor: progress; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 
 /* ---------- Urgent logistics banner (ADMIN-04, OPS-02) ---------- */
@@ -293,6 +294,8 @@ address { font-style: normal; margin: 0.6em 0 1em; }
 .input:focus { border-color: var(--navy); outline: 3px solid var(--navy); outline-offset: 2px; }
 .input[aria-invalid="true"] { border-color: var(--gold-deep); border-width: 2px; }
 textarea.input { min-height: 120px; resize: vertical; }
+select.input { appearance: auto; cursor: pointer; }
+.rsvp-name-picker .field + .field { margin-top: 4px; }
 .hint { color: var(--ink-soft); font-size: 1rem; margin: 6px 0 0; }
 .error-text { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0 0; font-weight: 600; }
 .error-text .icon { color: var(--gold-deep); width: 22px; height: 22px; margin-top: 2px; }
@@ -301,6 +304,10 @@ fieldset.is-invalid { border-color: var(--gold-deep); border-width: 2px; }
 legend { padding: 0 8px; margin-bottom: 4px; }
 .guest-block { margin-bottom: 28px; }
 .guest-block h3 { font-size: 1.5rem; margin-bottom: 10px; }
+.guest-block-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.guest-remove { font: inherit; font-size: 1rem; color: var(--gold-deep); background: none; border: 0; padding: 4px 0; cursor: pointer; text-decoration: underline; }
+.guest-remove:hover, .guest-remove:focus-visible { color: var(--ink); }
+.add-guest { margin: 8px 0 20px; }
 .event-row legend { font-size: 1.05rem; }
 .choice-group { display: flex; flex-wrap: wrap; gap: 10px; }
 .choice { position: relative; flex: 1 1 150px; }

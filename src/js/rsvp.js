@@ -56,14 +56,16 @@
   RsvpError.prototype = Object.create(Error.prototype);
 
   var MESSAGES = {
-    invalid_code: 'We could not find an invitation with that code. Please check the code on your invitation and try again.',
-    invalid_session: 'Your session has ended. Please enter your invitation code again; anything you had entered is kept on this page.',
+    invalid_code: 'We could not find that invitation. Please choose your invitation from the list, or contact us.',
+    invalid_session: 'Your session has ended. Please choose your invitation again; anything you had entered is kept on this page.',
     conflict: 'This household’s response was updated from another device. The latest answers are shown below; please review them before saving.',
     closed: cfg.closedText,
     rate_limited: 'Too many attempts. Please wait a few minutes and try again.',
     network: 'We could not reach the RSVP service. Nothing has been lost. Please check your connection and try again.',
     validation: 'Some of the answers could not be accepted. Please review them and try again.',
-    server_error: 'Something went wrong on our side. Nothing has been lost. Please try again in a moment.'
+    server_error: 'Something went wrong on our side. Please try again in a moment.',
+    directory_empty: 'The invitation list is not available yet. Please try again later, or contact us so we can help you respond.',
+    directory_error: 'We could not load the invitation list. Please try again, or contact us so we can help you respond.'
   };
 
   // ---------- adapters ----------
@@ -75,7 +77,7 @@
       if (!stores[hh.id]) stores[hh.id] = {
         revision: 0,
         responses: hh.entitlements.map(function (e) { return { guestId: e.guestId, eventId: e.eventId, status: 'pending', meal: null }; }),
-        plusOneNames: {}, contactEmail: hh.contactEmail || '', notes: '', hotelStay: null, reference: null, submittedAt: null, seen: {}
+        plusOneNames: {}, guestNames: {}, guestDietary: {}, contactEmail: hh.contactEmail || '', contactPhone: hh.contactPhone || '', mailingAddress: hh.mailingAddress || '', notes: '', hotelStay: null, reference: null, submittedAt: null, seen: {}
       };
       return stores[hh.id];
     }
@@ -83,21 +85,38 @@
       var hh = current; var store = storeFor(hh);
       return {
         household: {
-          id: hh.id, label: hh.label, contactEmail: store.contactEmail,
-          guests: hh.guests.map(function (g) { return { id: g.id, kind: g.kind, hostGuestId: g.hostGuestId || null, name: g.kind === 'plus-one' ? (store.plusOneNames[g.id] || null) : g.name }; })
+          id: hh.id, label: hh.label, contactEmail: store.contactEmail, contactPhone: store.contactPhone || '', mailingAddress: store.mailingAddress || '',
+          guests: hh.guests.map(function (g) {
+            var name = g.kind === 'plus-one' ? (store.plusOneNames[g.id] || store.guestNames[g.id] || null) : (store.guestNames[g.id] || g.name);
+            return { id: g.id, kind: g.kind, hostGuestId: g.hostGuestId || null, name: name, added: !!g.added, dietary: store.guestDietary[g.id] || g.dietary || '' };
+          })
         },
         entitlements: hh.entitlements,
         responses: store.responses.map(function (r) { return { guestId: r.guestId, eventId: r.eventId, status: r.status, meal: r.meal || null }; }),
         notes: store.notes, hotelStay: store.hotelStay || null, revision: store.revision, reference: store.reference, submittedAt: store.submittedAt,
+        extraGuestCap: cfg.extraGuestCap || 2,
+        extraGuestsRemaining: Math.max(0, (cfg.extraGuestCap || 2) - hh.guests.filter(function (g) { return g.kind === 'plus-one' || g.added; }).length),
         emailQueued: false, rsvp: { open: true, cutoffAt: cfg.cutoffAt }
       };
     }
     return {
       kind: 'preview',
-      openSession: function (code) {
+      listGuests: function () {
+        return wait(200).then(function () {
+          var guests = households.map(function (h) { return { name: h.label, partyId: h.id }; });
+          guests.sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }); });
+          return { guests: guests };
+        });
+      },
+      openSession: function (codeOrParty) {
         return wait(350).then(function () {
-          var c = String(code || '').trim().toUpperCase();
-          var hh = households.filter(function (h) { return String(h.code).toUpperCase() === c; })[0];
+          var hh;
+          if (codeOrParty && typeof codeOrParty === 'object' && codeOrParty.partyId) {
+            hh = households.filter(function (h) { return h.id === codeOrParty.partyId; })[0];
+          } else {
+            var c = String(codeOrParty || '').trim().toUpperCase();
+            hh = households.filter(function (h) { return String(h.code).toUpperCase() === c; })[0];
+          }
           if (!hh) throw new RsvpError('invalid_code');
           current = hh; return snapshot();
         });
@@ -119,9 +138,35 @@
             return n ? { guestId: r.guestId, eventId: r.eventId, status: n.status, meal: n.status === 'attending' ? (n.meal || null) : null } : r;
           });
           store.plusOneNames = Object.assign({}, p.plusOneNames || {});
+          store.guestNames = Object.assign({}, store.guestNames, p.guestNames || {});
+          store.guestDietary = Object.assign({}, p.guestDietary || {});
+          Object.keys(store.guestNames).forEach(function (id) {
+            hh.guests.forEach(function (g) { if (g.id === id && g.kind === 'named') g.name = store.guestNames[id]; });
+          });
+          Object.keys(store.guestDietary).forEach(function (id) {
+            hh.guests.forEach(function (g) { if (g.id === id) g.dietary = store.guestDietary[id]; });
+          });
           store.contactEmail = p.contactEmail || '';
+          store.contactPhone = p.contactPhone || '';
+          store.mailingAddress = p.mailingAddress || '';
           store.notes = p.notes || '';
           store.hotelStay = p.hotelStay || null;
+          (p.removedGuestIds || []).forEach(function (id) {
+            hh.guests = hh.guests.filter(function (g) { return g.id !== id; });
+            hh.entitlements = hh.entitlements.filter(function (e) { return e.guestId !== id; });
+            store.responses = store.responses.filter(function (r) { return r.guestId !== id; });
+          });
+          (p.addedGuests || []).forEach(function (row, i) {
+            var id = 'g_added_' + (i + 1) + '_' + String(store.revision + 1);
+            var host = hh.guests.filter(function (g) { return g.kind === 'named'; })[0];
+            hh.guests.push({ id: id, kind: 'plus-one', hostGuestId: host ? host.id : null, name: row.name, added: true, dietary: row.dietary || '' });
+            (row.responses || []).forEach(function (r) {
+              hh.entitlements.push({ guestId: id, eventId: r.eventId });
+              store.responses.push({ guestId: id, eventId: r.eventId, status: r.status, meal: r.meal || null });
+            });
+            store.plusOneNames[id] = row.name;
+            store.guestDietary[id] = row.dietary || '';
+          });
           store.revision += 1;
           store.reference = store.reference || ('PREVIEW-' + uuid().replace(/-/g, '').slice(0, 6).toUpperCase());
           store.submittedAt = new Date().toISOString();
@@ -149,7 +194,13 @@
     }
     return {
       kind: 'live',
-      openSession: function (code) { return call('POST', '/session', { code: code }); },
+      listGuests: function () { return call('GET', '/guests'); },
+      openSession: function (codeOrParty) {
+        if (codeOrParty && typeof codeOrParty === 'object' && codeOrParty.partyId) {
+          return call('POST', '/session', { partyId: codeOrParty.partyId });
+        }
+        return call('POST', '/session', { code: codeOrParty });
+      },
       getSession: function () { return call('GET', '/session').catch(function (e) { if (e.code === 'invalid_session' || e.code === 'invalid_code') return null; throw e; }); },
       saveResponse: function (p) { return call('PUT', '/response', p); },
       endSession: function () { return call('DELETE', '/session').catch(function () { return null; }); }
@@ -158,28 +209,26 @@
 
   var adapter = mode === 'preview' ? mockAdapter(cfg.preview) : httpAdapter(cfg.apiBaseUrl);
 
-  // Private household links carry their credential in the URL fragment (#t=…) or query (?t=…).
-  // It is read once, removed from the address bar immediately so it is not kept in history or
-  // leaked through referrers, and only exchanged for a session when the guest presses the button
-  // (a link-preview fetch must never consume it — PRD SEC-02, IA-02).
-  var linkToken = null;
-  (function readLinkToken() {
-    var hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
-    var t = hashParams.get('t') || params.get('t');
-    if (!t) return;
-    linkToken = t;
-    hashParams.delete('t');
-    params.delete('t');
-    var clean = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + (hashParams.toString() ? '#' + hashParams.toString() : '');
-    try { window.history.replaceState(null, '', clean); } catch (e) { /* ignore */ }
-  })();
+  function currentSearch() { return new URLSearchParams(window.location.search); }
+  function writeSearch(next) {
+    var q = next.toString();
+    try { window.history.replaceState(null, '', window.location.pathname + (q ? '?' + q : '')); } catch (e) { /* ignore */ }
+  }
+  function setPartyParam(partyId) {
+    var next = currentSearch();
+    if (partyId) next.set('party', partyId);
+    else next.delete('party');
+    writeSearch(next);
+  }
   var eventById = {};
   cfg.events.forEach(function (e) { eventById[e.id] = e; });
 
   // ---------- state ----------
   var state = {
-    step: 'access', session: null, answers: {}, plusOneNames: {}, contactEmail: '', notes: '', hotelStay: null, meals: {},
-    requestId: null, busy: false, notice: null, errors: {}, focusHeading: false
+    step: 'access', session: null, answers: {}, plusOneNames: {}, guestNames: {}, guestDietary: {},
+    contactEmail: '', contactPhone: '', mailingAddress: '', notes: '', hotelStay: null, meals: {},
+    requestId: null, busy: false, notice: null, errors: {}, focusHeading: false,
+    guestList: null, guestListError: null, selectedPartyId: '', removedGuestIds: []
   };
   var mealCfg = cfg.mealChoices && cfg.mealChoices.eventId && cfg.mealChoices.options && cfg.mealChoices.options.length ? cfg.mealChoices : null;
   function mealAsked(gid) { return !!mealCfg && state.answers[key(gid, mealCfg.eventId)] === 'attending'; }
@@ -188,6 +237,8 @@
     var sameHousehold = keepLocal && state.session && state.session.household.id === session.household.id;
     var local = sameHousehold ? state.answers : {};
     var localNames = sameHousehold ? state.plusOneNames : {};
+    var localGuestNames = sameHousehold ? state.guestNames : {};
+    var localDietary = sameHousehold ? state.guestDietary : {};
     state.session = session;
     state.answers = {};
     var localMeals = sameHousehold ? state.meals : {};
@@ -196,16 +247,34 @@
     Object.keys(localMeals).forEach(function (k) { if (localMeals[k]) state.meals[k] = localMeals[k]; });
     Object.keys(local).forEach(function (k) { if (local[k]) state.answers[k] = local[k]; });
     state.plusOneNames = {};
-    session.household.guests.forEach(function (g) { if (g.kind === 'plus-one' && g.name) state.plusOneNames[g.id] = g.name; });
+    state.guestNames = {};
+    state.guestDietary = {};
+    session.household.guests.forEach(function (g) {
+      if (g.name) {
+        state.guestNames[g.id] = g.name;
+        if (g.kind === 'plus-one') state.plusOneNames[g.id] = g.name;
+      }
+      if (g.dietary) state.guestDietary[g.id] = g.dietary;
+    });
     Object.keys(localNames).forEach(function (k) { if (localNames[k]) state.plusOneNames[k] = localNames[k]; });
+    Object.keys(localGuestNames).forEach(function (k) { if (localGuestNames[k]) state.guestNames[k] = localGuestNames[k]; });
+    Object.keys(localDietary).forEach(function (k) { if (localDietary[k] != null) state.guestDietary[k] = localDietary[k]; });
     if (!sameHousehold || !state.contactEmail) state.contactEmail = session.household.contactEmail || '';
+    if (!sameHousehold || !state.contactPhone) state.contactPhone = session.household.contactPhone || '';
+    if (!sameHousehold || !state.mailingAddress) state.mailingAddress = session.household.mailingAddress || '';
     if (!sameHousehold || !state.notes) state.notes = session.notes || '';
     if (!sameHousehold || !state.hotelStay) state.hotelStay = session.hotelStay || null;
+    if (!sameHousehold) state.removedGuestIds = [];
   }
   function guests() { return state.session.household.guests; }
   function entitlementsFor(gid) { return state.session.entitlements.filter(function (x) { return x.guestId === gid; }).map(function (x) { return x.eventId; }); }
-  function hostName(g) { var h = guests().filter(function (x) { return x.id === g.hostGuestId; })[0]; return h ? h.name : 'your household'; }
-  function guestLabel(g) { return g.kind === 'plus-one' ? (state.plusOneNames[g.id] || ('Guest of ' + hostName(g))) : g.name; }
+  function hostName(g) { var h = guests().filter(function (x) { return x.id === g.hostGuestId; })[0]; return h ? guestLabel(h) : 'your household'; }
+  function guestDisplayName(g) { return (state.guestNames[g.id] || state.plusOneNames[g.id] || g.name || '').trim(); }
+  function guestLabel(g) { return guestDisplayName(g) || (g.kind === 'plus-one' ? ('Guest of ' + hostName(g)) : 'Guest'); }
+  function extraGuestCap() { return (state.session && state.session.extraGuestCap) || cfg.extraGuestCap || 2; }
+  function extraCount() { return guests().filter(function (g) { return g.kind === 'plus-one' || g.added; }).length; }
+  function canAddGuest() { return extraCount() < extraGuestCap(); }
+  function isAddedGuest(g) { return !!(g.added || (g.kind === 'plus-one' && String(g.id).indexOf('new-') === 0)); }
   function attendingAny(gid) { return entitlementsFor(gid).some(function (eid) { return state.answers[key(gid, eid)] === 'attending'; }); }
   function anyoneAttending() { return guests().some(function (g) { return attendingAny(g.id); }); }
   function rsvpOpen() {
@@ -256,23 +325,50 @@
   }
 
   function renderAccess() {
-    if (linkToken) {
-      var linkForm = el('form', { novalidate: true, onsubmit: onLinkSubmit },
-        el('p', { text: 'You followed a personal invitation link. Press the button to open your household’s invitation.' }),
-        el('div', { class: 'form-actions' }, busyButton('Open my invitation', { class: 'btn btn-primary', type: 'submit', 'data-action': 'open-link', 'data-busy-label': 'Opening…' })),
-        el('p', { class: 'hint' }, 'Not you? ', el('button', { class: 'text-button', type: 'button', onclick: function () { linkToken = null; render(); } }, 'Enter an invitation code instead'), '.')
-      );
-      return stepSection('access', [heading('Open your invitation'), linkForm, contactNode('Having trouble? Please contact ')]);
+    var intro = el('p', { text: 'Choose your invitation to open the RSVP for everyone in your party.' });
+    if (mode === 'preview') {
+      intro = el('p', { text: 'Preview with synthetic guests. Choose a sample invitation to try the household form.' });
     }
-    var form = el('form', { novalidate: true, onsubmit: onAccessSubmit });
+    if (state.guestList === null && !state.guestListError) {
+      return stepSection('access', [heading('Find your invitation'), intro, el('p', { class: 'hint', role: 'status', text: 'Loading the invitation list…' })]);
+    }
+    if (state.guestListError || (state.guestList && !state.guestList.length)) {
+      var emptyMsg = state.guestListError ? MESSAGES.directory_error : MESSAGES.directory_empty;
+      return stepSection('access', [
+        heading('Find your invitation'),
+        el('div', { class: 'status is-error', role: 'status' }, icon('i-alert'), el('p', { text: emptyMsg })),
+        el('div', { class: 'form-actions' }, busyButton('Try again', { class: 'btn btn-secondary', type: 'button', 'data-action': 'retry-directory', onclick: function () { loadGuestList(); } })),
+        contactNode('You can also contact ')
+      ]);
+    }
+    var form = el('form', { class: 'rsvp-name-picker', novalidate: true, onsubmit: onAccessSubmit });
+    var selected = !!(state.selectedPartyId);
+    var select = el('select', {
+      class: 'input', id: 'guest-name', name: 'guest-name', required: true,
+      'aria-invalid': state.errors.party ? 'true' : null,
+      'aria-describedby': state.errors.party ? 'guest-name-error' : null,
+      onchange: function (e) {
+        state.selectedPartyId = e.target.value;
+        if (state.errors.party) state.errors.party = '';
+        var btn = document.querySelector('[data-action="open-party"]');
+        if (btn) { btn.disabled = !e.target.value || state.busy; if (e.target.value) btn.removeAttribute('aria-disabled'); }
+        var err = document.getElementById('guest-name-error');
+        if (err && e.target.value) err.remove();
+        select.setAttribute('aria-invalid', e.target.value ? 'false' : (state.errors.party ? 'true' : 'false'));
+      }
+    }, el('option', { value: '', text: '- Select -' }));
+    (state.guestList || []).forEach(function (g) {
+      append(select, el('option', { value: g.partyId, selected: state.selectedPartyId === g.partyId ? true : null, text: g.name }));
+    });
     append(form, el('div', { class: 'field' },
-      el('label', { for: 'code', text: 'Invitation code' }),
-      el('input', { class: 'input', id: 'code', name: 'code', type: 'text', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', required: true, 'aria-describedby': 'code-hint' + (state.errors.code ? ' code-error' : ''), 'aria-invalid': state.errors.code ? 'true' : null, value: state.codeValue || '' }),
-      el('p', { class: 'hint', id: 'code-hint' }, mode === 'preview' ? 'This is a preview with synthetic guests. Codes: ' + (cfg.preview.households || []).map(function (h) { return h.code; }).join(', ') + '.' : 'Your code is printed with your invitation. If you followed a personal link, you may not need it.'),
-      state.errors.code ? el('p', { class: 'error-text', id: 'code-error' }, icon('i-alert'), el('span', { text: state.errors.code })) : null
+      el('label', { for: 'guest-name', text: 'Your invitation' }),
+      select,
+      state.errors.party ? el('p', { class: 'error-text', id: 'guest-name-error' }, icon('i-alert'), el('span', { text: state.errors.party })) : null
     ));
-    append(form, el('div', { class: 'form-actions' }, busyButton('Find my invitation', { class: 'btn btn-primary', type: 'submit', 'data-busy-label': 'Checking…' })));
-    return stepSection('access', [heading('Find your invitation'), form, contactNode('Lost your code? Please contact ')]);
+    var continueBtn = busyButton('Continue', { class: 'btn btn-primary', type: 'submit', 'data-action': 'open-party', 'data-busy-label': 'Opening…' });
+    if (!selected && !state.busy) continueBtn.disabled = true;
+    append(form, el('div', { class: 'form-actions' }, continueBtn));
+    return stepSection('access', [heading('Find your invitation'), intro, form, contactNode('If your invitation is missing, please contact ')]);
   }
 
   function renderInvitees() {
@@ -283,7 +379,7 @@
       el('button', { class: 'btn btn-tertiary', type: 'button', 'data-action': 'not-mine', onclick: onNotMine }, 'This is not my invitation'),
       el('button', { class: 'btn btn-primary', type: 'button', 'data-action': 'continue', onclick: function () { go('attendance'); } }, 'These are correct — continue')
     );
-    return stepSection('invitees', [stepper('invitees'), heading(state.session.household.label), el('p', { text: 'Please confirm the people included in this invitation.' }), list, contactNode('If a name is wrong or someone is missing, please contact '), actions]);
+    return stepSection('invitees', [stepper('invitees'), heading(state.session.household.label), el('p', { text: 'These people are on this invitation. On the next page you can edit names, add guests, and answer for each person.' }), list, contactNode('If this is not your invitation, please go back or contact '), actions]);
   }
 
   function choice(name, value, label, checked, describedBy) {
@@ -297,7 +393,27 @@
   function renderAttendance() {
     var form = el('form', { novalidate: true, onsubmit: function (e) { e.preventDefault(); onAttendanceContinue(); } });
     guests().forEach(function (g) {
-      var block = el('div', { class: 'guest-block' }, el('h3', { text: guestLabel(g) }));
+      var title = el('div', { class: 'guest-block-head' }, el('h3', { text: isAddedGuest(g) ? (guestDisplayName(g) || 'Additional guest') : guestLabel(g) }));
+      if (isAddedGuest(g)) {
+        append(title, el('button', { class: 'guest-remove', type: 'button', 'data-action': 'remove-guest', onclick: function () { onRemoveGuest(g.id); } }, 'Remove'));
+      }
+      var block = el('div', { class: 'guest-block', 'data-guest': g.id }, title);
+      var nameId = 'guest-fullname-' + g.id;
+      var nameErr = 'name:' + g.id;
+      append(block, el('div', { class: 'field' },
+        el('label', { for: nameId, text: 'Full name' }),
+        el('input', {
+          class: 'input', id: nameId, type: 'text', autocomplete: 'name', maxlength: '80',
+          value: guestDisplayName(g),
+          'aria-invalid': state.errors[nameErr] ? 'true' : null,
+          'aria-describedby': state.errors[nameErr] ? nameId + '-error' : null,
+          oninput: function (e) {
+            state.guestNames[g.id] = e.target.value;
+            if (g.kind === 'plus-one') state.plusOneNames[g.id] = e.target.value;
+          }
+        }),
+        state.errors[nameErr] ? el('p', { class: 'error-text', id: nameId + '-error' }, icon('i-alert'), el('span', { text: state.errors[nameErr] })) : null
+      ));
       entitlementsFor(g.id).forEach(function (eid) {
         var ev = eventById[eid] || { label: eid, name: '', when: '' };
         var k = key(g.id, eid);
@@ -313,22 +429,35 @@
         );
         append(block, fs);
       });
-      if (g.kind === 'plus-one') {
-        var nameId = 'plusone-' + g.id;
-        var errKey = 'name:' + g.id;
-        append(block, el('div', { class: 'field', hidden: attendingAny(g.id) ? null : true },
-          el('label', { for: nameId, text: 'Guest’s name' }),
-          el('input', { class: 'input', id: nameId, type: 'text', autocomplete: 'off', maxlength: '80', value: state.plusOneNames[g.id] || '', 'aria-invalid': state.errors[errKey] ? 'true' : null, 'aria-describedby': state.errors[errKey] ? nameId + '-error' : null, oninput: function (e) { state.plusOneNames[g.id] = e.target.value; } }),
-          state.errors[errKey] ? el('p', { class: 'error-text', id: nameId + '-error' }, icon('i-alert'), el('span', { text: state.errors[errKey] })) : null
-        ));
-      }
+      var dietId = 'guest-dietary-' + g.id;
+      var dietErr = 'dietary:' + g.id;
+      append(block, el('div', { class: 'field' },
+        el('label', { for: dietId, text: 'Dietary requirements' }),
+        el('input', {
+          class: 'input', id: dietId, type: 'text', autocomplete: 'off', maxlength: '200',
+          value: state.guestDietary[g.id] || '',
+          'aria-invalid': state.errors[dietErr] ? 'true' : null,
+          'aria-describedby': dietId + '-hint' + (state.errors[dietErr] ? ' ' + dietId + '-error' : ''),
+          oninput: function (e) { state.guestDietary[g.id] = e.target.value; }
+        }),
+        el('p', { class: 'hint', id: dietId + '-hint', text: 'Optional. Allergies, meals we should plan for, or none.' }),
+        state.errors[dietErr] ? el('p', { class: 'error-text', id: dietId + '-error' }, icon('i-alert'), el('span', { text: state.errors[dietErr] })) : null
+      ));
       append(form, block);
     });
+    if (canAddGuest()) {
+      append(form, el('div', { class: 'add-guest' },
+        el('button', { class: 'btn btn-secondary', type: 'button', 'data-action': 'add-guest', onclick: onAddGuest }, 'Add a guest'),
+        el('p', { class: 'hint', text: 'You can add up to ' + extraGuestCap() + ' extra guests (' + (extraGuestCap() - extraCount()) + ' remaining).' })
+      ));
+    } else {
+      append(form, el('p', { class: 'hint add-guest', text: 'This invitation is at the extra-guest limit (' + extraGuestCap() + ').' }));
+    }
     append(form, el('div', { class: 'form-actions' },
       el('button', { class: 'btn btn-tertiary', type: 'button', 'data-action': 'back', onclick: function () { go('invitees'); } }, 'Back'),
       el('button', { class: 'btn btn-primary', type: 'submit', 'data-action': 'continue' }, 'Continue')
     ));
-    return stepSection('attendance', [stepper('attendance'), heading('Will you attend?'), el('p', { text: 'Please answer for each person and each event. Responses can differ between the ceremony and the reception.' }), form]);
+    return stepSection('attendance', [stepper('attendance'), heading('Will you attend?'), el('p', { text: 'Please answer for each person and each event. You can edit names and add extra guests here.' }), form]);
   }
 
   function renderDetails() {
@@ -338,6 +467,18 @@
       el('input', { class: 'input', id: 'contactEmail', type: 'email', autocomplete: 'email', inputmode: 'email', required: true, value: state.contactEmail, 'aria-invalid': state.errors.contactEmail ? 'true' : null, 'aria-describedby': 'email-hint' + (state.errors.contactEmail ? ' email-error' : ''), oninput: function (e) { state.contactEmail = e.target.value; } }),
       el('p', { class: 'hint', id: 'email-hint', text: 'Used to confirm your response and reach you if plans change. Not shared with anyone else.' }),
       state.errors.contactEmail ? el('p', { class: 'error-text', id: 'email-error' }, icon('i-alert'), el('span', { text: state.errors.contactEmail })) : null
+    ));
+    append(form, el('div', { class: 'field' },
+      el('label', { for: 'contactPhone', text: 'Phone number' }),
+      el('input', { class: 'input', id: 'contactPhone', type: 'tel', autocomplete: 'tel', inputmode: 'tel', maxlength: '40', value: state.contactPhone, 'aria-invalid': state.errors.contactPhone ? 'true' : null, 'aria-describedby': 'phone-hint' + (state.errors.contactPhone ? ' phone-error' : ''), oninput: function (e) { state.contactPhone = e.target.value; } }),
+      el('p', { class: 'hint', id: 'phone-hint', text: 'Optional. A number we can reach if plans change.' }),
+      state.errors.contactPhone ? el('p', { class: 'error-text', id: 'phone-error' }, icon('i-alert'), el('span', { text: state.errors.contactPhone })) : null
+    ));
+    append(form, el('div', { class: 'field' },
+      el('label', { for: 'mailingAddress', text: 'Mailing address' }),
+      el('textarea', { class: 'input', id: 'mailingAddress', autocomplete: 'street-address', maxlength: '500', 'aria-describedby': 'address-hint' + (state.errors.mailingAddress ? ' address-error' : ''), 'aria-invalid': state.errors.mailingAddress ? 'true' : null, oninput: function (e) { state.mailingAddress = e.target.value; } }, state.mailingAddress),
+      el('p', { class: 'hint', id: 'address-hint', text: 'Optional. For thank-you notes or anything we should post.' }),
+      state.errors.mailingAddress ? el('p', { class: 'error-text', id: 'address-error' }, icon('i-alert'), el('span', { text: state.errors.mailingAddress })) : null
     ));
     var hotelErr = !!state.errors.hotelStay;
     append(form, el('fieldset', { class: 'event-row' + (hotelErr ? ' is-invalid' : '') },
@@ -368,7 +509,7 @@
     }
     var count = el('p', { class: 'hint char-count', id: 'notes-count', text: (500 - state.notes.length) + ' characters left' });
     append(form, el('div', { class: 'field' },
-      el('label', { for: 'notes', text: 'Anything we should know?' }),
+      el('label', { for: 'notes', text: 'A message for Robert and Natalie' }),
       el('textarea', { class: 'input', id: 'notes', maxlength: '500', 'aria-describedby': 'notes-hint notes-count', oninput: function (e) { state.notes = e.target.value; count.textContent = (500 - state.notes.length) + ' characters left'; } }, state.notes),
       el('p', { class: 'hint', id: 'notes-hint', text: cfg.notesPurpose }),
       count
@@ -407,8 +548,14 @@
     var details = el('dl', { class: 'review-details' });
     if (anyoneAttending()) {
       append(details, el('div', {}, el('dt', { text: 'Contact email' }), el('dd', { text: state.contactEmail || '—' })));
+      append(details, el('div', {}, el('dt', { text: 'Phone' }), el('dd', { text: state.contactPhone || '—' })));
+      append(details, el('div', {}, el('dt', { text: 'Mailing address' }), el('dd', { text: state.mailingAddress || '—' })));
       append(details, el('div', {}, el('dt', { text: 'Grand Hotel stay' }), el('dd', { text: state.hotelStay === 'yes' ? 'Yes' : state.hotelStay === 'no' ? 'No' : state.hotelStay === 'undecided' ? 'Not sure yet' : '—' })));
-      append(details, el('div', {}, el('dt', { text: 'Dietary or access notes' }), el('dd', { text: state.notes || 'None' })));
+      guests().forEach(function (g) {
+        var diet = (state.guestDietary[g.id] || '').trim();
+        if (diet) append(details, el('div', {}, el('dt', { text: 'Dietary — ' + guestLabel(g) }), el('dd', { text: diet })));
+      });
+      append(details, el('div', {}, el('dt', { text: 'Message' }), el('dd', { text: state.notes || 'None' })));
     }
     var actions = el('div', { class: 'form-actions' },
       el('div', { class: 'actions' },
@@ -476,7 +623,13 @@
       return;
     }
     if (code === 'closed') { state.step = 'closed'; render(); setNotice('error', MESSAGES.closed); return; }
-    if (code === 'invalid_session') { state.step = 'access'; render(); setNotice('error', MESSAGES.invalid_session); return; }
+    if (code === 'invalid_session') {
+      state.step = 'access';
+      setNotice('error', MESSAGES.invalid_session);
+      if (!state.guestList) loadGuestList();
+      else render();
+      return;
+    }
     var fields = code === 'validation' && err.extra && err.extra.error && err.extra.error.fields;
     if (fields && fields.length) {
       // Server-side field errors (audit QA-15): show them inline on the step that owns the field,
@@ -487,7 +640,11 @@
         if ((m = /^responses\.([^.]+)\.([^.]+)\.status$/.exec(path))) { mapped[key(m[1], m[2])] = f.message; attendance = true; return; }
         if ((m = /^responses\.([^.]+)\.([^.]+)\.meal$/.exec(path))) { mapped['meal:' + m[1]] = f.message; details = true; return; }
         if ((m = /^plusOneNames\.([^.]+)$/.exec(path))) { mapped['name:' + m[1]] = f.message; attendance = true; return; }
-        if (path === 'contactEmail' || path === 'notes' || path === 'hotelStay') { mapped[path] = f.message; details = true; }
+        if ((m = /^guestNames\.([^.]+)$/.exec(path))) { mapped['name:' + m[1]] = f.message; attendance = true; return; }
+        if ((m = /^guestDietary\.([^.]+)$/.exec(path))) { mapped['dietary:' + m[1]] = f.message; attendance = true; return; }
+        if ((m = /^addedGuests\.(\d+)\.name$/.exec(path))) { mapped.addedGuests = f.message; attendance = true; return; }
+        if (path === 'addedGuests' || path === 'removedGuestIds') { mapped[path] = f.message; attendance = true; return; }
+        if (path === 'contactEmail' || path === 'contactPhone' || path === 'mailingAddress' || path === 'notes' || path === 'hotelStay') { mapped[path] = f.message; details = true; }
       });
       if (attendance || details) {
         state.step = attendance ? 'attendance' : 'details';
@@ -499,59 +656,96 @@
     setNotice('error', MESSAGES[code] || MESSAGES.server_error);
   }
 
-  function onAccessSubmit(e) {
-    e.preventDefault();
+  function resetLocalAnswers() {
+    state.session = null; state.answers = {}; state.plusOneNames = {}; state.guestNames = {}; state.guestDietary = {};
+    state.contactEmail = ''; state.contactPhone = ''; state.mailingAddress = ''; state.notes = ''; state.hotelStay = null; state.meals = {};
+    state.selectedPartyId = ''; state.removedGuestIds = [];
+  }
+
+  function applyOpenedSession(session) {
+    loadSession(session, true);
+    if (!rsvpOpen() && !session.reference) { state.step = 'closed'; state.focusHeading = true; render(); return; }
+    go(session.reference ? 'confirmation' : 'invitees');
+  }
+
+  function openParty(partyId) {
     if (state.busy) return;
-    var input = document.getElementById('code');
-    var code = (input.value || '').trim();
-    state.codeValue = code;
+    state.selectedPartyId = partyId;
     state.errors = {};
-    if (!code) { state.errors.code = 'Please enter your invitation code.'; render(); input = document.getElementById('code'); input.focus(); return; }
     state.busy = true; render(); setNotice(null);
-    adapter.openSession(code).then(function (session) {
+    adapter.openSession({ partyId: partyId }).then(function (session) {
       state.busy = false;
-      loadSession(session, true);
-      state.codeValue = '';
-      if (!rsvpOpen() && !session.reference) { state.step = 'closed'; state.focusHeading = true; render(); return; }
-      go(session.reference ? 'confirmation' : 'invitees');
+      setPartyParam(partyId);
+      applyOpenedSession(session);
     }).catch(function (err) {
       state.busy = false;
-      if (err.code === 'invalid_code') { state.errors.code = MESSAGES.invalid_code; render(); document.getElementById('code').focus(); return; }
+      setPartyParam('');
+      if (err.code === 'invalid_code') { state.errors.party = MESSAGES.invalid_code; render(); var sel = document.getElementById('guest-name'); if (sel) sel.focus(); return; }
       render(); handleError(err);
     });
   }
 
-  function onLinkSubmit(e) {
-    e.preventDefault();
-    if (state.busy || !linkToken) return;
-    var token = linkToken;
-    state.busy = true; render(); setNotice(null);
-    adapter.openSession(token).then(function (session) {
-      state.busy = false;
-      linkToken = null;
-      loadSession(session, true);
-      if (!rsvpOpen() && !session.reference) { state.step = 'closed'; state.focusHeading = true; render(); return; }
-      go(session.reference ? 'confirmation' : 'invitees');
-    }).catch(function (err) {
-      state.busy = false;
-      if (err.code === 'invalid_code') { linkToken = null; state.errors.code = 'That invitation link is no longer valid. Please enter the code from your invitation, or contact us.'; render(); var c = document.getElementById('code'); if (c) c.focus(); return; }
-      render(); handleError(err);
+  function onAddGuest() {
+    if (!canAddGuest()) return;
+    var host = guests().filter(function (g) { return g.kind === 'named'; })[0] || guests()[0];
+    var events = host ? entitlementsFor(host.id) : ['ceremony', 'reception'];
+    var id = 'new-' + uuid().replace(/-/g, '').slice(0, 10);
+    state.session.household.guests.push({ id: id, kind: 'plus-one', hostGuestId: host ? host.id : null, name: '', added: true, dietary: '' });
+    events.forEach(function (eid) {
+      state.session.entitlements.push({ guestId: id, eventId: eid });
+      state.answers[key(id, eid)] = null;
     });
+    state.guestNames[id] = '';
+    state.plusOneNames[id] = '';
+    state.guestDietary[id] = '';
+    render();
+    var field = document.getElementById('guest-fullname-' + id);
+    if (field) field.focus();
+  }
+
+  function onRemoveGuest(id) {
+    var g = guests().filter(function (x) { return x.id === id; })[0];
+    if (!g || !isAddedGuest(g)) return;
+    if (String(id).indexOf('new-') !== 0) {
+      if (state.removedGuestIds.indexOf(id) === -1) state.removedGuestIds.push(id);
+    }
+    state.session.household.guests = guests().filter(function (x) { return x.id !== id; });
+    state.session.entitlements = state.session.entitlements.filter(function (e) { return e.guestId !== id; });
+    delete state.guestNames[id];
+    delete state.plusOneNames[id];
+    delete state.guestDietary[id];
+    Object.keys(state.answers).forEach(function (k) { if (k.indexOf(id + '|') === 0) delete state.answers[k]; });
+    render();
+  }
+
+  function onAccessSubmit(e) {
+    e.preventDefault();
+    if (state.busy) return;
+    var select = document.getElementById('guest-name');
+    var partyId = ((select && select.value) || state.selectedPartyId || '').trim();
+    state.selectedPartyId = partyId;
+    state.errors = {};
+    if (!partyId) { state.errors.party = 'Please choose your invitation from the list.'; render(); select = document.getElementById('guest-name'); if (select) select.focus(); return; }
+    openParty(partyId);
   }
 
   function onNotMine() {
     adapter.endSession().then(function () {
-      state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = ''; state.hotelStay = null; state.meals = {};
+      resetLocalAnswers();
+      setPartyParam('');
       go('access');
-      setNotice('info', 'You have been signed out of that invitation. Enter the code from your own invitation to continue.');
+      setNotice('info', 'You have been signed out of that invitation. Choose your own invitation to continue.');
+      if (!state.guestList) loadGuestList();
     });
   }
 
   function onSignOut() {
     adapter.endSession().then(function () {
-      state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = ''; state.hotelStay = null; state.meals = {};
+      resetLocalAnswers();
+      setPartyParam('');
       go('access');
       setNotice('success', 'Thank you. You have been signed out of this invitation.');
+      if (!state.guestList) loadGuestList();
     });
   }
 
@@ -580,10 +774,8 @@
         var k = key(g.id, eid);
         if (!state.answers[k]) { state.errors[k] = 'Please choose attending or declining for ' + guestLabel(g) + '.'; firstInvalid = firstInvalid || 'c-' + k.replace(/[^a-z0-9]/gi, '_') + '-attending'; }
       });
-      if (g.kind === 'plus-one' && attendingAny(g.id)) {
-        var name = (state.plusOneNames[g.id] || '').trim();
-        if (name.length < 2) { state.errors['name:' + g.id] = 'Please enter the name of the guest who will attend.'; firstInvalid = firstInvalid || 'plusone-' + g.id; }
-      }
+      var name = guestDisplayName(g);
+      if (name.length < 2) { state.errors['name:' + g.id] = 'Please enter this guest’s full name.'; firstInvalid = firstInvalid || ('guest-fullname-' + g.id); }
     });
     if (firstInvalid) {
       render();
@@ -629,17 +821,38 @@
       revision: state.session.revision,
       responses: [],
       plusOneNames: {},
+      guestNames: {},
+      guestDietary: {},
+      addedGuests: [],
+      removedGuestIds: (state.removedGuestIds || []).slice(),
       contactEmail: anyoneAttending() ? state.contactEmail : (state.contactEmail || ''),
+      contactPhone: anyoneAttending() ? (state.contactPhone || '') : '',
+      mailingAddress: anyoneAttending() ? (state.mailingAddress || '') : '',
       notes: anyoneAttending() ? state.notes : '',
       hotelStay: anyoneAttending() ? state.hotelStay : null
     };
     guests().forEach(function (g) {
+      var name = guestDisplayName(g);
+      payload.guestNames[g.id] = name;
+      payload.guestDietary[g.id] = (state.guestDietary[g.id] || '').trim();
+      if (String(g.id).indexOf('new-') === 0) {
+        payload.addedGuests.push({
+          name: name,
+          dietary: payload.guestDietary[g.id],
+          responses: entitlementsFor(g.id).map(function (eid) {
+            var row = { eventId: eid, status: state.answers[key(g.id, eid)] };
+            if (mealCfg && eid === mealCfg.eventId && row.status === 'attending') row.meal = state.meals[g.id] || null;
+            return row;
+          })
+        });
+        return;
+      }
       entitlementsFor(g.id).forEach(function (eid) {
         var row = { guestId: g.id, eventId: eid, status: state.answers[key(g.id, eid)] };
         if (mealCfg && eid === mealCfg.eventId && row.status === 'attending') row.meal = state.meals[g.id] || null;
         payload.responses.push(row);
       });
-      if (g.kind === 'plus-one' && attendingAny(g.id)) payload.plusOneNames[g.id] = (state.plusOneNames[g.id] || '').trim();
+      if (g.kind === 'plus-one') payload.plusOneNames[g.id] = name;
     });
     state.busy = true; render(); setNotice('info', 'Saving your response…');
     adapter.saveResponse(payload).then(function (saved) {
@@ -655,12 +868,42 @@
     });
   }
 
+  function loadGuestList() {
+    state.guestList = null;
+    state.guestListError = null;
+    state.busy = true;
+    render();
+    adapter.listGuests().then(function (data) {
+      state.busy = false;
+      state.guestList = (data && data.guests) ? data.guests.slice() : [];
+      state.guestListError = null;
+      var requested = currentSearch().get('party') || '';
+      if (requested && !state.session) {
+        openParty(requested);
+        return;
+      }
+      render();
+    }).catch(function (err) {
+      state.busy = false;
+      state.guestList = [];
+      state.guestListError = err && err.code ? err.code : 'network';
+      render();
+      if (err && (err.code === 'network' || err.code === 'rate_limited')) setNotice('error', MESSAGES[err.code] || MESSAGES.directory_error);
+    });
+  }
+
   // ---------- start ----------
   adapter.getSession().then(function (session) {
     if (session) {
       loadSession(session, false);
       state.step = session.reference ? 'confirmation' : (rsvpOpen() ? 'invitees' : 'closed');
+      render();
+      return;
     }
+    loadGuestList();
+  }).catch(function (err) {
     render();
-  }).catch(function (err) { render(); if (err && err.code === 'network') setNotice('error', MESSAGES.network); });
+    if (err && err.code === 'network') setNotice('error', MESSAGES.network);
+    loadGuestList();
+  });
 })();

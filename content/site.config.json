@@ -671,7 +671,7 @@
     {
       "id": "who-is-invited",
       "question": "Who is included in my invitation?",
-      "answer": "Your invitation is addressed to the members of your household. When you RSVP, the form shows exactly who is included, and you respond for each person by name.",
+      "answer": "Choose your invitation from the list on the RSVP page. The form then shows everyone in your party, and you respond for each person by name.",
       "approval": {
         "state": "draft",
         "owner": "Robert / Natalie",
@@ -759,9 +759,10 @@
     "cutoffAt": "2026-11-15T23:59:59-06:00",
     "opensAt": null,
     "allowPreview": true,
-    "comingSoonText": "Responses are not being accepted yet. When they open, your invitation will include a private link or code for your household, and this page will show the response deadline.",
+    "comingSoonText": "Responses are not being accepted yet. When they open, choose your invitation on this page to respond for your household, and this page will show the response deadline.",
     "closedText": "Online responses have now closed. If you need to change your response, please contact us directly.",
-    "notesPurpose": "Optional. Share anything that helps us look after you, such as dietary or access needs. This is used only for planning and shared only with the people who need it.",
+    "notesPurpose": "Optional. A message for Robert and Natalie. Dietary needs for each guest are collected with that person.",
+    "extraGuestCap": 2,
     "preview": {
       "households": [
         {
@@ -914,8 +915,8 @@
       "state": "pending",
       "owner": "Robert / Natalie / technical lead",
       "source": "PRD \u00a708\u2013\u00a711",
-      "reviewed": "2026-10-05",
-      "note": "Private-link RSVP is wired to https://api.robertandnatalie.wedding with cutoff 2026-11-15T23:59:59-06:00 (America/Chicago). Guests need an issued household link; the roster is imported through /ops/roster/sync when OPS_BOOTSTRAP_TOKEN (and optionally the Google service account) are set. Mail stays stub and Access is still unset. Approval stays pending until Rob confirms the issued links and the RSVP Answers tab. Synthetic preview fixtures (PRD \u00a714) are unchanged."
+      "reviewed": "2026-10-07",
+      "note": "Name-picker RSVP is wired to https://api.robertandnatalie.wedding with cutoff 2026-11-15T23:59:59-06:00 (America/Chicago). Guests choose their party from GET /guests (one label per household) and respond for that party. Rob settled a 14-party roster imported through /ops/roster/sync when OPS_BOOTSTRAP_TOKEN is set. Mail stays stub and Access is still unset. Approval stays pending until Rob confirms the imported roster. Synthetic preview fixtures (PRD \u00a714) are unchanged."
     },
     "mealChoices": {
       "eventId": null,

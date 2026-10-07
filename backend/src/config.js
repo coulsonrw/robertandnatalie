@@ -47,12 +47,14 @@ export function readConfig(env) {
     eventTimezone: env.EVENT_TIMEZONE || 'America/Chicago',
     weddingDestination: env.WEDDING_DESTINATION || 'Point Clear, Alabama',
     rsvpCutoffAt: env.RSVP_CUTOFF_AT || null,
+    extraGuestCap: Math.min(20, int(env.EXTRA_GUEST_CAP, 2)),
     retentionDaysAfterWedding: int(env.RETENTION_DAYS_AFTER_WEDDING, 90),
     sessionTtlMs: int(env.SESSION_TTL_HOURS, 24) * 3600 * 1000,
     rateLimit: {
       windowSeconds: int(env.RATE_LIMIT_WINDOW_SECONDS, 900),
       perIp: int(env.RATE_LIMIT_PER_IP, 20),
       perCode: int(env.RATE_LIMIT_PER_CODE, 10),
+      perDirectory: int(env.RATE_LIMIT_PER_DIRECTORY, 60),
     },
     mail: {
       provider: env.MAIL_PROVIDER || 'stub',

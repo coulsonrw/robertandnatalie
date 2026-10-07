@@ -135,7 +135,7 @@ describe('ops bootstrap', () => {
     expect((await ops('/ops/status', { token: 'nope' })).status).toBe(401);
   });
 
-  it('imports the synthetic sheet and issues one link per named guest', async () => {
+  it('imports the synthetic sheet without issuing private links', async () => {
     const status = await (await ops('/ops/status')).json();
     expect(status.households).toBe(0);
     expect(status.sheets.configured).toBe(false);
@@ -144,14 +144,27 @@ describe('ops bootstrap', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.counts.invitationRows).toBe(11);
-    expect(body.counts.privateLinks).toBe(17);
-    expect(body.links.filter((l) => l.issued)).toHaveLength(17);
-    expect(body.links.every((l) => l.link && l.link.includes('/rsvp.html#t='))).toBe(true);
+    expect(body.counts.namedGuests).toBe(17);
+    expect(body.links).toEqual([]);
     expect(body.answersTab.skipped).toBe(true);
+
+    const names = await (await SELF.fetch(`${BASE}/guests`, { headers: { Origin: 'https://robertandnatalie.wedding' } })).json();
+    expect(names.guests.length).toBe(11); // one dropdown row per invitation, not per named guest
+    expect(names.guests.every((g) => g.name && g.partyId)).toBe(true);
+    expect(new Set(names.guests.map((g) => g.partyId)).size).toBe(11);
 
     const again = await ops('/ops/roster/sync', { method: 'POST', body: { csv: FIXTURE } });
     expect(again.status).toBe(200);
-    const replay = await again.json();
+    expect((await again.json()).links).toEqual([]);
+  });
+
+  it('issues private links only when issueLinks is true', async () => {
+    const res = await ops('/ops/roster/sync', { method: 'POST', body: { csv: FIXTURE, issueLinks: true } });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.links.filter((l) => l.issued)).toHaveLength(17);
+    expect(body.links.every((l) => l.link && l.link.includes('/rsvp.html#t='))).toBe(true);
+    const replay = await (await ops('/ops/roster/sync', { method: 'POST', body: { csv: FIXTURE, issueLinks: true } })).json();
     expect(replay.links.filter((l) => l.issued)).toHaveLength(0);
     expect(replay.links.filter((l) => l.reason === 'already_issued')).toHaveLength(17);
   });

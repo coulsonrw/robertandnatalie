@@ -1,8 +1,8 @@
-# RSVP private-link launch
+# RSVP guest launch
 
-How to open household RSVPs without touching Natalie’s original guest list. The form is already wired on the site (`rsvp.mode` = `live`, API `https://api.robertandnatalie.wedding`). Guests still need issued links.
+How to open household RSVPs without touching Natalie’s original guest list. The form is already wired on the site (`rsvp.mode` = `live`, API `https://api.robertandnatalie.wedding`). Guests do **not** need private links.
 
-**Default path (Rob, 5 October 2026 via Babbage):** `OPS_BOOTSTRAP_TOKEN` + CSV roster sync + D1. Google Sheets is optional later and is not required to issue links or collect answers.
+**Default path (Rob, 7 October 2026):** `OPS_BOOTSTRAP_TOKEN` + CSV roster sync + D1. Guests click RSVP, choose their invitation (one label per party), and answer for their household. Google Sheets is optional later and is not required to collect answers.
 
 ## Cutoff
 
@@ -12,10 +12,18 @@ Set in both `content/site.config.json` → `rsvp.cutoffAt` and `backend/wrangler
 
 ## What guests see
 
-- One private link per **named guest** on that invitation row. Plus-ones (named or unnamed) answer through the host’s household page.
-- A forwarded link shows only that household.
-- The form cannot add more people than the row already allows (named plus-ones become named people on the household; “N unnamed” becomes N plus-one slots).
-- Answers: attending/declining per person and event, derived headcount, dietary/access notes, Grand Hotel stay (yes / no / not sure).
+1. They click **RSVP** on the site (`/rsvp.html`).
+2. The page loads a collapsed native dropdown of **party labels** from the Worker (`GET /guests`) — one row per household, sorted A to Z. It starts at “- Select -”; Continue stays disabled until they pick a party.
+3. Choosing a label opens that **party** page — one form per invitation row in the roster.
+4. They answer attending / declining for each person and event, can edit each full name, add extra guests (up to 2), and fill dietary notes, contact email/phone, optional mailing address, Grand Hotel stay, and a message to the couple.
+
+A forwarded or bookmarked party URL (`/rsvp.html?party=<id>`) opens the same household form. Plus-ones (named or unnamed) answer on the host household’s page. Parties can add extra guests up to `extraGuestCap` (default 2). The **Add a guest** control is hidden once the party is at that cap.
+
+If that household has already RSVPed, the page shows the saved answers and they can update them until the cutoff. Two devices editing at once use the existing revision check (409 + latest snapshot) so a second save does not silently overwrite the first; after reviewing the latest answers, the next save wins.
+
+If the roster is empty or the API is unreachable, the page says so and points guests to the couple.
+
+The public list returns **only** the party label and party id. No emails, phones, addresses, notes, answers or a per-person name list.
 
 ## Secrets Rob must set
 
@@ -23,32 +31,47 @@ Nothing in this list is spent money. Generate tokens with `node -e "console.log(
 
 | Secret / var | Where | Required to |
 |---|---|---|
-| `OPS_BOOTSTRAP_TOKEN` | `npx wrangler secret put OPS_BOOTSTRAP_TOKEN` (from `backend/`) | Import the CSV roster and issue links without Cloudflare Access |
+| `OPS_BOOTSTRAP_TOKEN` | `npx wrangler secret put OPS_BOOTSTRAP_TOKEN` (from `backend/`) | Import the CSV roster without Cloudflare Access |
 | `CREDENTIAL_PEPPER`, `SESSION_SECRET` | already set (23 Sep 2026) | Sessions |
 | `MAIL_WEBHOOK_URL`, `MAIL_WEBHOOK_TOKEN` | only if `MAIL_PROVIDER=webhook` | Actual confirmation email. Safe to leave `stub` |
 | Cloudflare Access (`ACCESS_*`, `OWNER_EMAILS`, `COORDINATOR_EMAILS`) | still unset | Admin UI. Not required for guest RSVP or `/ops` bootstrap |
 
 If `OPS_BOOTSTRAP_TOKEN` is missing, `/ops/*` returns `503 bootstrap_unavailable`. RSVPs always save to D1 once a household exists. Google Sheet secrets are not part of this path; see [Optional later: Google Sheets](#optional-later-google-sheets).
 
-Redeploy after secrets: `cd backend && npm run deploy`. Then apply the new migration on the remote D1:
+No new Worker secrets are required for the name-picker flow.
+
+## Ops steps (do these in order)
+
+Do **not** skip the remote migration after a Worker deploy that includes new SQL. This change adds **`0004_party_details.sql`** (household phone/address and `guest.origin` so parties can add extra guests). It is additive and backward compatible. Apply it with `npm run migrate:remote` after deploy — do not edit older migration files. The steps below are the same launch path as before, minus issuing links.
+
+1. Set `OPS_BOOTSTRAP_TOKEN` if it is not already set (`npx wrangler secret put OPS_BOOTSTRAP_TOKEN` from `backend/`).
+2. Deploy the Worker: `cd backend && npm run deploy`.
+3. Apply remote migrations (safe if already applied):
 
 ```bash
 cd backend
 npm run migrate:remote
 ```
 
-(`0003_hotel_stay.sql` adds `household_response.hotel_stay`.)
+4. Import the 14-party roster CSV (below). After that, `GET https://api.robertandnatalie.wedding/guests` should list **14 party labels** and party ids only, A to Z.
 
-## Import the roster and issue links
+(`0003_hotel_stay.sql` adds `household_response.hotel_stay` if that migration has not already been applied. `0004_party_details.sql` adds `household.contact_phone`, `household.mailing_address`, and `guest.origin`.)
 
-1. Download the **first tab** of [Natalie’s guest sheet](https://docs.google.com/spreadsheets/d/1MzBwUQpLq78eIH6tmUFSM4PcojktZRJe/edit) as CSV. Do not edit that tab. The Worker never reads or writes the live sheet on this path.
-2. Preview the mapping (names omitted unless you pass `--print-names`):
+Parties can add up to **2 extra guests** (`rsvp.extraGuestCap` / `EXTRA_GUEST_CAP`, Rob 7 October 2026). That cap is one number for every household. The form hides **Add a guest** at the limit; the Worker rejects a third extra. `GET /guests` still returns only party labels and ids — never emails, phones, addresses, notes or answers.
+
+## Import the roster
+
+Use the **14-party guest-sheet CSV** from this follow-up (artifact `roster-14-parties.csv`; do not commit it). Do not import the older 16-row download of [Natalie’s guest sheet](https://docs.google.com/spreadsheets/d/1MzBwUQpLq78eIH6tmUFSM4PcojktZRJe/edit). The Worker never reads or writes the live sheet on this path. The POST body is unchanged: guest-sheet columns, one `Guest Name` cell per party.
+
+1. Preview the mapping (names omitted unless you pass `--print-names`):
 
 ```bash
-npm run rsvp:roster -- --csv ~/Downloads/guest-list.csv
+npm run rsvp:roster -- --csv /path/to/roster-14-parties.csv
 ```
 
-3. POST that CSV to the API:
+Expect **14 invitation rows**. Couple labels split on `&` into two named guests; a single-name label is one guest. There are no plus-one slots on this roster.
+
+2. POST that CSV to the API:
 
 ```bash
 curl -sS -X POST https://api.robertandnatalie.wedding/ops/roster/sync \
@@ -56,45 +79,45 @@ curl -sS -X POST https://api.robertandnatalie.wedding/ops/roster/sync \
   -H "Content-Type: application/json" \
   -H "Origin: https://robertandnatalie.wedding" \
   --data-binary @- <<EOF
-{"csv": $(python3 -c 'import json,sys; print(json.dumps(open(sys.argv[1]).read()))' ~/Downloads/guest-list.csv)}
+{"csv": $(python3 -c 'import json,sys; print(json.dumps(open(sys.argv[1]).read()))' /path/to/roster-14-parties.csv)}
 EOF
 ```
 
-The response includes `counts`, `flags`, and `links[]` with `link` shown **once** per named guest. Store that list in an owner-controlled place (not this repository). A second run does not reissue existing labels unless `"reissue": true`.
+The response includes `counts` and `flags`. It does **not** issue private links. A second run updates the same household ids in place (ids are derived from the Guest Name cell). To issue old-style personal links as well (not needed for guests), send `"issueLinks": true`.
 
-4. Check `GET /ops/status` with the same bearer token: household count and active links. D1 is the source of truth for answers.
+3. Check `GET /ops/status` with the same bearer token: 14 households. Confirm `GET /guests` from a browser on the wedding site returns 14 party labels, A to Z. D1 is the source of truth for answers.
 
 ## Preview
 
 ```bash
 npm run build && npm run serve
 # Form: http://127.0.0.1:8080/rsvp.html
-# Synthetic household (nothing saved): http://127.0.0.1:8080/rsvp.html?preview=1  codes PREVIEW, SOLO, FAMILY
+# Synthetic households (nothing saved): http://127.0.0.1:8080/rsvp.html?preview=1
 ```
 
-Local API: `cd backend && cp .dev.vars.example .dev.vars` (fill `OPS_BOOTSTRAP_TOKEN` and the already-documented session secrets), `npm run migrate:local`, `npm run dev`. Point a **local copy** of `rsvp.apiBaseUrl` at `http://localhost:8787` only for that laptop check.
+The preview dropdown lists sample **party labels** (The Example Household, Taylor Sample, …), not every synthetic guest name. Local API: `cd backend && cp .dev.vars.example .dev.vars` (fill `OPS_BOOTSTRAP_TOKEN` and the already-documented session secrets), `npm run migrate:local`, `npm run dev`. Point a **local copy** of `rsvp.apiBaseUrl` at `http://localhost:8787` only for that laptop check.
 
-## Guest-list mapping (kept as written)
+## Guest-list mapping (Rob, 7 October 2026)
 
-The 5 October 2026 sheet has **16 invitation rows**. Named people in the Guest Name cell are split on `&` / `and` / commas. That is about **24 named guests** (the earlier “~22” count). Plus-one cells become either named household members (semicolon-separated names) or unnamed slots (`1 unnamed…`). A bare number that equals the named count (for example a couple with `2`) is treated as party size, **not** two extra guests, and is flagged.
+Rob settled a **14-party** roster. One `Guest Name` row per party; that cell is the dropdown label and the household id source. Named people in the cell are still split on `&` / `and` / commas. There are no plus-one cells on this list. The exact 14 labels and guest splits live in the uncommitted artifact `roster-14-parties.csv` (same guest-sheet columns `POST /ops/roster/sync` already accepts). Do not commit that file.
 
-Rob decisions still open on the list itself:
+Settled labels (do not invent fuller names, and do not keep the old 16-row sheet):
 
-- Incomplete names kept as written: **Mama & Daddy**, **Ken** (in Shelly & Ken). Not expanded.
-- **Anna & Logan** plus-one cell is `2` — treated as party size (no extra plus-ones). Confirm if they should have two unnamed slots instead.
-- Possible duplicate households: **Winne & Francois** vs **Winnie** + **Francoise**. Kept as two rows.
-- Several rows have no email/phone; the RSVP form collects a contact email when anyone attends.
-- Site contact email/phone on Details stay TBD and do not block this ship.
+- Couples are **one party** under the combined label: Andrew & Taylor; Anna & Logan (party of two, no extra plus-ones); Jon & Yuko; Linda & Danny; Shelly & Ken; **Winnie & Francois** (that spelling, one row — not a separate Winnie / Francoise household).
+- **Mama & Daddy** stays as written (two named guests: Mama, Daddy).
+- Single-name parties are one guest.
 
-Do not invent fuller names. Re-run the CSV roster sync after any sheet edit; ids are derived from the Guest Name cell so the same row updates in place.
+The RSVP form still collects a contact email when anyone attends. Site contact email/phone on Details stay TBD and do not block this ship.
+
+Re-run the CSV roster sync after any roster edit; ids are derived from the Guest Name cell so the same row updates in place. After sync, `GET /guests` must show those 14 labels once each, A to Z.
 
 ## Remaining owner work
 
-- Set `OPS_BOOTSTRAP_TOKEN`, deploy, migrate, POST the CSV, store the issued links, then distribute them (text, email, or printed insert).
+- Set `OPS_BOOTSTRAP_TOKEN` if needed, deploy the Worker, `migrate:remote`, POST the 14-party CSV. Guests then use the site RSVP button — no links to store or send.
 - Mail provider if confirmation email is wanted.
 - Cloudflare Access + MFA for `/admin`.
 - Details contact route, dress code, children policy, G3 `site.launchApproved`.
-- Token expiry 31 December 2026 (extend before the March 2027 retention run).
+- Token expiry 31 December 2026 (extend before the March 2027 retention run). This is the Cloudflare API token, not a guest RSVP link.
 - Optional later: Google Sheets answers tab (below).
 
 ## Optional later: Google Sheets

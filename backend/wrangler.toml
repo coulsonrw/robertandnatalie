@@ -56,16 +56,19 @@ WEDDING_DESTINATION = "Point Clear, Alabama"
 # America/Chicago (CST is UTC−6). Keep content/site.config.json rsvp.cutoffAt identical (DATA-01).
 # Overridable without a redeploy through /admin/content/rsvp-settings once Access exists.
 RSVP_CUTOFF_AT = "2026-11-15T23:59:59-06:00"
+# Extra guests a party may add on the RSVP form (beyond named roster guests).
+EXTRA_GUEST_CAP = "2"
 
 # Retention (SEC-06): mirrors privacy.retentionDaysAfterWedding in content/site.config.json.
 RETENTION_DAYS_AFTER_WEDDING = "90"
 
 # Guest sessions (SEC-03).
 SESSION_TTL_HOURS = "24"
-# Rate limits for POST /session, per client IP and per submitted code (SEC-02).
+# Rate limits for POST /session (per IP and per code/party) and GET /guests (SEC-02).
 RATE_LIMIT_WINDOW_SECONDS = "900"
 RATE_LIMIT_PER_IP = "20"
 RATE_LIMIT_PER_CODE = "10"
+RATE_LIMIT_PER_DIRECTORY = "60"
 
 # Mail (RSVP-07). MAIL_PROVIDER: "stub" (marks mail as sent without delivering; local/dev only) or
 # "webhook" (POSTs a JSON envelope to MAIL_WEBHOOK_URL with a bearer secret; see src/mail/provider.js
@@ -103,7 +106,7 @@ GOOGLE_SHEETS_ANSWERS_TAB = "RSVP Answers"
 #   SESSION_SECRET      32+ random bytes. HMAC key for session-cookie digests.
 #   MAIL_WEBHOOK_URL    only for MAIL_PROVIDER = "webhook".
 #   MAIL_WEBHOOK_TOKEN  only for MAIL_PROVIDER = "webhook".
-#   OPS_BOOTSTRAP_TOKEN owner bootstrap for /ops/roster/sync (issue links without Access).
+#   OPS_BOOTSTRAP_TOKEN owner bootstrap for /ops/roster/sync (import the CSV roster without Access).
 #   GOOGLE_SERVICE_ACCOUNT_JSON  full service-account JSON (or GOOGLE_SERVICE_ACCOUNT_EMAIL
 #                                plus GOOGLE_PRIVATE_KEY). Share the sheet with that client_email.
 # See .dev.vars.example for local development values.
