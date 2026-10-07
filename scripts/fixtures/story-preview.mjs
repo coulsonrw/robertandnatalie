@@ -24,7 +24,6 @@ export function storyPreviewFixture(view) {
   const [n1, n2] = view.couple.names;
   const mark = image('fixture-mark', 'chapter', 'Monogram slot', 800, 800, 'monogram');
   const photo = image('fixture-photo', 'chapter', 'Chapter photograph slot', 800, 1066, 'photo');
-  const soon = image('fixture-soon', 'chapter', 'Coming soon slot', 800, 800, 'placeholder');
   return {
     published: false,
     fixture: true,
@@ -35,11 +34,16 @@ export function storyPreviewFixture(view) {
     byline: `The Story of ${n1} & ${n2}`,
     paragraphs: [],
     milestones: [],
-    images: [mark, photo, soon],
+    images: [mark, photo],
+    continued: true,
+    close: {
+      title: 'To be continued…',
+      verse: 'And over all these virtues put on love, which binds them all together in perfect unity.',
+      citation: 'Colossians 3:14',
+    },
     chapters: [
       { id: 'ch1', number: 1, title: 'Chapter title (fixture)', when: null, place: 'Place names (optional)', paragraphs: [`Synthetic fixture: this preview shows where the first chapter of ${n1} and ${n2}'s story will sit. It is placeholder text supplied by the build so that the owners can judge the chapter timeline; it says nothing about the couple.`], comingSoon: false, image: mark },
       { id: 'ch2', number: 2, title: 'Second chapter (fixture)', when: 'Month', place: 'City', paragraphs: ['Synthetic fixture, chapter two: a photograph sits opposite the copy on wide screens and below the title on phones. Nothing here is drawn from private conversations, messages or photographs.'], comingSoon: false, image: photo },
-      { id: 'ch3', number: 3, title: 'Coming-soon chapter (fixture)', when: null, place: null, paragraphs: ['Coming soon…'], comingSoon: true, image: soon },
     ],
   };
 }

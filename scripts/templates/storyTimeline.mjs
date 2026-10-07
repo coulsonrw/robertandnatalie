@@ -1,7 +1,8 @@
 // Our Story chapter timeline (Eames / Figma). Chapters 1–6 wrap the published
 // full-colour still in a .sketch frame and load a separate OpenCV/Potrace line
-// overlay; the photograph itself is unchanged (no sepia, no AI). Monogram and
-// coming-soon chapters stay photo-first. No inline styles (CSP).
+// overlay; the photograph itself is unchanged (no sepia, no AI). Unpublished
+// drafts never reach this template. A "To be continued" beat follows the last
+// published chapter while any draft remains. No inline styles (CSP).
 import { esc } from '../lib/html.mjs';
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
@@ -56,7 +57,7 @@ export function storyTimeline(view, { headingLevel = 2 } = {}) {
     const fig = ch.image
       ? `<figure class="chapter-figure">${chapterPicture(ch.image, { eager: i === 0 })}${ch.image.caption ? `<figcaption>${esc(ch.image.caption)}</figcaption>` : ''}</figure>`
       : '';
-    const cls = ['chapter', ch.comingSoon ? 'is-placeholder' : '', ch.image?.kind === 'photo' ? 'has-photo' : 'has-mark', ch.image?.sketch ? 'has-sketch' : ''].filter(Boolean).join(' ');
+    const cls = ['chapter', ch.image?.kind === 'photo' ? 'has-photo' : 'has-mark', ch.image?.sketch ? 'has-sketch' : ''].filter(Boolean).join(' ');
     return `<li class="${cls}" id="story-${esc(ch.id)}" aria-labelledby="story-${esc(ch.id)}-title">
   <span class="chapter-marker" aria-hidden="true">${esc(r)}</span>
   <div class="chapter-head chapter-text">
@@ -68,6 +69,18 @@ export function storyTimeline(view, { headingLevel = 2 } = {}) {
   <div class="chapter-body chapter-text">${ch.paragraphs.map(chapterParagraph).join('')}</div>
 </li>`;
   });
+  if (s.continued) {
+    items.push(`<li class="chapter is-continued-mark" aria-hidden="true"><span class="chapter-marker"></span></li>`);
+  }
+  const close = s.continued && s.close
+    ? `<div class="chapter story-continued" id="story-continued" aria-labelledby="story-continued-title">
+  <div class="chapter-text">
+    <${C} id="story-continued-title" class="story-continued-title">${esc(s.close.title)}</${C}>
+    <p class="story-continued-verse">${esc(s.close.verse)}</p>
+    <p class="scripture">${esc(s.close.citation)}</p>
+  </div>
+</div>`
+    : '';
   return `<section id="our-story" class="section story story-timeline" aria-labelledby="story-title">
   <header class="story-hero">
     <p class="kicker story-kicker">${esc(s.heading)}</p>
@@ -76,5 +89,6 @@ export function storyTimeline(view, { headingLevel = 2 } = {}) {
     ${s.byline ? `<p class="story-byline">${esc(s.byline)}</p>` : ''}
   </header>
   <ol class="timeline" aria-label="Chapters">${items.join('\n')}</ol>
+  ${close}
 </section>`;
 }

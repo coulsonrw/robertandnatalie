@@ -6,4 +6,4 @@ overlays only: the photographs themselves are unchanged and are not
 AI-generated or re-touched.
 
 Used on the public Our Story timeline for chapters 1–6 (scroll-draw, then
-full-colour still). Chapters 7–9 and 10 have no sketch.
+full-colour still). Unpublished drafts and chapter 10 have no sketch.

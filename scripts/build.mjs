@@ -290,6 +290,16 @@ function storyManifest() {
 function storyDerivatives(id) { return storyManifest()?.images?.[id] ?? null; }
 function storyPublished(c) { const s = c.story; return !!(s && s.enabled && s.approval?.state === 'approved' && s.visibility === 'public'); }
 function storyLayout(s) { return s?.layout === 'timeline' ? 'timeline' : 'narrative'; }
+// Guests only see chapters with published: true. Drafts stay in site.config.json
+// (published: false, often comingSoon: true). Omit published and a coming-soon
+// chapter stays hidden; a finished chapter is shown. Visitor-facing Roman
+// numerals are sequential among published chapters (stored number is the
+// owner-document id). To publish: fill the copy, comingSoon: false,
+// published: true, textApproved: true. See story.chaptersNote / docs/OUR_STORY_INTAKE.md.
+function chapterIsPublished(ch) {
+  if (typeof ch.published === 'boolean') return ch.published;
+  return !ch.comingSoon;
+}
 
 function storyImageView(im, d) {
   const ratio = d.width / d.height;
@@ -343,7 +353,9 @@ function validateStory(c) {
     if (!ch.title) fail(`${t}: title is required`);
     if (!Array.isArray(ch.paragraphs) || !ch.paragraphs.length || ch.paragraphs.some((x) => typeof x !== 'string' || !x.trim())) fail(`${t}: paragraphs must hold at least one non-empty string`);
     if (ch.imageId && !ids.has(ch.imageId)) fail(`${t}: imageId "${ch.imageId}" is not in story.images`);
+    if (ch.published != null && typeof ch.published !== 'boolean') fail(`${t}: published must be true or false when set`);
     if (ch.comingSoon && (ch.paragraphs.length !== 1 || ch.paragraphs[0] !== 'Coming soon…')) fail(`${t}: coming-soon chapters must use the body "Coming soon…" only`);
+    if (chapterIsPublished(ch) && ch.comingSoon) fail(`${t}: a published chapter cannot use coming-soon placeholder copy`);
   }
   for (const m of s.milestones ?? []) {
     if (!m.id || !m.title || !m.description) fail(`story.milestones[${m.id}]: id, title and description are required`);
@@ -353,11 +365,12 @@ function validateStory(c) {
   if (s.approval?.state !== 'approved') fail('story.enabled is true but story.approval.state is not "approved"; the section stays out of the public build until the owners approve the copy and photographs (audit IMP-12)');
   if (s.visibility !== 'public') fail('story.enabled is true but story.visibility is not "public" (owner visibility decision, audit IMP-03)');
   if (layout === 'timeline') {
-    if (!chapters.length) fail('story.chapters must hold at least one chapter when layout is "timeline"');
+    if (!chapters.some(chapterIsPublished)) fail('story.chapters must hold at least one published chapter when layout is "timeline"');
     for (const ch of chapters) {
+      if (!chapterIsPublished(ch)) continue;
       const t = `story.chapters[${ch.id}]`;
-      if (!ch.imageId) fail(`${t}: imageId is required when the story is enabled`);
-      if (ch.textApproved !== true && !ch.comingSoon) fail(`${t}: textApproved must be true before publication`);
+      if (!ch.imageId) fail(`${t}: imageId is required when the chapter is published`);
+      if (ch.textApproved !== true) fail(`${t}: textApproved must be true before publication`);
     }
   } else {
     const paras = s.narrative?.paragraphs ?? [];
@@ -397,18 +410,30 @@ function storyView(c) {
     images,
   };
   if (layout !== 'timeline') return base;
+  const publishedChapters = (s.chapters ?? []).filter(chapterIsPublished);
+  const usedImageIds = new Set(publishedChapters.map((ch) => ch.imageId).filter(Boolean));
   return {
     ...base,
-    chapters: (s.chapters ?? []).map((ch, i) => ({
+    images: images.filter((im) => usedImageIds.has(im.id)),
+    chapters: publishedChapters.map((ch, i) => ({
       id: ch.id,
-      number: ch.number ?? i + 1,
+      number: i + 1,
       title: ch.title,
       when: ch.when ?? null,
       place: ch.place ?? null,
       paragraphs: ch.paragraphs,
-      comingSoon: !!ch.comingSoon,
+      comingSoon: false,
       image: ch.imageId ? byId[ch.imageId] ?? null : null,
     })),
+    continued: (s.chapters ?? []).some((ch) => !chapterIsPublished(ch)),
+    // No verse text exists in the owner document — only the Ch10 citation label
+    // "Colossians 3:14". The verse wording is NIV; the visible citation is the
+    // reference only (Rob, 7 October 2026: no translation tag).
+    close: {
+      title: s.close?.title || 'To be continued…',
+      verse: s.close?.verse || 'And over all these virtues put on love, which binds them all together in perfect unity.',
+      citation: s.close?.citation || 'Colossians 3:14',
+    },
   };
 }
 

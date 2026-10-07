@@ -1,7 +1,8 @@
 /* Our Story — vertical chapter timeline (Eames / Figma).
    Loaded after site.css. Reuses site tokens. No inline styles (CSP style-src 'self').
    Chapters 1–6: scroll-drawn line overlay, then the published full-colour still
-   (no cream / greyscale / sepia on the photograph). Ch 7–9 and 10 stay photo-first. */
+   (no cream / greyscale / sepia on the photograph). Unpublished drafts are omitted.
+   A photo-less "To be continued" beat closes the rail while drafts remain. */
 
 .story-timeline {
   --rail: var(--gold-rule); --rail-ink: var(--gold);
@@ -44,7 +45,24 @@
 .chapter-text p { font-size: 1.18rem; line-height: 1.6; margin: 0 0 0.75em; max-width: 60ch; }
 .chapter-text .scripture { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.1em; color: var(--gold-text); }
 .chapter-text .coda { font-family: var(--font-script); font-size: 1.9rem; color: var(--gold-text); line-height: 1.2; margin-top: 0.6em; }
-.chapter.is-placeholder .chapter-body p { font-family: var(--font-sc); font-weight: 600; letter-spacing: 0.08em; color: var(--gold-text); }
+/* Closing mark is the last item inside the rail. Copy sits after the <ol>, so
+   the gold line ends at this dot and never runs through the title or verse. */
+.chapter.is-continued-mark {
+  padding: 0 0 8px 52px; min-height: 36px; display: block;
+}
+.story-continued {
+  display: block; max-width: 1080px; margin: 0 auto; text-align: center;
+  padding: 8px var(--gutter) clamp(40px, 7vw, 80px);
+}
+.story-continued .chapter-text { max-width: 36rem; margin-inline: auto; }
+.chapter-text .story-continued-title,
+h3.story-continued-title {
+  font-family: var(--font-script); font-weight: 400; color: var(--gold-text);
+  font-size: clamp(2rem, 5vw, 3rem); line-height: 1.15; margin: 0;
+}
+.story-continued-verse {
+  font-style: italic; color: var(--ink); margin: 0.55em 0 0.35em;
+}
 
 .chapter-figure { margin: 0; }
 .chapter-figure figcaption { font-size: 0.95rem; color: var(--ink-soft); font-style: italic; margin-top: 8px; }
@@ -148,6 +166,9 @@
   .chapter:nth-child(even) .chapter-figure { grid-column: 2; }
   .chapter:nth-child(even) .chapter-head,
   .chapter:nth-child(even) .chapter-body { grid-column: 1; }
+  .chapter.is-continued-mark { padding: 0; min-height: 40px; }
+  .story-continued { display: block; padding: 12px var(--gutter) clamp(40px, 7vw, 80px); text-align: center; }
+  .story-continued .chapter-text { margin-inline: auto; }
 }
 
 @media print {

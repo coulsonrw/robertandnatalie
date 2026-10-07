@@ -308,6 +308,12 @@
       "voice": "third-person",
       "paragraphs": []
     },
+    "chaptersNote": "Guests only see chapters with published: true. Keep draft copy here with published: false (and comingSoon: true until the prose is ready). Visitor-facing Chapter I, II… labels are sequential among published chapters — stored number is the owner-document id, so ch10 stays 10 here even while 7–9 are hidden. To publish a draft: replace the Coming soon… body, set comingSoon: false, published: true and textApproved: true, then npm run check. Details: docs/OUR_STORY_INTAKE.md.",
+    "close": {
+      "title": "To be continued…",
+      "verse": "And over all these virtues put on love, which binds them all together in perfect unity.",
+      "citation": "Colossians 3:14"
+    },
     "chapters": [
       {
         "id": "ch1",
@@ -325,7 +331,8 @@
         ],
         "imageId": "ch1-harvard-law",
         "textApproved": true,
-        "comingSoon": false
+        "comingSoon": false,
+        "published": true
       },
       {
         "id": "ch2",
@@ -348,7 +355,8 @@
         ],
         "imageId": "ch2-cairo",
         "textApproved": true,
-        "comingSoon": false
+        "comingSoon": false,
+        "published": true
       },
       {
         "id": "ch3",
@@ -369,7 +377,8 @@
         ],
         "imageId": "ch3-boat",
         "textApproved": true,
-        "comingSoon": false
+        "comingSoon": false,
+        "published": true
       },
       {
         "id": "ch4",
@@ -387,7 +396,8 @@
         ],
         "imageId": "ch4-engagement",
         "textApproved": true,
-        "comingSoon": false
+        "comingSoon": false,
+        "published": true
       },
       {
         "id": "ch5",
@@ -404,7 +414,8 @@
         ],
         "imageId": "ch5-awards",
         "textApproved": true,
-        "comingSoon": false
+        "comingSoon": false,
+        "published": true
       },
       {
         "id": "ch6",
@@ -422,7 +433,8 @@
         ],
         "imageId": "ch6-rooftop",
         "textApproved": true,
-        "comingSoon": false
+        "comingSoon": false,
+        "published": true
       },
       {
         "id": "ch7",
@@ -435,7 +447,8 @@
         ],
         "imageId": "placeholder-monogram",
         "textApproved": true,
-        "comingSoon": true
+        "comingSoon": true,
+        "published": false
       },
       {
         "id": "ch8",
@@ -448,7 +461,8 @@
         ],
         "imageId": "placeholder-monogram",
         "textApproved": true,
-        "comingSoon": true
+        "comingSoon": true,
+        "published": false
       },
       {
         "id": "ch9",
@@ -461,7 +475,8 @@
         ],
         "imageId": "placeholder-monogram",
         "textApproved": true,
-        "comingSoon": true
+        "comingSoon": true,
+        "published": false
       },
       {
         "id": "ch10",
@@ -483,7 +498,8 @@
         ],
         "imageId": "monogram-rn",
         "textApproved": true,
-        "comingSoon": false
+        "comingSoon": false,
+        "published": true
       }
     ],
     "milestones": [],
@@ -636,7 +652,7 @@
       "owner": "Robert",
       "source": "Owner document (story.chapters.json); Rob chat request via Babbage, 5 October 2026; owner approval to ship scroll-sketch → colour reveal on chapters 2–6; Rob attached Natalie’s Harvard Law graduation portrait for chapter 1 (5 October 2026 via Babbage); Rob follow-up via Babbage, 5 October 2026 ~2:37 PM ET, to give chapter 1 the same scroll-sketch → colour reveal",
       "reviewed": "2026-10-05",
-      "note": "Rob asked to add Our Story (5 October 2026 via Babbage). Chapter copy from the owner document is approved as-is for chapters 1–6 and 10. Chapters 7–9 remain Coming soon… with monogram placeholders. Photos for chapters 1–6 are approved for public site use. Chapter 1 is Natalie’s Harvard Law graduation portrait with the same OpenCV/Potrace scroll-sketch → full-colour reveal as chapters 2–6 (Rob follow-up via Babbage, 5 October 2026 ~2:37 PM ET). Chapter 10 uses the RN monogram until a photograph exists. Sketches are separate line-art overlays traced from the published photo derivatives; the photographs themselves are unchanged (no AI, no cream/greyscale/sepia on the photos)."
+      "note": "Rob asked to add Our Story (5 October 2026 via Babbage). Chapter copy from the owner document is approved as-is for chapters 1–6 and 10. Chapter 10 is a real chapter (approved closing copy); the RN monogram is only a photo stand-in, not Coming-soon placeholder copy. Chapters 7–9 stay in this file as unpublished drafts (published: false, Coming soon…). Guests see 1–6 and 10, then a To be continued beat. Photos for chapters 1–6 are approved for public site use. Chapter 1 is Natalie’s Harvard Law graduation portrait with the same OpenCV/Potrace scroll-sketch → full-colour reveal as chapters 2–6 (Rob follow-up via Babbage, 5 October 2026 ~2:37 PM ET). Sketches are separate line-art overlays traced from the published photo derivatives; the photographs themselves are unchanged (no AI, no cream/greyscale/sepia on the photos)."
     }
   },
   "faqs": [
