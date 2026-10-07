@@ -761,7 +761,8 @@
     "allowPreview": true,
     "comingSoonText": "Responses are not being accepted yet. When they open, choose your invitation on this page to respond for your household, and this page will show the response deadline.",
     "closedText": "Online responses have now closed. If you need to change your response, please contact us directly.",
-    "notesPurpose": "Optional. Share anything that helps us look after you, such as dietary or access needs. This is used only for planning and shared only with the people who need it.",
+    "notesPurpose": "Optional. A message for Robert and Natalie. Dietary needs for each guest are collected with that person.",
+    "extraGuestCap": 4,
     "preview": {
       "households": [
         {

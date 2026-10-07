@@ -120,7 +120,7 @@ export async function handleAdmin(request, env, cfg, url) {
     await coordinator();
     const loaded = await loadHousehold(db, m.id);
     if (!loaded) throw new HttpError(404, 'not_found', 'Unknown household.');
-    const snapshot = buildSnapshot({ ...loaded, notes: '' }, await rsvpWindow(db, cfg)); // notes stay restricted
+    const snapshot = buildSnapshot({ ...loaded, notes: '' }, await rsvpWindow(db, cfg), cfg); // notes stay restricted
     delete snapshot.notes;
     return json(200, { ...snapshot, state: loaded.household.state, credentials: await listCredentials(db, m.id) });
   }
@@ -150,7 +150,7 @@ export async function handleAdmin(request, env, cfg, url) {
     const loaded = await loadHousehold(db, m.id);
     if (!loaded) throw new HttpError(404, 'not_found', 'Unknown household.');
     if (body.revision !== undefined && body.revision !== loaded.state.revision) {
-      throw new HttpError(409, 'conflict', 'The household response changed; reload and retry.', { latest: buildSnapshot({ ...loaded, notes: '' }, await rsvpWindow(db, cfg)) });
+      throw new HttpError(409, 'conflict', 'The household response changed; reload and retry.', { latest: buildSnapshot({ ...loaded, notes: '' }, await rsvpWindow(db, cfg), cfg) });
     }
     // Restricted notes are never edited through this path; keep what is stored.
     const change = validatePayload({ ...body, notes: loaded.notes }, loaded, { partial: true });

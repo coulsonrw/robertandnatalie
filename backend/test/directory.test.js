@@ -27,7 +27,7 @@ describe('GET /guests (public name directory)', () => {
     ]);
     expect(body.guests.map((g) => g.partyId)).toEqual(['hh_solo', 'hh_example', 'hh_family']);
     const payload = JSON.stringify(body);
-    expect(payload).not.toMatch(/@|phone|email|address|notes|Vegetarian|plus-one|g_alex_guest|contact|Alex Example|Jordan Example/i);
+    expect(payload).not.toMatch(/@|phone|email|address|notes|Vegetarian|plus-one|g_alex_guest|contact|Alex Example|Jordan Example|mailing|dietary/i);
     expect(payload).not.toContain('alex@example');
   });
 

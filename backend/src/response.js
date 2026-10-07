@@ -9,7 +9,7 @@
 import { HttpError, json, validationError } from './http.js';
 import { newId, newReference } from './crypto.js';
 import { one, stmt, batch, audit, nowIso, loadHousehold, loadEvents } from './db.js';
-import { buildSnapshot, rsvpWindow } from './snapshot.js';
+import { buildSnapshot, extraGuestCapOf, rsvpWindow } from './snapshot.js';
 import { requireSession } from './session.js';
 import { confirmationMail } from './mail/templates.js';
 import { retentionDueAt } from './retention.js';
@@ -21,6 +21,104 @@ const HOTEL = new Set(['yes', 'no', 'undecided']);
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const MAX_NOTES = 500;
 const MAX_NAME = 80;
+const MAX_PHONE = 40;
+const MAX_ADDRESS = 500;
+const MAX_DIETARY = 200;
+
+export function planGuestMutations(payload, loaded, cfg) {
+  const problems = [];
+  const fail = (path, message) => validationError(message, [{ path, message }]);
+  const cap = extraGuestCapOf(cfg);
+  const removedIds = Array.isArray(payload.removedGuestIds) ? payload.removedGuestIds : [];
+  const guestsById = new Map(loaded.guests.map((g) => [g.id, g]));
+  const removed = [];
+  for (const id of removedIds) {
+    if (typeof id !== 'string') throw fail('removedGuestIds', 'Guests to remove must be identified by id.');
+    const g = guestsById.get(id);
+    if (!g || g.kind !== 'plus-one' || (g.origin || 'roster') !== 'guest') {
+      throw fail('removedGuestIds', 'Only guests you added can be removed.');
+    }
+    removed.push(id);
+  }
+  const addedRaw = Array.isArray(payload.addedGuests) ? payload.addedGuests : [];
+  const remainingPlus = loaded.guests.filter((g) => g.kind === 'plus-one' && !removed.includes(g.id));
+  if (remainingPlus.length + addedRaw.length > cap) {
+    problems.push({ path: 'addedGuests', message: `You can add up to ${cap} extra guests.` });
+  }
+  const host = loaded.guests.find((g) => g.kind === 'named') || loaded.guests[0];
+  if (addedRaw.length && !host) throw fail('addedGuests', 'This invitation cannot add guests.');
+  const eventIds = [...new Set(loaded.entitlements.map((e) => e.event_id))];
+  const added = addedRaw.map((row, index) => {
+    if (!isPlainObject(row)) throw fail('addedGuests', 'Each added guest needs a name and answers.');
+    const name = typeof row.name === 'string' ? row.name.trim().slice(0, MAX_NAME) : '';
+    if (name.length < 2) problems.push({ path: `addedGuests.${index}.name`, message: 'Please enter the guest’s name.' });
+    const dietary = typeof row.dietary === 'string' ? row.dietary.trim().slice(0, MAX_DIETARY) : '';
+    if (row.dietary != null && typeof row.dietary !== 'string') throw fail(`addedGuests.${index}.dietary`, 'Dietary notes must be text.');
+    if (!Array.isArray(row.responses)) throw fail(`addedGuests.${index}.responses`, 'Each added guest needs attending answers.');
+    const id = newId('g');
+    const guest = {
+      id,
+      household_id: loaded.household.id,
+      kind: 'plus-one',
+      display_name: null,
+      host_guest_id: host.id,
+      plus_one_name: name,
+      origin: 'guest',
+      sort_order: 100 + index,
+      state: 'active',
+    };
+    const entitlements = eventIds.map((eventId) => ({
+      id: newId('ie'),
+      guest_id: id,
+      event_id: eventId,
+      response_id: null,
+      status: 'pending',
+      meal_value: null,
+    }));
+    return { guest, entitlements, responses: row.responses, dietary, name, index };
+  });
+  return { added, removed, problems, cap };
+}
+
+export function mergePlannedHousehold(loaded, plan) {
+  const removed = new Set(plan.removed);
+  const guests = loaded.guests.filter((g) => !removed.has(g.id)).concat(plan.added.map((a) => a.guest));
+  const entitlements = loaded.entitlements.filter((e) => !removed.has(e.guest_id)).concat(plan.added.flatMap((a) => a.entitlements));
+  const dietary = { ...(loaded.dietary || {}) };
+  plan.added.forEach((a) => { dietary[a.guest.id] = a.dietary; });
+  plan.removed.forEach((id) => { delete dietary[id]; });
+  return { ...loaded, guests, entitlements, dietary };
+}
+
+function mergeAddedIntoPayload(payload, plan) {
+  const removed = new Set(plan.removed);
+  const plusOneNames = { ...(isPlainObject(payload.plusOneNames) ? payload.plusOneNames : {}) };
+  const guestDietary = { ...(isPlainObject(payload.guestDietary) ? payload.guestDietary : {}) };
+  const guestNames = { ...(isPlainObject(payload.guestNames) ? payload.guestNames : {}) };
+  const extraResponses = [];
+  for (const a of plan.added) {
+    plusOneNames[a.guest.id] = a.name;
+    guestDietary[a.guest.id] = a.dietary;
+    guestNames[a.guest.id] = a.name;
+    for (const r of a.responses) {
+      extraResponses.push({ ...r, guestId: a.guest.id });
+    }
+  }
+  const responses = [...(Array.isArray(payload.responses) ? payload.responses : []), ...extraResponses]
+    .filter((r) => !r || !removed.has(r.guestId));
+  for (const id of removed) {
+    delete plusOneNames[id];
+    delete guestDietary[id];
+    delete guestNames[id];
+  }
+  return {
+    ...payload,
+    responses,
+    plusOneNames,
+    guestDietary,
+    guestNames,
+  };
+}
 
 function isPlainObject(v) { return v !== null && typeof v === 'object' && !Array.isArray(v); }
 
@@ -86,7 +184,9 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
   }
 
   const plusOneNames = isPlainObject(payload.plusOneNames) ? payload.plusOneNames : {};
+  const guestNames = isPlainObject(payload.guestNames) ? payload.guestNames : {};
   const nameUpdates = new Map();
+  const namedNameUpdates = new Map();
   for (const [gid, name] of Object.entries(plusOneNames)) {
     const g = guestsById.get(gid);
     // Not a plus-one slot of this household (a named guest, a child, or a foreign/unknown id):
@@ -95,15 +195,42 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
     if (typeof name !== 'string') throw fail(`plusOneNames.${gid}`, 'Guest names must be text.');
     nameUpdates.set(gid, name.trim().slice(0, MAX_NAME));
   }
+  for (const [gid, name] of Object.entries(guestNames)) {
+    const g = guestsById.get(gid);
+    if (!g) throw fail('guestNames', 'A name was given for someone not on this invitation.');
+    if (typeof name !== 'string') throw fail(`guestNames.${gid}`, 'Guest names must be text.');
+    const trimmed = name.trim().slice(0, MAX_NAME);
+    if (g.kind === 'plus-one') nameUpdates.set(gid, trimmed);
+    else {
+      if (trimmed.length < 2 && !partial) problem(`guestNames.${gid}`, 'Please enter this guest’s full name.');
+      namedNameUpdates.set(gid, trimmed);
+    }
+  }
   for (const g of loaded.guests) {
-    if (g.kind !== 'plus-one') continue;
+    if (g.kind !== 'plus-one') {
+      if (!partial && !namedNameUpdates.has(g.id) && !(g.display_name || '').trim()) {
+        problem(`guestNames.${g.id}`, 'Please enter this guest’s full name.');
+      }
+      continue;
+    }
     if (attendingGuests.has(g.id)) {
       const name = nameUpdates.has(g.id) ? nameUpdates.get(g.id) : (g.plus_one_name || '');
       if (!name || name.trim().length < 2) problem(`plusOneNames.${g.id}`, 'Please enter the name of the guest who will attend.');
       else nameUpdates.set(g.id, name.trim());
+    } else if ((g.origin || 'roster') === 'guest') {
+      if (!nameUpdates.has(g.id)) nameUpdates.set(g.id, g.plus_one_name || null);
     } else {
-      nameUpdates.set(g.id, null); // slot not used: no name is kept (RSVP-02)
+      nameUpdates.set(g.id, null); // roster slot not used: no name is kept (RSVP-02)
     }
+  }
+
+  const guestDietary = isPlainObject(payload.guestDietary) ? payload.guestDietary : {};
+  const dietaryUpdates = new Map();
+  for (const [gid, note] of Object.entries(guestDietary)) {
+    const g = guestsById.get(gid);
+    if (!g) throw fail('guestDietary', 'A dietary note was given for someone not on this invitation.');
+    if (typeof note !== 'string') throw fail(`guestDietary.${gid}`, 'Dietary notes must be text.');
+    dietaryUpdates.set(gid, note.trim().slice(0, MAX_DIETARY));
   }
 
   // A partial (admin) correction that omits contactEmail keeps the household's stored address;
@@ -120,10 +247,29 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
     problem('contactEmail', 'A contact email is needed so we can confirm your response.');
   }
 
+  let contactPhone = payload.contactPhone === undefined || payload.contactPhone === null
+    ? (partial ? (loaded.household.contact_phone || '') : '')
+    : payload.contactPhone;
+  if (typeof contactPhone !== 'string') throw fail('contactPhone', 'contactPhone must be text.');
+  contactPhone = contactPhone.trim().slice(0, MAX_PHONE);
+
+  let mailingAddress = payload.mailingAddress === undefined || payload.mailingAddress === null
+    ? (partial ? (loaded.household.mailing_address || '') : '')
+    : payload.mailingAddress;
+  if (typeof mailingAddress !== 'string') throw fail('mailingAddress', 'mailingAddress must be text.');
+  mailingAddress = mailingAddress.trim().slice(0, MAX_ADDRESS);
+
   let notes = payload.notes === undefined || payload.notes === null ? '' : payload.notes;
   if (typeof notes !== 'string') throw fail('notes', 'notes must be text.');
   notes = notes.trim().slice(0, MAX_NOTES);
-  if (!anyoneAttending) notes = ''; // declining households skip practical details (RSVP-03)
+  if (!anyoneAttending) {
+    notes = ''; // declining households skip practical details (RSVP-03)
+    if (!partial) {
+      contactPhone = '';
+      mailingAddress = '';
+      dietaryUpdates.clear();
+    }
+  }
 
   let hotelStay = payload.hotelStay === undefined || payload.hotelStay === null
     ? (partial ? (loaded.state.hotel_stay || null) : null)
@@ -144,7 +290,10 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
     const message = problems.length === 1 ? problems[0].message : `${problems.length} answers need attention. Please review them and try again.`;
     throw validationError(message, problems);
   }
-  return { answered, meals, nameUpdates, contactEmail, notes, hotelStay, anyoneAttending };
+  return {
+    answered, meals, nameUpdates, namedNameUpdates, dietaryUpdates,
+    contactEmail, contactPhone, mailingAddress, notes, hotelStay, anyoneAttending,
+  };
 }
 
 // Replayed idempotency bodies are stored without the restricted note; attach the household's current note.
@@ -154,7 +303,7 @@ async function withCurrentNotes(db, householdId, body) {
   return { ...body, notes: row ? row.note : '' };
 }
 
-function attendanceSummary(loaded, answered, events, nameUpdates) {
+function attendanceSummary(loaded, answered, events, nameUpdates, namedNameUpdates) {
   const guestsById = new Map(loaded.guests.map((g) => [g.id, g]));
   const byEvent = new Map(events.map((ev) => [ev.id, { event: ev, attending: [], declining: [] }]));
   for (const e of loaded.entitlements) {
@@ -163,7 +312,9 @@ function attendanceSummary(loaded, answered, events, nameUpdates) {
     const g = guestsById.get(e.guest_id);
     const bucket = byEvent.get(e.event_id);
     if (!g || !bucket) continue;
-    const name = g.kind === 'plus-one' ? (nameUpdates.get(g.id) || g.plus_one_name || 'Guest') : g.display_name;
+    const name = g.kind === 'plus-one'
+      ? (nameUpdates.get(g.id) || g.plus_one_name || 'Guest')
+      : ((namedNameUpdates && namedNameUpdates.get(g.id)) || g.display_name);
     if (status === 'attending') bucket.attending.push(name);
     else if (status === 'declining') bucket.declining.push(name);
   }
@@ -184,6 +335,27 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
 
   statements.push(stmt(db, 'INSERT INTO household_revision (household_id, revision, committed_at, origin) VALUES (?, ?, ?, ?)', loaded.household.id, nextRevision, now, origin));
 
+  const plan = change.guestPlan;
+  if (plan) {
+    for (const a of plan.added) {
+      statements.push(stmt(
+        db,
+        `INSERT INTO guest (id, household_id, kind, display_name, host_guest_id, plus_one_name, sort_order, state, origin, created_at, updated_at)
+         VALUES (?, ?, 'plus-one', NULL, ?, ?, ?, 'active', 'guest', ?, ?)`,
+        a.guest.id, loaded.household.id, a.guest.host_guest_id, a.name || null, a.guest.sort_order, now, now,
+      ));
+      for (const e of a.entitlements) {
+        statements.push(stmt(db, 'INSERT INTO invitation_entitlement (id, guest_id, event_id, created_at) VALUES (?, ?, ?, ?)', e.id, a.guest.id, e.event_id, now));
+      }
+      if (!changedFields.includes('addedGuests')) changedFields.push('addedGuests');
+    }
+    for (const id of plan.removed) {
+      statements.push(stmt(db, "UPDATE guest SET state = 'revoked', updated_at = ? WHERE id = ? AND household_id = ? AND origin = 'guest'", now, id, loaded.household.id));
+      statements.push(stmt(db, 'UPDATE invitation_entitlement SET revoked_at = ? WHERE guest_id = ? AND revoked_at IS NULL', now, id));
+      if (!changedFields.includes('removedGuests')) changedFields.push('removedGuests');
+    }
+  }
+
   for (const e of loaded.entitlements) {
     const key = `${e.guest_id}|${e.event_id}`;
     if (!change.answered.has(key)) continue;
@@ -203,17 +375,37 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
   }
   if (Object.keys(statusChanges).length) changedFields.push('responses');
 
-  for (const [gid, name] of change.nameUpdates) {
+  for (const [gid, name] of (change.nameUpdates || [])) {
     const g = loaded.guests.find((x) => x.id === gid);
+    if (!g) continue;
     if ((g.plus_one_name || null) !== name) {
       statements.push(stmt(db, 'UPDATE guest SET plus_one_name = ?, updated_at = ? WHERE id = ? AND household_id = ?', name, now, gid, loaded.household.id));
       if (!changedFields.includes('plusOneNames')) changedFields.push('plusOneNames');
     }
   }
+  for (const [gid, name] of (change.namedNameUpdates || [])) {
+    const g = loaded.guests.find((x) => x.id === gid);
+    if (!g || (g.display_name || '') === name) continue;
+    statements.push(stmt(db, 'UPDATE guest SET display_name = ?, updated_at = ? WHERE id = ? AND household_id = ? AND kind = ?', name, now, gid, loaded.household.id, 'named'));
+    if (!changedFields.includes('guestNames')) changedFields.push('guestNames');
+  }
 
-  if ((loaded.household.contact_email || '') !== change.contactEmail) {
-    statements.push(stmt(db, 'UPDATE household SET contact_email = ?, updated_at = ? WHERE id = ?', change.contactEmail || null, now, loaded.household.id));
-    changedFields.push('contactEmail');
+  const nextEmail = change.contactEmail || null;
+  const nextPhone = change.contactPhone || null;
+  const nextAddress = change.mailingAddress || null;
+  if (
+    (loaded.household.contact_email || '') !== (change.contactEmail || '')
+    || (loaded.household.contact_phone || '') !== (change.contactPhone || '')
+    || (loaded.household.mailing_address || '') !== (change.mailingAddress || '')
+  ) {
+    statements.push(stmt(
+      db,
+      'UPDATE household SET contact_email = ?, contact_phone = ?, mailing_address = ?, updated_at = ? WHERE id = ?',
+      nextEmail, nextPhone, nextAddress, now, loaded.household.id,
+    ));
+    if ((loaded.household.contact_email || '') !== (change.contactEmail || '')) changedFields.push('contactEmail');
+    if ((loaded.household.contact_phone || '') !== (change.contactPhone || '')) changedFields.push('contactPhone');
+    if ((loaded.household.mailing_address || '') !== (change.mailingAddress || '')) changedFields.push('mailingAddress');
   }
 
   if ((loaded.notes || '') !== change.notes) {
@@ -222,6 +414,23 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
       statements.push(stmt(db, 'INSERT INTO restricted_guest_needs (id, household_id, guest_id, note, retention_until, created_at, updated_at) VALUES (?, ?, NULL, ?, ?, ?, ?)', newId('rn'), loaded.household.id, change.notes, retention, now, now));
     }
     changedFields.push('notes'); // field name only; the text never enters the audit trail (SEC-05)
+  }
+
+  const nextDietary = { ...(loaded.dietary || {}) };
+  for (const [gid, note] of (change.dietaryUpdates || [])) {
+    const prev = loaded.dietary && loaded.dietary[gid] ? loaded.dietary[gid] : '';
+    if (prev === (note || '')) {
+      nextDietary[gid] = note || '';
+      continue;
+    }
+    statements.push(stmt(db, 'DELETE FROM restricted_guest_needs WHERE household_id = ? AND guest_id = ?', loaded.household.id, gid));
+    if (note) {
+      statements.push(stmt(db, 'INSERT INTO restricted_guest_needs (id, household_id, guest_id, note, retention_until, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)', newId('rn'), loaded.household.id, gid, note, retention, now, now));
+      nextDietary[gid] = note;
+    } else {
+      delete nextDietary[gid];
+    }
+    if (!changedFields.includes('guestDietary')) changedFields.push('guestDietary');
   }
 
   if ((loaded.state.hotel_stay || null) !== (change.hotelStay || null)) {
@@ -248,8 +457,18 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
 
   // The snapshot the caller will receive: computed from the same values the batch writes.
   const after = {
-    household: { ...loaded.household, contact_email: change.contactEmail || null },
-    guests: loaded.guests.map((g) => (change.nameUpdates.has(g.id) ? { ...g, plus_one_name: change.nameUpdates.get(g.id) } : g)),
+    household: {
+      ...loaded.household,
+      contact_email: change.contactEmail || null,
+      contact_phone: change.contactPhone || null,
+      mailing_address: change.mailingAddress || null,
+    },
+    guests: loaded.guests.map((g) => {
+      let next = g;
+      if (change.nameUpdates && change.nameUpdates.has(g.id)) next = { ...next, plus_one_name: change.nameUpdates.get(g.id) };
+      if (change.namedNameUpdates && change.namedNameUpdates.has(g.id)) next = { ...next, display_name: change.namedNameUpdates.get(g.id) };
+      return next;
+    }),
     entitlements: loaded.entitlements.map((e) => {
       const key = `${e.guest_id}|${e.event_id}`;
       if (!change.answered.has(key)) return e;
@@ -259,11 +478,12 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
     }),
     state: { ...loaded.state, revision: nextRevision, reference, first_submitted_at: loaded.state.first_submitted_at || now, last_submitted_at: now, last_origin: origin, last_email_queued: emailQueued ? 1 : 0, hotel_stay: change.hotelStay || null },
     notes: change.notes,
+    dietary: nextDietary,
   };
-  const snapshot = buildSnapshot(after, await rsvpWindow(db, cfg));
+  const snapshot = buildSnapshot(after, await rsvpWindow(db, cfg), cfg);
 
   if (emailQueued) {
-    const mail = confirmationMail(cfg, { reference, events, summary: attendanceSummary(loaded, change.answered, events, change.nameUpdates), householdLabel: loaded.household.label });
+    const mail = confirmationMail(cfg, { reference, events, summary: attendanceSummary(loaded, change.answered, events, change.nameUpdates || new Map(), change.namedNameUpdates || new Map()), householdLabel: loaded.household.label });
     statements.push(stmt(
       db,
       `INSERT INTO mail_outbox (id, household_id, kind, to_email, subject, body_text, dedupe_key, state, attempts, next_attempt_at, created_at)
@@ -301,7 +521,7 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
     }
     const fresh = await loadHousehold(db, loaded.household.id);
     if (fresh && fresh.state.revision !== expectedRevision) {
-      throw new HttpError(409, 'conflict', 'This response was updated from another device.', { latest: buildSnapshot(fresh, await rsvpWindow(db, cfg)) });
+      throw new HttpError(409, 'conflict', 'This response was updated from another device.', { latest: buildSnapshot(fresh, await rsvpWindow(db, cfg), cfg) });
     }
     throw err;
   }
@@ -330,12 +550,30 @@ export async function putResponse(request, env, cfg, payload) {
   const loaded = await loadHousehold(db, householdId);
   if (!loaded) throw new HttpError(401, 'invalid_session', 'Your session has ended.');
   if (payload.revision !== loaded.state.revision) {
-    throw new HttpError(409, 'conflict', 'This response was updated from another device.', { latest: buildSnapshot(loaded, window) });
+    throw new HttpError(409, 'conflict', 'This response was updated from another device.', { latest: buildSnapshot(loaded, window, cfg) });
   }
 
-  const change = validatePayload(payload, loaded);
+  const plan = planGuestMutations(payload, loaded, cfg);
+  const planned = mergePlannedHousehold(loaded, plan);
+  const merged = mergeAddedIntoPayload(payload, plan);
+  let change;
+  try {
+    change = validatePayload(merged, planned);
+  } catch (err) {
+    if (err instanceof HttpError && err.code === 'validation' && plan.problems.length) {
+      const fields = [...plan.problems, ...(err.fields || [])];
+      const message = fields.length === 1 ? fields[0].message : `${fields.length} answers need attention. Please review them and try again.`;
+      throw validationError(message, fields);
+    }
+    throw err;
+  }
+  if (plan.problems.length) {
+    const message = plan.problems.length === 1 ? plan.problems[0].message : `${plan.problems.length} answers need attention. Please review them and try again.`;
+    throw validationError(message, plan.problems);
+  }
+  change.guestPlan = plan;
   const snapshot = await commitResponse({
-    env, cfg, loaded, change,
+    env, cfg, loaded: planned, change,
     expectedRevision: loaded.state.revision,
     requestId: payload.requestId,
     origin: 'guest',

@@ -23,7 +23,7 @@ export async function applyRetention(env, cfg, { force = false, actor = { kind: 
   const before = {
     responses: (await one(db, 'SELECT COUNT(*) AS n FROM response'))?.n ?? 0,
     notes: (await one(db, 'SELECT COUNT(*) AS n FROM restricted_guest_needs'))?.n ?? 0,
-    contacts: (await one(db, 'SELECT COUNT(*) AS n FROM household WHERE contact_email IS NOT NULL'))?.n ?? 0,
+    contacts: (await one(db, 'SELECT COUNT(*) AS n FROM household WHERE contact_email IS NOT NULL OR contact_phone IS NOT NULL OR mailing_address IS NOT NULL'))?.n ?? 0,
     plusOneNames: (await one(db, 'SELECT COUNT(*) AS n FROM guest WHERE plus_one_name IS NOT NULL'))?.n ?? 0,
     importBatches: (await one(db, 'SELECT COUNT(*) AS n FROM import_batch'))?.n ?? 0,
   };
@@ -40,7 +40,7 @@ export async function applyRetention(env, cfg, { force = false, actor = { kind: 
     stmt(db, 'DELETE FROM import_batch'),
     stmt(db, 'UPDATE access_credential SET revoked_at = COALESCE(revoked_at, ?)', now),
     stmt(db, 'UPDATE guest SET plus_one_name = NULL, updated_at = ? WHERE plus_one_name IS NOT NULL', now),
-    stmt(db, 'UPDATE household SET contact_email = NULL, updated_at = ? WHERE contact_email IS NOT NULL', now),
+    stmt(db, 'UPDATE household SET contact_email = NULL, contact_phone = NULL, mailing_address = NULL, updated_at = ? WHERE contact_email IS NOT NULL OR contact_phone IS NOT NULL OR mailing_address IS NOT NULL', now),
     stmt(db, 'UPDATE household_response SET first_submitted_at = NULL, last_submitted_at = NULL, last_origin = NULL, last_email_queued = 0, hotel_stay = NULL'),
     audit(db, { at: now, actorKind: actor.kind, actorId: actor.id, action: 'retention.apply', details: { dueAt, forced: force, deleted: before } }),
   ]);

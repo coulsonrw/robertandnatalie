@@ -45,7 +45,7 @@ async function openHouseholdSession(db, cfg, householdId, { credentialId = null,
   if (credentialId) statements.splice(1, 0, stmt(db, 'UPDATE access_credential SET last_used_at = ? WHERE id = ?', now, credentialId));
   await batch(db, statements);
   const loaded = await loadHousehold(db, householdId);
-  const snapshot = buildSnapshot(loaded, await rsvpWindow(db, cfg));
+  const snapshot = buildSnapshot(loaded, await rsvpWindow(db, cfg), cfg);
   return json(200, snapshot, { 'Set-Cookie': cookieHeader(token, Math.floor(cfg.sessionTtlMs / 1000)) });
 }
 
@@ -115,7 +115,7 @@ export async function getSession(request, env, cfg) {
   const { householdId } = await requireSession(request, env, cfg);
   const loaded = await loadHousehold(env.DB, householdId);
   if (!loaded) throw new HttpError(401, 'invalid_session', 'Your session has ended.');
-  return json(200, buildSnapshot(loaded, await rsvpWindow(env.DB, cfg)));
+  return json(200, buildSnapshot(loaded, await rsvpWindow(env.DB, cfg), cfg));
 }
 
 export async function deleteSession(request, env, cfg) {

@@ -380,7 +380,10 @@ test('live RSVP: name-picker talks to the API origin and does not hard-code gues
   assert.match(js, /hotelStay/);
   assert.match(js, /\/guests/);
   assert.match(js, /partyId/);
-  assert.match(js, /Choose your invitation/);
+  assert.match(js, /- Select -/);
+  assert.doesNotMatch(js, /Search invitations|invitations shown/);
+  assert.match(js, /Add a guest/);
+  assert.match(js, /extraGuestCap|extraGuestsRemaining/);
   assert.doesNotMatch(js, /Mama & Daddy|Winne|Francoise|Shelly & Ken|Andrew & Taylor|Anna & Logan|Jon & Yuko|Linda & Danny|Winnie & Francois|Khetha|Ariam/);
   assert.doesNotMatch(rsvp, /Mama & Daddy|Winne|Francoise|Shelly & Ken|Andrew & Taylor|Anna & Logan|Jon & Yuko|Linda & Danny|Winnie & Francois|Khetha|Ariam/);
   fs.rmSync(b.tmp, { recursive: true, force: true });

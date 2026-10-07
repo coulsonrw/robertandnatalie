@@ -31,7 +31,7 @@ All bodies are JSON. Errors use `{ "error": { "code": string, "message": string 
 
 The front end maps HTTP status to these codes when `error.code` is absent: 400 validation, 401 invalid_session, 403/404 invalid_code, 409 conflict, 423 closed, 429 rate_limited, otherwise server_error. Network failures are shown as retryable with input kept in page memory (RSVP-06).
 
-A `400 validation` body may also carry `error.fields`, an array of `{ "path", "message" }` naming every guest-fixable problem at once (added 22 September 2026, audit QA-15; additive, older clients ignore it). Paths: `contactEmail`, `notes`, `hotelStay`, `requestId`, `revision`, `responses` (structural, no id echoed), `responses.<guestId>.<eventId>.status`, `responses.<guestId>.<eventId>.meal`, `plusOneNames` (no id echoed), `plusOneNames.<guestId>`. Authorization and structural problems fail first and never echo a foreign identifier. The front end maps these paths to its inline field errors and announces `error.message`.
+A `400 validation` body may also carry `error.fields`, an array of `{ "path", "message" }` naming every guest-fixable problem at once (added 22 September 2026, audit QA-15; additive, older clients ignore it). Paths: `contactEmail`, `contactPhone`, `mailingAddress`, `notes`, `hotelStay`, `guestNames.<guestId>`, `guestDietary.<guestId>`, `addedGuests`, `removedGuestIds`, `requestId`, `revision`, `responses` (structural, no id echoed), `responses.<guestId>.<eventId>.status`, `responses.<guestId>.<eventId>.meal`, `plusOneNames` (no id echoed), `plusOneNames.<guestId>`. Authorization and structural problems fail first and never echo a foreign identifier. The front end maps these paths to its inline field errors and announces `error.message`.
 
 `rsvp.cutoffAt` (in configuration and in the owner-editable `rsvp-settings`) must carry an explicit UTC offset or `Z`. The shipped value is `2026-11-15T23:59:59-06:00` (end of Sunday 15 November 2026, America/Chicago / CST). The service refuses a cutoff without an offset, and a configured cutoff it cannot parse closes the window rather than leaving it open (`GET /admin/status` then reports `rsvp.cutoffInvalid: true`).
 
@@ -43,15 +43,19 @@ A `400 validation` body may also carry `error.fields`, an array of `{ "path", "m
     "id": "hh_01H...",
     "label": "The Example Household",
     "contactEmail": "",
+    "contactPhone": "",
+    "mailingAddress": "",
     "guests": [
-      { "id": "g_01", "kind": "named", "name": "Alex Example" },
-      { "id": "g_02", "kind": "plus-one", "hostGuestId": "g_01", "name": null }
+      { "id": "g_01", "kind": "named", "name": "Alex Example", "added": false, "dietary": "" },
+      { "id": "g_02", "kind": "plus-one", "hostGuestId": "g_01", "name": null, "added": false, "dietary": "" }
     ]
   },
   "entitlements": [ { "guestId": "g_01", "eventId": "ceremony" }, { "guestId": "g_01", "eventId": "reception" } ],
   "responses":    [ { "guestId": "g_01", "eventId": "ceremony", "status": "pending" } ],
   "notes": "",
   "hotelStay": null,
+  "extraGuestCap": 4,
+  "extraGuestsRemaining": 3,
   "revision": 0,
   "reference": null,
   "submittedAt": null,
@@ -67,6 +71,8 @@ A `400 validation` body may also carry `error.fields`, an array of `{ "path", "m
 - `emailQueued` is `true` only when a confirmation email was enqueued in the same transaction; the page shows an explicit "email not available" note otherwise (RSVP-06/07).
 - `revision` increments on every committed save and is used for optimistic concurrency (RSVP-05).
 - `hotelStay` (optional, household-level) is `yes`, `no` or `undecided` when anyone is attending, and `null` when the household declines. It is required on a guest save if anyone attends. Headcount is derived from attending guests and is not a separate payload field.
+- `contactPhone` and `mailingAddress` are household-level, optional, and appear only on the session snapshot — never on `GET /guests`.
+- `extraGuestCap` (default **4**, `EXTRA_GUEST_CAP` / `rsvp.extraGuestCap`) is how many plus-one / guest-added people a party may have. `addedGuests` creates `origin=guest` plus-one rows; `removedGuestIds` may revoke only those. Roster plus-one slots cannot be removed.
 
 ## Response payload
 
@@ -76,8 +82,14 @@ A `400 validation` body may also carry `error.fields`, an array of `{ "path", "m
   "revision": 0,
   "responses": [ { "guestId": "g_01", "eventId": "ceremony", "status": "attending" } ],
   "plusOneNames": { "g_02": "Casey Example" },
+  "guestNames": { "g_01": "Alex Example" },
+  "guestDietary": { "g_01": "Vegetarian" },
+  "addedGuests": [ { "name": "Pat Example", "dietary": "", "responses": [ { "eventId": "ceremony", "status": "attending" }, { "eventId": "reception", "status": "attending" } ] } ],
+  "removedGuestIds": [],
   "contactEmail": "alex@example.com",
-  "notes": "Vegetarian, please.",
+  "contactPhone": "251-555-0100",
+  "mailingAddress": "",
+  "notes": "Looking forward to celebrating.",
   "hotelStay": "yes"
 }
 ```

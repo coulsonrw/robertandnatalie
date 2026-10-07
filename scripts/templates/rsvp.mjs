@@ -30,6 +30,7 @@ export function renderRsvp(view) {
     mealChoices: r.mealChoices && r.mealChoices.eventId && (r.mealChoices.options || []).length ? r.mealChoices : null,
     closedText: r.closedText,
     notesPurpose: r.notesPurpose,
+    extraGuestCap: Number.isInteger(r.extraGuestCap) ? r.extraGuestCap : 4,
     contact: view.contact,
     couple: view.couple.displayName,
     events: view.events.map((ev) => ({ id: ev.id, label: ev.label, name: ev.name, when: `${ev.longDate}, ${ev.clock} ${ev.tzLabel}`, shortWhen: `${ev.clock}` })),

@@ -15,7 +15,7 @@ Set in both `content/site.config.json` → `rsvp.cutoffAt` and `backend/wrangler
 1. They click **RSVP** on the site (`/rsvp.html`).
 2. The page loads a dropdown of **party labels** from the Worker (`GET /guests`) — one row per household, sorted A to Z. A search box narrows the list.
 3. Choosing a label opens that **party** page — one form per invitation row in the roster.
-4. They answer attending / declining for each person and event, plus the existing details (contact email when anyone attends, Grand Hotel stay, optional notes) and submit.
+4. They answer attending / declining for each person and event, can edit each full name, add extra guests (up to 4), and fill dietary notes, contact email/phone, optional mailing address, Grand Hotel stay, and a message to the couple.
 
 A forwarded or bookmarked party URL (`/rsvp.html?party=<id>`) opens the same household form. Plus-ones (named or unnamed) answer on the host household’s page. The form cannot add more people than the row already allows.
 
@@ -42,7 +42,7 @@ No new Worker secrets are required for the name-picker flow.
 
 ## Ops steps (do these in order)
 
-Do **not** skip the remote migration after a Worker deploy that includes new SQL. This name-picker change does **not** add a migration; D1 schema is unchanged. The steps below are the same launch path as before, minus issuing links.
+Do **not** skip the remote migration after a Worker deploy that includes new SQL. This change adds **`0004_party_details.sql`** (household phone/address and `guest.origin` so parties can add extra guests). It is additive and backward compatible. Apply it with `npm run migrate:remote` after deploy — do not edit older migration files. The steps below are the same launch path as before, minus issuing links.
 
 1. Set `OPS_BOOTSTRAP_TOKEN` if it is not already set (`npx wrangler secret put OPS_BOOTSTRAP_TOKEN` from `backend/`).
 2. Deploy the Worker: `cd backend && npm run deploy`.
@@ -55,7 +55,9 @@ npm run migrate:remote
 
 4. Import the 14-party roster CSV (below). After that, `GET https://api.robertandnatalie.wedding/guests` should list **14 party labels** and party ids only, A to Z.
 
-(`0003_hotel_stay.sql` adds `household_response.hotel_stay` if that migration has not already been applied.)
+(`0003_hotel_stay.sql` adds `household_response.hotel_stay` if that migration has not already been applied. `0004_party_details.sql` adds `household.contact_phone`, `household.mailing_address`, and `guest.origin`.)
+
+Parties can add up to **4 extra guests** (`rsvp.extraGuestCap` / `EXTRA_GUEST_CAP`). That cap is one number for every household. `GET /guests` still returns only party labels and ids — never emails, phones, addresses, notes or answers.
 
 ## Import the roster
 
