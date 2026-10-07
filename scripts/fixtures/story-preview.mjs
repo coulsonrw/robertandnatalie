@@ -36,6 +36,11 @@ export function storyPreviewFixture(view) {
     milestones: [],
     images: [mark, photo],
     continued: true,
+    close: {
+      title: 'To be continued…',
+      verse: 'And over all these virtues put on love, which binds them all together in perfect unity.',
+      citation: 'Colossians 3:14 (NIV)',
+    },
     chapters: [
       { id: 'ch1', number: 1, title: 'Chapter title (fixture)', when: null, place: 'Place names (optional)', paragraphs: [`Synthetic fixture: this preview shows where the first chapter of ${n1} and ${n2}'s story will sit. It is placeholder text supplied by the build so that the owners can judge the chapter timeline; it says nothing about the couple.`], comingSoon: false, image: mark },
       { id: 'ch2', number: 2, title: 'Second chapter (fixture)', when: 'Month', place: 'City', paragraphs: ['Synthetic fixture, chapter two: a photograph sits opposite the copy on wide screens and below the title on phones. Nothing here is drawn from private conversations, messages or photographs.'], comingSoon: false, image: photo },

@@ -426,6 +426,13 @@ function storyView(c) {
       image: ch.imageId ? byId[ch.imageId] ?? null : null,
     })),
     continued: (s.chapters ?? []).some((ch) => !chapterIsPublished(ch)),
+    // No verse text exists in the owner document — only the Ch10 citation label
+    // "Colossians 3:14". NIV is Rob's specified fallback (7 October 2026).
+    close: {
+      title: s.close?.title || 'To be continued…',
+      verse: s.close?.verse || 'And over all these virtues put on love, which binds them all together in perfect unity.',
+      citation: s.close?.citation || 'Colossians 3:14 (NIV)',
+    },
   };
 }
 

@@ -70,13 +70,17 @@ export function storyTimeline(view, { headingLevel = 2 } = {}) {
 </li>`;
   });
   if (s.continued) {
-    items.push(`<li class="chapter is-continued" id="story-continued" aria-labelledby="story-continued-title">
-  <span class="chapter-marker" aria-hidden="true"></span>
-  <div class="chapter-text">
-    <${C} id="story-continued-title" class="story-continued-title">To be continued</${C}>
-  </div>
-</li>`);
+    items.push(`<li class="chapter is-continued-mark" aria-hidden="true"><span class="chapter-marker"></span></li>`);
   }
+  const close = s.continued && s.close
+    ? `<div class="chapter story-continued" id="story-continued" aria-labelledby="story-continued-title">
+  <div class="chapter-text">
+    <${C} id="story-continued-title" class="story-continued-title">${esc(s.close.title)}</${C}>
+    <p class="story-continued-verse">${esc(s.close.verse)}</p>
+    <p class="scripture">${esc(s.close.citation)}</p>
+  </div>
+</div>`
+    : '';
   return `<section id="our-story" class="section story story-timeline" aria-labelledby="story-title">
   <header class="story-hero">
     <p class="kicker story-kicker">${esc(s.heading)}</p>
@@ -85,5 +89,6 @@ export function storyTimeline(view, { headingLevel = 2 } = {}) {
     ${s.byline ? `<p class="story-byline">${esc(s.byline)}</p>` : ''}
   </header>
   <ol class="timeline" aria-label="Chapters">${items.join('\n')}</ol>
+  ${close}
 </section>`;
 }

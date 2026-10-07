@@ -309,6 +309,11 @@
       "paragraphs": []
     },
     "chaptersNote": "Guests only see chapters with published: true. Keep draft copy here with published: false (and comingSoon: true until the prose is ready). Visitor-facing Chapter I, II… labels are sequential among published chapters — stored number is the owner-document id, so ch10 stays 10 here even while 7–9 are hidden. To publish a draft: replace the Coming soon… body, set comingSoon: false, published: true and textApproved: true, then npm run check. Details: docs/OUR_STORY_INTAKE.md.",
+    "close": {
+      "title": "To be continued…",
+      "verse": "And over all these virtues put on love, which binds them all together in perfect unity.",
+      "citation": "Colossians 3:14 (NIV)"
+    },
     "chapters": [
       {
         "id": "ch1",

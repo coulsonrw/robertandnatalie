@@ -214,7 +214,10 @@ test('QA-07/08 timeline: published chapters 1–6 and 10, sequential labels, no 
   assert.equal((index.match(/id="story-ch\d+"/g) || []).length, 7);
   assert.doesNotMatch(index, /Coming soon/);
   assert.match(index, /id="story-continued"/);
-  assert.match(index, /To be continued/);
+  assert.match(index, /To be continued…/);
+  assert.match(index, /And over all these virtues put on love, which binds them all together in perfect unity\./);
+  assert.match(index, /Colossians 3:14 \(NIV\)/);
+  assert.match(index, /class="chapter is-continued-mark"/);
   assert.match(index, /is-real-photo/);
   assert.match(index, /\/img\/story\/ch1-harvard-law-/);
   assert.match(index, /\/img\/story\/ch2-cairo-/);
@@ -242,6 +245,9 @@ test('QA-07/08 timeline: published chapters 1–6 and 10, sequential labels, no 
   assert.match(chapterHtml('ch1'), /ch1-harvard-law-/);
   assert.match(chapterHtml('ch10'), /monogram-rn-/);
   assert.match(chapterHtml('ch10'), /Chapter VII/);
+  assert.match(chapterHtml('ch10'), /<p class="scripture">Colossians 3:14<\/p>/);
+  assert.match(chapterHtml('ch10'), /Their Love Story Continues/);
+  assert.doesNotMatch(chapterHtml('ch10'), /put on love/);
   assert.doesNotMatch(chapterHtml('ch10'), /ch1-harvard-law-/);
   assert.match(chapterHtml('ch1'), /data-sketch="\/img\/story\/ch1-sketch\.svg"/);
   assert.doesNotMatch(chapterHtml('ch10'), /data-sketch|class="sketch"|has-sketch/);
