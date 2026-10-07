@@ -216,7 +216,8 @@ test('QA-07/08 timeline: published chapters 1–6 and 10, sequential labels, no 
   assert.match(index, /id="story-continued"/);
   assert.match(index, /To be continued…/);
   assert.match(index, /And over all these virtues put on love, which binds them all together in perfect unity\./);
-  assert.match(index, /Colossians 3:14 \(NIV\)/);
+  assert.match(index, /Colossians 3:14/);
+  assert.doesNotMatch(index, /\(NIV\)/);
   assert.match(index, /class="chapter is-continued-mark"/);
   assert.match(index, /is-real-photo/);
   assert.match(index, /\/img\/story\/ch1-harvard-law-/);
