@@ -192,7 +192,7 @@ test('QA-07/08 (build level): the story is refused until every approval is recor
   fs.rmSync(b.tmp, { recursive: true, force: true }); fs.rmSync(derivTmp, { recursive: true, force: true });
 });
 
-test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real photos on 1–6, sketches on 1–6, placeholders elsewhere', () => {
+test('QA-07/08 timeline: published chapters 1–6 and 10, sequential labels, no coming-soon drafts, continued beat', () => {
   const b = buildWith(readConfig(), { preview: false });
   b.run();
   const index = b.read('index.html');
@@ -201,13 +201,20 @@ test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real
   assert.match(index, /href="#our-story">Our Story<\/a>/);
   assert.match(index, /Somewhere Between Africa &amp; America/);
   assert.match(index, /A Love Without Borders/);
-  for (const [n, title] of [['I', 'Two Worlds'], ['II', 'With love, from Cairo'], ['III', 'Cape Town'], ['IV', 'An African Safari like no other'], ['V', 'Closing the Distance'], ['VI', 'Around the globe in 40 Hours'], ['VII', 'The Land of the Sand'], ['VIII', 'From Jozi Girl'], ['IX', 'Back to Harvard'], ['X', 'Sweet Home Alabama']]) {
+  for (const [n, title] of [['I', 'Two Worlds'], ['II', 'With love, from Cairo'], ['III', 'Cape Town'], ['IV', 'An African Safari like no other'], ['V', 'Closing the Distance'], ['VI', 'Around the globe in 40 Hours'], ['VII', 'Sweet Home Alabama']]) {
     assert.match(index, new RegExp(`Chapter ${n}`));
     assert.ok(index.includes(title), `chapter title ${title}`);
   }
-  assert.equal((index.match(/id="story-ch\d+"/g) || []).length, 10);
-  assert.match(index, /Coming soon…/);
-  assert.equal((index.match(/Coming soon…/g) || []).length, 3);
+  assert.doesNotMatch(index, /The Land of the Sand/);
+  assert.doesNotMatch(index, /From Jozi Girl/);
+  assert.doesNotMatch(index, /Back to Harvard/);
+  assert.doesNotMatch(index, /id="story-ch7"/);
+  assert.doesNotMatch(index, /id="story-ch8"/);
+  assert.doesNotMatch(index, /id="story-ch9"/);
+  assert.equal((index.match(/id="story-ch\d+"/g) || []).length, 7);
+  assert.doesNotMatch(index, /Coming soon/);
+  assert.match(index, /id="story-continued"/);
+  assert.match(index, /To be continued/);
   assert.match(index, /is-real-photo/);
   assert.match(index, /\/img\/story\/ch1-harvard-law-/);
   assert.match(index, /\/img\/story\/ch2-cairo-/);
@@ -216,7 +223,8 @@ test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real
   assert.match(index, /\/img\/story\/ch5-awards-/);
   assert.match(index, /\/img\/story\/ch6-rooftop-/);
   assert.match(index, /\/img\/story\/monogram-rn-/);
-  assert.match(index, /\/img\/story\/placeholder-monogram-/);
+  assert.doesNotMatch(index, /\/img\/story\/placeholder-monogram-/);
+  assert.ok(!b.exists('img/story/placeholder-monogram-800.webp'), 'unpublished placeholder art is not deployed');
   assert.match(index, /data-draw="scrub"/);
   for (const n of [1, 2, 3, 4, 5, 6]) {
     assert.match(index, new RegExp(`class="chapter has-photo has-sketch" id="story-ch${n}"`));
@@ -226,18 +234,17 @@ test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real
   function chapterHtml(id) {
     const needle = `id="story-${id}"`;
     const start = index.indexOf(needle);
+    assert.notEqual(start, -1, `story-${id} is present`);
     const rest = index.slice(start + needle.length);
     const next = rest.indexOf('\n<li class="chapter');
     return index.slice(start, next === -1 ? undefined : start + needle.length + next);
   }
   assert.match(chapterHtml('ch1'), /ch1-harvard-law-/);
   assert.match(chapterHtml('ch10'), /monogram-rn-/);
+  assert.match(chapterHtml('ch10'), /Chapter VII/);
   assert.doesNotMatch(chapterHtml('ch10'), /ch1-harvard-law-/);
   assert.match(chapterHtml('ch1'), /data-sketch="\/img\/story\/ch1-sketch\.svg"/);
-  for (const id of ['ch7', 'ch8', 'ch9', 'ch10']) {
-    const html = chapterHtml(id);
-    assert.doesNotMatch(html, /data-sketch|class="sketch"|has-sketch/);
-  }
+  assert.doesNotMatch(chapterHtml('ch10'), /data-sketch|class="sketch"|has-sketch/);
   assert.doesNotMatch(index, /sepia\(/);
   assert.doesNotMatch(css, /sepia\(|grayscale\(/);
   assert.match(css, /--sketch-ink: #2c2414/);
@@ -249,6 +256,39 @@ test('QA-07/08 timeline: the published chapter timeline lists ten chapters, real
   assert.ok(b.exists('img/story/ch1-harvard-law-800.webp'));
   assert.ok(b.exists('img/story/ch2-cairo-800.webp'));
   assert.ok(!b.exists('story-preview.html'));
+  fs.rmSync(b.tmp, { recursive: true, force: true });
+});
+
+test('QA-07/08 timeline: flipping published: true on a draft chapter shows it and remumbers later chapters', () => {
+  const config = readConfig();
+  const ch7 = config.story.chapters.find((ch) => ch.id === 'ch7');
+  ch7.comingSoon = false;
+  ch7.published = true;
+  ch7.textApproved = true;
+  ch7.paragraphs = ['Approved draft copy for the Dubai chapter.'];
+  const b = buildWith(config, { preview: false });
+  b.run();
+  const index = b.read('index.html');
+  assert.match(index, /id="story-ch7"/);
+  assert.match(index, /The Land of the Sand/);
+  assert.match(index, /Chapter VII/);
+  const html7Start = index.indexOf('id="story-ch7"');
+  const html10Start = index.indexOf('id="story-ch10"');
+  assert.ok(html7Start > -1 && html10Start > html7Start, 'ch7 appears before ch10');
+  assert.match(index.slice(html7Start, html10Start), /Chapter VII/);
+  assert.match(index.slice(html10Start), /Chapter VIII/);
+  assert.doesNotMatch(index, /id="story-ch8"/);
+  assert.match(index, /id="story-continued"/);
+  assert.doesNotMatch(index, /Coming soon/);
+  fs.rmSync(b.tmp, { recursive: true, force: true });
+});
+
+test('QA-07/08 timeline: a published coming-soon chapter fails the build', () => {
+  const config = readConfig();
+  const ch7 = config.story.chapters.find((ch) => ch.id === 'ch7');
+  ch7.published = true;
+  const b = buildWith(config, { preview: false });
+  assert.throws(() => b.run(), /cannot use coming-soon placeholder copy/);
   fs.rmSync(b.tmp, { recursive: true, force: true });
 });
 

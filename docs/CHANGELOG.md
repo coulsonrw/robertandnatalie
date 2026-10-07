@@ -1,5 +1,11 @@
 # Change log
 
+## Repository changes (7 October 2026)
+
+| Change | Instruction or reason | Affected requirements | Approvals reopened |
+|---|---|---|---|
+| Hide unpublished Our Story chapters (7–9 stay in the config as `published: false` drafts). Guests see chapters 1–6 and 10 with sequential Roman labels I–VII, then a photo-less “To be continued” beat. Chapter 10 is real approved copy (RN monogram is a photo stand-in, not Coming-soon copy). RSVP untouched. | Rob: do not show coming-soon / placeholder chapters; keep draft data for later; end the timeline with a tasteful “To be continued”. | CONTENT-01, DES-01, audit IMP-12/13 | None; `story.approval.note` records that 7–9 are unpublished drafts and that chapter 10 remains a real chapter |
+
 ## Repository changes (5 October 2026)
 
 | Change | Instruction or reason | Affected requirements | Approvals reopened |
