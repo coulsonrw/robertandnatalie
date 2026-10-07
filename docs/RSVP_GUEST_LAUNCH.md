@@ -2,7 +2,7 @@
 
 How to open household RSVPs without touching Natalie’s original guest list. The form is already wired on the site (`rsvp.mode` = `live`, API `https://api.robertandnatalie.wedding`). Guests do **not** need private links.
 
-**Default path (Rob, 7 October 2026):** `OPS_BOOTSTRAP_TOKEN` + CSV roster sync + D1. Guests click RSVP, choose their name from the roster, and answer for their household. Google Sheets is optional later and is not required to collect answers.
+**Default path (Rob, 7 October 2026):** `OPS_BOOTSTRAP_TOKEN` + CSV roster sync + D1. Guests click RSVP, choose their invitation (one label per party), and answer for their household. Google Sheets is optional later and is not required to collect answers.
 
 ## Cutoff
 
@@ -13,8 +13,8 @@ Set in both `content/site.config.json` → `rsvp.cutoffAt` and `backend/wrangler
 ## What guests see
 
 1. They click **RSVP** on the site (`/rsvp.html`).
-2. The page loads a dropdown of guest names from the Worker (`GET /guests`). Names are sorted A to Z; a search box narrows the list.
-3. Choosing a name opens that guest’s **party** page — one form per invitation row (household) in the roster.
+2. The page loads a dropdown of **party labels** from the Worker (`GET /guests`) — one row per household, sorted A to Z. A search box narrows the list.
+3. Choosing a label opens that **party** page — one form per invitation row in the roster.
 4. They answer attending / declining for each person and event, plus the existing details (contact email when anyone attends, Grand Hotel stay, optional notes) and submit.
 
 A forwarded or bookmarked party URL (`/rsvp.html?party=<id>`) opens the same household form. Plus-ones (named or unnamed) answer on the host household’s page. The form cannot add more people than the row already allows.
@@ -23,7 +23,7 @@ If that household has already RSVPed, the page shows the saved answers and they 
 
 If the roster is empty or the API is unreachable, the page says so and points guests to the couple.
 
-The public name list returns **only** display names and party ids. No emails, phones, addresses, notes or answers.
+The public list returns **only** the party label and party id. No emails, phones, addresses, notes, answers or a per-person name list.
 
 ## Secrets Rob must set
 
@@ -53,20 +53,23 @@ cd backend
 npm run migrate:remote
 ```
 
-4. Import the roster CSV (below). After that, `GET https://api.robertandnatalie.wedding/guests` should list names and party ids only.
+4. Import the 14-party roster CSV (below). After that, `GET https://api.robertandnatalie.wedding/guests` should list **14 party labels** and party ids only, A to Z.
 
 (`0003_hotel_stay.sql` adds `household_response.hotel_stay` if that migration has not already been applied.)
 
 ## Import the roster
 
-1. Download the **first tab** of [Natalie’s guest sheet](https://docs.google.com/spreadsheets/d/1MzBwUQpLq78eIH6tmUFSM4PcojktZRJe/edit) as CSV. Do not edit that tab. The Worker never reads or writes the live sheet on this path.
-2. Preview the mapping (names omitted unless you pass `--print-names`):
+Use the **14-party guest-sheet CSV** from this follow-up (artifact `roster-14-parties.csv`; do not commit it). Do not import the older 16-row download of [Natalie’s guest sheet](https://docs.google.com/spreadsheets/d/1MzBwUQpLq78eIH6tmUFSM4PcojktZRJe/edit). The Worker never reads or writes the live sheet on this path. The POST body is unchanged: guest-sheet columns, one `Guest Name` cell per party.
+
+1. Preview the mapping (names omitted unless you pass `--print-names`):
 
 ```bash
-npm run rsvp:roster -- --csv ~/Downloads/guest-list.csv
+npm run rsvp:roster -- --csv /path/to/roster-14-parties.csv
 ```
 
-3. POST that CSV to the API:
+Expect **14 invitation rows**. Couple labels split on `&` into two named guests; a single-name label is one guest. There are no plus-one slots on this roster.
+
+2. POST that CSV to the API:
 
 ```bash
 curl -sS -X POST https://api.robertandnatalie.wedding/ops/roster/sync \
@@ -74,13 +77,13 @@ curl -sS -X POST https://api.robertandnatalie.wedding/ops/roster/sync \
   -H "Content-Type: application/json" \
   -H "Origin: https://robertandnatalie.wedding" \
   --data-binary @- <<EOF
-{"csv": $(python3 -c 'import json,sys; print(json.dumps(open(sys.argv[1]).read()))' ~/Downloads/guest-list.csv)}
+{"csv": $(python3 -c 'import json,sys; print(json.dumps(open(sys.argv[1]).read()))' /path/to/roster-14-parties.csv)}
 EOF
 ```
 
-The response includes `counts` and `flags`. It does **not** issue private links. A second run updates the same household ids in place. To issue old-style personal links as well (not needed for guests), send `"issueLinks": true`.
+The response includes `counts` and `flags`. It does **not** issue private links. A second run updates the same household ids in place (ids are derived from the Guest Name cell). To issue old-style personal links as well (not needed for guests), send `"issueLinks": true`.
 
-4. Check `GET /ops/status` with the same bearer token: household count and named guests. Confirm `GET /guests` from a browser on the wedding site returns the name list. D1 is the source of truth for answers.
+3. Check `GET /ops/status` with the same bearer token: 14 households. Confirm `GET /guests` from a browser on the wedding site returns 14 party labels, A to Z. D1 is the source of truth for answers.
 
 ## Preview
 
@@ -90,25 +93,25 @@ npm run build && npm run serve
 # Synthetic households (nothing saved): http://127.0.0.1:8080/rsvp.html?preview=1
 ```
 
-The preview dropdown lists the sample names (Alex Example, Taylor Example, Morgan Example, …). Local API: `cd backend && cp .dev.vars.example .dev.vars` (fill `OPS_BOOTSTRAP_TOKEN` and the already-documented session secrets), `npm run migrate:local`, `npm run dev`. Point a **local copy** of `rsvp.apiBaseUrl` at `http://localhost:8787` only for that laptop check.
+The preview dropdown lists sample **party labels** (The Example Household, Taylor Sample, …), not every synthetic guest name. Local API: `cd backend && cp .dev.vars.example .dev.vars` (fill `OPS_BOOTSTRAP_TOKEN` and the already-documented session secrets), `npm run migrate:local`, `npm run dev`. Point a **local copy** of `rsvp.apiBaseUrl` at `http://localhost:8787` only for that laptop check.
 
-## Guest-list mapping (kept as written)
+## Guest-list mapping (Rob, 7 October 2026)
 
-The 5 October 2026 sheet has **16 invitation rows**. Named people in the Guest Name cell are split on `&` / `and` / commas. That is about **24 named guests** (the earlier “~22” count). Plus-one cells become either named household members (semicolon-separated names) or unnamed slots (`1 unnamed…`). A bare number that equals the named count (for example a couple with `2`) is treated as party size, **not** two extra guests, and is flagged.
+Rob settled a **14-party** roster. One `Guest Name` row per party; that cell is the dropdown label and the household id source. Named people in the cell are still split on `&` / `and` / commas. There are no plus-one cells on this list. The exact 14 labels and guest splits live in the uncommitted artifact `roster-14-parties.csv` (same guest-sheet columns `POST /ops/roster/sync` already accepts). Do not commit that file.
 
-Rob decisions still open on the list itself:
+Settled labels (do not invent fuller names, and do not keep the old 16-row sheet):
 
-- Incomplete names kept as written: **Mama & Daddy**, **Ken** (in Shelly & Ken). Not expanded.
-- **Anna & Logan** plus-one cell is `2` — treated as party size (no extra plus-ones). Confirm if they should have two unnamed slots instead.
-- Possible duplicate households: **Winne & Francois** vs **Winnie** + **Francoise**. Kept as two rows.
-- Several rows have no email/phone; the RSVP form collects a contact email when anyone attends.
-- Site contact email/phone on Details stay TBD and do not block this ship.
+- Couples are **one party** under the combined label: Andrew & Taylor; Anna & Logan (party of two, no extra plus-ones); Jon & Yuko; Linda & Danny; Shelly & Ken; **Winnie & Francois** (that spelling, one row — not a separate Winnie / Francoise household).
+- **Mama & Daddy** stays as written (two named guests: Mama, Daddy).
+- Single-name parties are one guest.
 
-Do not invent fuller names. Re-run the CSV roster sync after any sheet edit; ids are derived from the Guest Name cell so the same row updates in place.
+The RSVP form still collects a contact email when anyone attends. Site contact email/phone on Details stay TBD and do not block this ship.
+
+Re-run the CSV roster sync after any roster edit; ids are derived from the Guest Name cell so the same row updates in place. After sync, `GET /guests` must show those 14 labels once each, A to Z.
 
 ## Remaining owner work
 
-- Set `OPS_BOOTSTRAP_TOKEN` if needed, deploy the Worker, `migrate:remote`, POST the CSV. Guests then use the site RSVP button — no links to store or send.
+- Set `OPS_BOOTSTRAP_TOKEN` if needed, deploy the Worker, `migrate:remote`, POST the 14-party CSV. Guests then use the site RSVP button — no links to store or send.
 - Mail provider if confirmation email is wanted.
 - Cloudflare Access + MFA for `/admin`.
 - Details contact route, dress code, children policy, G3 `site.launchApproved`.

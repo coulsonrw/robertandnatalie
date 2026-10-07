@@ -166,7 +166,7 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   await context.close();
 }
 
-// Name-picker access: dropdown of synthetic names, then the household form.
+// Name-picker access: dropdown of synthetic party labels, then the household form.
 {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
@@ -175,7 +175,7 @@ for (const vp of [VIEWPORTS[1], VIEWPORTS[3]]) {
   await page.waitForSelector('#guest-name');
   const before = await page.evaluate(() => ({
     url: location.href,
-    names: Array.from(document.querySelectorAll('#guest-name option')).map((o) => o.textContent).filter((t) => t && t !== 'Choose your name…'),
+    names: Array.from(document.querySelectorAll('#guest-name option')).map((o) => o.textContent).filter((t) => t && t !== 'Choose your invitation…'),
   }));
   await page.screenshot({ path: path.join(OUT, 'rsvp-name-picker-390.png'), fullPage: true });
   await page.selectOption('#guest-name', 'hh_preview');

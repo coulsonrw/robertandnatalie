@@ -35,7 +35,7 @@ export function confirmationMail(cfg, { reference, events, summary, householdLab
   }
   lines.push('To change your response before responses close, return to');
   lines.push(cfg.siteRsvpUrl);
-  lines.push('and choose your name from the list. Please keep this reference for your records.');
+  lines.push('and choose your invitation from the list. Please keep this reference for your records.');
   lines.push('');
   lines.push('This message was sent because a response was saved for your invitation. It contains no dietary or access notes.');
   return { subject: `Your response for the wedding of ${cfg.coupleDisplayName} (${reference})`, text: `${lines.join('\n')}\n` };

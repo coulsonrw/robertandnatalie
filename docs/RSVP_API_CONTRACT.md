@@ -10,7 +10,7 @@ The static site's RSVP page (`src/js/rsvp.js`) talks to a small server-side serv
 
 ## Session and security (RSVP-01, SEC-02, SEC-03)
 
-- Guests open a household by choosing their name. `GET /guests` is a public, rate-limited directory of `{ name, partyId }` only (no emails, phones, addresses, notes or answers). `POST /session` with `{ "partyId" }` establishes a session and sets an `HttpOnly; Secure; SameSite=Lax` cookie.
+- Guests open a household by choosing their invitation. `GET /guests` is a public, rate-limited directory of one `{ name, partyId }` per party (`name` is the household label) — no emails, phones, addresses, notes, answers or individual guest names. `POST /session` with `{ "partyId" }` establishes a session and sets an `HttpOnly; Secure; SameSite=Lax` cookie.
 - Admin-issued link tokens and fallback codes still work as `{ "code": "<token or short code>" }` for support and tests. Only digests are stored; they are optional and are not issued by roster sync unless `"issueLinks": true`.
 - A link-preview `GET` must never open a session or change data. The guest page may keep `?party=<id>` in the query after the guest chooses a name; that id is not a secret.
 - Every request re-checks that the session's household owns every guest and event ID in the payload (deny by default). Guest session responses carry `Cache-Control: private, no-store`. The public name list may be cached briefly (`public, max-age=60`).
@@ -23,7 +23,7 @@ All bodies are JSON. Errors use `{ "error": { "code": string, "message": string 
 
 | Method and path | Purpose | Success | Errors |
 |---|---|---|---|
-| `GET /guests` | Public name list for the RSVP dropdown | `200` `{ "guests": [ { "name", "partyId" } ] }` | `429 rate_limited` |
+| `GET /guests` | Public party-label list for the RSVP dropdown | `200` `{ "guests": [ { "name", "partyId" } ] }` one row per household | `429 rate_limited` |
 | `POST /session` `{ partyId }` or `{ code }` | Open a household session | `200` **Session snapshot** | `403 invalid_code`, `429 rate_limited` |
 | `GET /session` | Resume an existing session | `200` snapshot | `401 invalid_session` |
 | `PUT /response` **Response payload** | Save the household's response atomically | `200` snapshot (with `reference`, new `revision`, `emailQueued`) | `400 validation`, `401 invalid_session`, `409 conflict` (body includes `latest` snapshot), `423 closed` |

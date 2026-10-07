@@ -39,7 +39,7 @@ Guests correct their own response by choosing their name again on the RSVP page 
 
 ## 5. Import the roster (name-picker RSVP)
 
-Guests click RSVP and choose their name. Until Cloudflare Access exists, download Natalie’s guest list as CSV and import it with `POST /ops/roster/sync` (see `docs/RSVP_GUEST_LAUNCH.md`; D1 is the default store). The public name list is `GET /guests` (names and party ids only). After Access is on, use the admin import endpoints in `backend/README.md` to update the roster. Optional admin-issued codes or links remain available for support; they are not part of the guest path.
+Guests click RSVP and choose their invitation (one label per party). Until Cloudflare Access exists, import the 14-party CSV with `POST /ops/roster/sync` (see `docs/RSVP_GUEST_LAUNCH.md`; D1 is the default store). The public list is `GET /guests` (party label and party id only). After Access is on, use the admin import endpoints in `backend/README.md` to update the roster. Optional admin-issued codes or links remain available for support; they are not part of the guest path.
 
 ## 6. Export attendance safely
 
@@ -87,7 +87,7 @@ If the RSVP service is unavailable, guests see the network-error state with thei
 
 ## 13. Announce the RSVP opening date (audit IMP-02)
 
-Set `rsvp.opensAt` in `content/site.config.json` to the approved date-time with its offset (for example `2026-10-01T09:00:00-05:00`) only once the owners have approved it and the service is ready to open on that day. The not-yet-open state on `/rsvp.html` and the note under the welcome area then name the date in Central Time. Leave it `null` otherwise; the site says only that responses are not open yet. `rsvp.mode` is `live` and `rsvp.apiBaseUrl` is `https://api.robertandnatalie.wedding`. Guests choose their name on `/rsvp.html` after the roster CSV is imported (`docs/RSVP_GUEST_LAUNCH.md`). Confirmation mail stays on the `stub` provider until a mail identity is chosen.
+Set `rsvp.opensAt` in `content/site.config.json` to the approved date-time with its offset (for example `2026-10-01T09:00:00-05:00`) only once the owners have approved it and the service is ready to open on that day. The not-yet-open state on `/rsvp.html` and the note under the welcome area then name the date in Central Time. Leave it `null` otherwise; the site says only that responses are not open yet. `rsvp.mode` is `live` and `rsvp.apiBaseUrl` is `https://api.robertandnatalie.wedding`. Guests choose their invitation on `/rsvp.html` after the 14-party roster CSV is imported (`docs/RSVP_GUEST_LAUNCH.md`). Confirmation mail stays on the `stub` provider until a mail identity is chosen.
 
 ## 14. Publish Our Story (audit IMP-12/13)
 

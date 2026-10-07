@@ -12,7 +12,7 @@ describe('GET /guests (public name directory)', () => {
     expect(res.headers.get('Cache-Control')).toBe('public, max-age=60');
   });
 
-  it('returns only display names and party ids, sorted A to Z, with no other guest data', async () => {
+  it('returns one party label per household, sorted A to Z, with no other guest data', async () => {
     await importRoster();
     const res = await listGuests();
     expect(res.status).toBe(200);
@@ -21,31 +21,23 @@ describe('GET /guests (public name directory)', () => {
     expect(Object.keys(body)).toEqual(['guests']);
     expect(body.guests.every((g) => Object.keys(g).sort().join(',') === 'name,partyId')).toBe(true);
     expect(body.guests.map((g) => g.name)).toEqual([
-      'Alex Example',
-      'Casey Sample',
-      'Jordan Example',
-      'Morgan Sample',
-      'Riley Sample',
-      'Sam Example',
       'Taylor Sample',
+      'The Example Household',
+      'The Sample Family',
     ]);
-    expect(body.guests.filter((g) => g.partyId === 'hh_example').map((g) => g.name)).toEqual([
-      'Alex Example',
-      'Jordan Example',
-      'Sam Example',
-    ]);
+    expect(body.guests.map((g) => g.partyId)).toEqual(['hh_solo', 'hh_example', 'hh_family']);
     const payload = JSON.stringify(body);
-    expect(payload).not.toMatch(/@|phone|email|address|notes|Vegetarian|plus-one|g_alex_guest|contact/i);
+    expect(payload).not.toMatch(/@|phone|email|address|notes|Vegetarian|plus-one|g_alex_guest|contact|Alex Example|Jordan Example/i);
     expect(payload).not.toContain('alex@example');
   });
 
-  it('omits plus-one slots and guests from a revoked household', async () => {
+  it('omits a revoked household', async () => {
     await importRoster();
     await admin(OWNER, 'POST', '/admin/households/hh_solo/revoke', { body: {} });
     const body = await (await listGuests()).json();
     expect(body.guests.map((g) => g.name)).not.toContain('Taylor Sample');
     expect(body.guests.some((g) => g.partyId === 'hh_solo')).toBe(false);
-    expect(body.guests).toHaveLength(6);
+    expect(body.guests).toHaveLength(2);
   });
 
   it('rate limits repeated directory reads per IP', async () => {

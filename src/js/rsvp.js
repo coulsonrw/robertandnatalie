@@ -56,16 +56,16 @@
   RsvpError.prototype = Object.create(Error.prototype);
 
   var MESSAGES = {
-    invalid_code: 'We could not find that invitation. Please choose your name from the list, or contact us.',
-    invalid_session: 'Your session has ended. Please choose your name again; anything you had entered is kept on this page.',
+    invalid_code: 'We could not find that invitation. Please choose your invitation from the list, or contact us.',
+    invalid_session: 'Your session has ended. Please choose your invitation again; anything you had entered is kept on this page.',
     conflict: 'This household’s response was updated from another device. The latest answers are shown below; please review them before saving.',
     closed: cfg.closedText,
     rate_limited: 'Too many attempts. Please wait a few minutes and try again.',
     network: 'We could not reach the RSVP service. Nothing has been lost. Please check your connection and try again.',
     validation: 'Some of the answers could not be accepted. Please review them and try again.',
     server_error: 'Something went wrong on our side. Please try again in a moment.',
-    directory_empty: 'The guest list is not available yet. Please try again later, or contact us so we can help you respond.',
-    directory_error: 'We could not load the guest list. Please try again, or contact us so we can help you respond.'
+    directory_empty: 'The invitation list is not available yet. Please try again later, or contact us so we can help you respond.',
+    directory_error: 'We could not load the invitation list. Please try again, or contact us so we can help you respond.'
   };
 
   // ---------- adapters ----------
@@ -98,12 +98,7 @@
       kind: 'preview',
       listGuests: function () {
         return wait(200).then(function () {
-          var guests = [];
-          households.forEach(function (h) {
-            h.guests.forEach(function (g) {
-              if (g.kind === 'named' && g.name) guests.push({ name: g.name, partyId: h.id });
-            });
-          });
+          var guests = households.map(function (h) { return { name: h.label, partyId: h.id }; });
           guests.sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }); });
           return { guests: guests };
         });
@@ -285,12 +280,12 @@
   }
 
   function renderAccess() {
-    var intro = el('p', { text: 'Choose your name to open the RSVP for everyone on your invitation.' });
+    var intro = el('p', { text: 'Choose your invitation to open the RSVP for everyone in your party.' });
     if (mode === 'preview') {
-      intro = el('p', { text: 'Preview with synthetic guests. Choose a sample name to try the household form.' });
+      intro = el('p', { text: 'Preview with synthetic guests. Choose a sample invitation to try the household form.' });
     }
     if (state.guestList === null && !state.guestListError) {
-      return stepSection('access', [heading('Find your invitation'), intro, el('p', { class: 'hint', role: 'status', text: 'Loading the guest list…' })]);
+      return stepSection('access', [heading('Find your invitation'), intro, el('p', { class: 'hint', role: 'status', text: 'Loading the invitation list…' })]);
     }
     if (state.guestListError || (state.guestList && !state.guestList.length)) {
       var emptyMsg = state.guestListError ? MESSAGES.directory_error : MESSAGES.directory_empty;
@@ -304,32 +299,32 @@
     var visible = filteredGuests();
     var form = el('form', { class: 'rsvp-name-picker', novalidate: true, onsubmit: onAccessSubmit });
     append(form, el('div', { class: 'field' },
-      el('label', { for: 'guest-filter', text: 'Search names' }),
+      el('label', { for: 'guest-filter', text: 'Search invitations' }),
       el('input', {
         class: 'input', id: 'guest-filter', name: 'guest-filter', type: 'search', autocomplete: 'off',
         spellcheck: 'false', value: state.guestFilter || '', 'aria-controls': 'guest-name',
         'aria-describedby': 'guest-filter-hint',
         oninput: function (e) { state.guestFilter = e.target.value; refreshNameOptions(); }
       }),
-      el('p', { class: 'hint', id: 'guest-filter-hint', text: 'Optional. Type to narrow the list, then choose your name.' })
+      el('p', { class: 'hint', id: 'guest-filter-hint', text: 'Optional. Type to narrow the list, then choose your invitation.' })
     ));
     var select = el('select', {
       class: 'input', id: 'guest-name', name: 'guest-name', required: true,
       'aria-invalid': state.errors.party ? 'true' : null,
       'aria-describedby': 'guest-name-hint' + (state.errors.party ? ' guest-name-error' : ''),
       onchange: function (e) { state.selectedPartyId = e.target.value; }
-    }, el('option', { value: '', text: 'Choose your name…' }));
+    }, el('option', { value: '', text: 'Choose your invitation…' }));
     visible.forEach(function (g) {
       append(select, el('option', { value: g.partyId, selected: state.selectedPartyId === g.partyId ? true : null, text: g.name }));
     });
     append(form, el('div', { class: 'field' },
-      el('label', { for: 'guest-name', text: 'Your name' }),
+      el('label', { for: 'guest-name', text: 'Your invitation' }),
       select,
-      el('p', { class: 'hint', id: 'guest-name-hint', text: visible.length ? (visible.length + (visible.length === 1 ? ' name' : ' names') + ' shown, A to Z.') : 'No names match that search.' }),
+      el('p', { class: 'hint', id: 'guest-name-hint', text: visible.length ? (visible.length + (visible.length === 1 ? ' invitation' : ' invitations') + ' shown, A to Z.') : 'No invitations match that search.' }),
       state.errors.party ? el('p', { class: 'error-text', id: 'guest-name-error' }, icon('i-alert'), el('span', { text: state.errors.party })) : null
     ));
     append(form, el('div', { class: 'form-actions' }, busyButton('Continue', { class: 'btn btn-primary', type: 'submit', 'data-action': 'open-party', 'data-busy-label': 'Opening…' })));
-    return stepSection('access', [heading('Find your invitation'), intro, form, contactNode('If your name is missing, please contact ')]);
+    return stepSection('access', [heading('Find your invitation'), intro, form, contactNode('If your invitation is missing, please contact ')]);
   }
 
   function refreshNameOptions() {
@@ -339,13 +334,13 @@
     var visible = filteredGuests();
     var current = state.selectedPartyId || select.value;
     select.innerHTML = '';
-    append(select, el('option', { value: '', text: 'Choose your name…' }));
+    append(select, el('option', { value: '', text: 'Choose your invitation…' }));
     visible.forEach(function (g) {
       append(select, el('option', { value: g.partyId, selected: current === g.partyId ? true : null, text: g.name }));
     });
     if (current && visible.some(function (g) { return g.partyId === current; })) select.value = current;
     else { select.value = ''; state.selectedPartyId = ''; }
-    if (hint) hint.textContent = visible.length ? (visible.length + (visible.length === 1 ? ' name' : ' names') + ' shown, A to Z.') : 'No names match that search.';
+    if (hint) hint.textContent = visible.length ? (visible.length + (visible.length === 1 ? ' invitation' : ' invitations') + ' shown, A to Z.') : 'No invitations match that search.';
   }
 
   function renderInvitees() {
@@ -613,7 +608,7 @@
     var partyId = ((select && select.value) || state.selectedPartyId || '').trim();
     state.selectedPartyId = partyId;
     state.errors = {};
-    if (!partyId) { state.errors.party = 'Please choose your name from the list.'; render(); select = document.getElementById('guest-name'); if (select) select.focus(); return; }
+    if (!partyId) { state.errors.party = 'Please choose your invitation from the list.'; render(); select = document.getElementById('guest-name'); if (select) select.focus(); return; }
     openParty(partyId);
   }
 
@@ -622,7 +617,7 @@
       resetLocalAnswers();
       setPartyParam('');
       go('access');
-      setNotice('info', 'You have been signed out of that invitation. Choose your own name to continue.');
+      setNotice('info', 'You have been signed out of that invitation. Choose your own invitation to continue.');
       if (!state.guestList) loadGuestList();
     });
   }

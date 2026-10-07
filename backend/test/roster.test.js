@@ -149,8 +149,9 @@ describe('ops bootstrap', () => {
     expect(body.answersTab.skipped).toBe(true);
 
     const names = await (await SELF.fetch(`${BASE}/guests`, { headers: { Origin: 'https://robertandnatalie.wedding' } })).json();
-    expect(names.guests.length).toBe(21); // named guests + named plus-ones from the fixture
+    expect(names.guests.length).toBe(11); // one dropdown row per invitation, not per named guest
     expect(names.guests.every((g) => g.name && g.partyId)).toBe(true);
+    expect(new Set(names.guests.map((g) => g.partyId)).size).toBe(11);
 
     const again = await ops('/ops/roster/sync', { method: 'POST', body: { csv: FIXTURE } });
     expect(again.status).toBe(200);
