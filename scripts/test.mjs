@@ -265,6 +265,7 @@ test('QA-07/08 timeline: flipping published: true on a draft chapter shows it an
   ch7.comingSoon = false;
   ch7.published = true;
   ch7.textApproved = true;
+  ch7.imageId = 'monogram-rn';
   ch7.paragraphs = ['Approved draft copy for the Dubai chapter.'];
   const b = buildWith(config, { preview: false });
   b.run();
