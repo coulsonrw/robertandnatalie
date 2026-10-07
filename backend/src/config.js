@@ -53,6 +53,7 @@ export function readConfig(env) {
       windowSeconds: int(env.RATE_LIMIT_WINDOW_SECONDS, 900),
       perIp: int(env.RATE_LIMIT_PER_IP, 20),
       perCode: int(env.RATE_LIMIT_PER_CODE, 10),
+      perDirectory: int(env.RATE_LIMIT_PER_DIRECTORY, 60),
     },
     mail: {
       provider: env.MAIL_PROVIDER || 'stub',

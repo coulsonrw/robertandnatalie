@@ -77,6 +77,23 @@ export async function openSession(code, extraHeaders) {
   return { res, cookie, snapshot: res.status === 200 ? await res.json() : null };
 }
 
+export async function openParty(partyId, extraHeaders) {
+  const res = await SELF.fetch(`${BASE}/session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://robertandnatalie.wedding', ...(extraHeaders || {}) },
+    body: JSON.stringify({ partyId }),
+  });
+  const setCookie = res.headers.get('Set-Cookie') || '';
+  const cookie = setCookie.split(';')[0];
+  return { res, cookie, snapshot: res.status === 200 ? await res.json() : null };
+}
+
+export function listGuests(extraHeaders) {
+  return SELF.fetch(`${BASE}/guests`, {
+    headers: { Origin: 'https://robertandnatalie.wedding', ...(extraHeaders || {}) },
+  });
+}
+
 export function guest(cookie, method, path, body) {
   const headers = { Cookie: cookie, Origin: 'https://robertandnatalie.wedding' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';

@@ -369,14 +369,20 @@ test('P2 #4: RSVP calls to action follow rsvp.mode: outlined "opens soon" until 
   fs.rmSync(c.tmp, { recursive: true, force: true });
 });
 
-test('live RSVP: private-link API origin is in CSP and the form asks about The Grand Hotel', () => {
+test('live RSVP: name-picker talks to the API origin and does not hard-code guest names', () => {
   const b = buildWith(readConfig(), { preview: false }); b.run();
   const rsvp = b.read('rsvp.html');
+  const js = b.read('js/rsvp.js');
   assert.match(rsvp, /connect-src 'self' https:\/\/api\.robertandnatalie\.wedding/);
   assert.match(rsvp, /"apiBaseUrl":"https:\/\/api\.robertandnatalie\.wedding"/);
   assert.match(rsvp, /"mode":"live"/);
-  assert.match(b.read('js/rsvp.js'), /Will you stay at The Grand Hotel\?/);
-  assert.match(b.read('js/rsvp.js'), /hotelStay/);
+  assert.match(js, /Will you stay at The Grand Hotel\?/);
+  assert.match(js, /hotelStay/);
+  assert.match(js, /\/guests/);
+  assert.match(js, /partyId/);
+  assert.match(js, /Choose your name/);
+  assert.doesNotMatch(js, /Mama & Daddy|Winne|Francoise|Shelly & Ken/);
+  assert.doesNotMatch(rsvp, /Mama & Daddy|Winne|Francoise|Shelly & Ken/);
   fs.rmSync(b.tmp, { recursive: true, force: true });
 });
 

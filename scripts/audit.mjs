@@ -61,10 +61,10 @@ const PERF_PAGES = [
     await measure('tap "View the invitation" (opens the invitation dialog)', () => page.click('.hero-keepsake [data-action="view-invitation"]'));
   } },
   { id: 'rsvp-preview', url: '/rsvp.html?preview=1', label: 'RSVP with synthetic guests (/rsvp.html?preview=1)', interact: async (page, measure) => {
-    await page.waitForSelector('#code');
-    await measure('tap the invitation-code field (focus)', () => page.click('#code'));
-    await page.fill('#code', 'PREVIEW');
-    await measure('tap "Find my invitation" (submits the code; re-renders the busy state)', () => page.click('button[type=submit]'));
+    await page.waitForSelector('#guest-name');
+    await measure('tap the name list (focus)', () => page.click('#guest-name'));
+    await page.selectOption('#guest-name', 'hh_preview');
+    await measure('tap "Continue" (opens the household form)', () => page.click('[data-action="open-party"]'));
     await page.waitForSelector('[data-step="invitees"]', { timeout: 15000 }).catch(() => {});
     await measure('tap "These are correct — continue" (renders the attendance step)', () => page.click('[data-action="continue"]'));
   } },
@@ -128,8 +128,9 @@ async function settle(page) {
 // ---------- RSVP preview flow helpers (synthetic household, code PREVIEW) ----------
 async function rsvpEnterCode(page) {
   await page.waitForSelector('[data-step="access"]');
-  await page.fill('#code', 'PREVIEW');
-  await page.click('button[type=submit]');
+  await page.waitForSelector('#guest-name');
+  await page.selectOption('#guest-name', 'hh_preview');
+  await page.click('[data-action="open-party"]');
   await page.waitForSelector('[data-step="invitees"]');
 }
 async function rsvpToAttendanceError(page) {
@@ -155,6 +156,7 @@ async function rsvpToDetails(page) {
   await page.click('[data-action="continue"]');
   await page.waitForSelector('[data-step="details"]');
   await page.fill('#contactEmail', 'alex@example.com');
+  await page.check('#c-hotelStay-yes');
   await page.fill('#notes', 'Vegetarian, please.');
 }
 async function rsvpToReview(page) {
@@ -307,7 +309,7 @@ async function accessibleNames(context, page, selectors) {
   } finally { await cdp.detach().catch(() => {}); }
   return out;
 }
-const NAME_PROBES = ['#seal', '#invitation-title', '#hero-title', '.keepsake-btn', '.dialog-close', '.nav-toggle', '#rsvp-step-heading', '#code'];
+const NAME_PROBES = ['#seal', '#invitation-title', '#hero-title', '.keepsake-btn', '.dialog-close', '.nav-toggle', '#rsvp-step-heading', '#guest-name'];
 
 async function runAxe(page) {
   await page.addScriptTag({ path: AXE_PATH });

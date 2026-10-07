@@ -1,6 +1,6 @@
 // Owner bootstrap that does not wait on Cloudflare Access (Access is still unset on the account).
 // Gated by OPS_BOOTSTRAP_TOKEN. When the token is missing the routes fail closed. Used to import
-// the guest-sheet roster and issue one private link per named guest.
+// the guest-sheet roster. Guests pick their name from GET /guests; private links are optional.
 
 import { HttpError, json, readJson } from './http.js';
 import { all } from './db.js';
@@ -95,16 +95,18 @@ export async function handleOps(request, env, cfg, url) {
     const commit = await commitImport(env.DB, preview.batchId, OPS_ACTOR);
 
     const issued = [];
-    const existing = await all(env.DB, "SELECT household_id, label FROM access_credential WHERE kind = 'link' AND revoked_at IS NULL");
-    const have = new Set(existing.map((r) => `${r.household_id}|${r.label || ''}`));
-    for (const item of linkPlan(parsed)) {
-      const key = `${item.householdId}|${item.label}`;
-      if (have.has(key) && body.reissue !== true) {
-        issued.push({ ...item, issued: false, reason: 'already_issued' });
-        continue;
+    if (body.issueLinks === true) {
+      const existing = await all(env.DB, "SELECT household_id, label FROM access_credential WHERE kind = 'link' AND revoked_at IS NULL");
+      const have = new Set(existing.map((r) => `${r.household_id}|${r.label || ''}`));
+      for (const item of linkPlan(parsed)) {
+        const key = `${item.householdId}|${item.label}`;
+        if (have.has(key) && body.reissue !== true) {
+          issued.push({ ...item, issued: false, reason: 'already_issued' });
+          continue;
+        }
+        const cred = await issueCredential(env.DB, cfg, item.householdId, { kind: 'link', label: item.label }, OPS_ACTOR);
+        issued.push({ ...item, issued: true, credentialId: cred.id, link: cred.link });
       }
-      const cred = await issueCredential(env.DB, cfg, item.householdId, { kind: 'link', label: item.label }, OPS_ACTOR);
-      issued.push({ ...item, issued: true, credentialId: cred.id, link: cred.link });
     }
 
     let answers = { skipped: true, reason: 'sheets_unconfigured' };

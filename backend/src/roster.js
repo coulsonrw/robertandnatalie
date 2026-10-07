@@ -1,7 +1,8 @@
-// Turns Natalie's guest-sheet CSV (one invitation row per household) into the admin import CSV
-// and one private link per named guest. Plus-ones stay on the host household and cannot be added
-// beyond the slots the row already allows. Synthetic fixtures only in tests (DATA-03); production
-// names are read at runtime from the sheet or a local CSV and are never committed.
+// Turns Natalie's guest-sheet CSV (one invitation row per household) into the admin import CSV.
+// Named people on a row become household members; plus-ones stay on the host household and cannot
+// be added beyond the slots the row already allows. Guests find their party by name (GET /guests).
+// Synthetic fixtures only in tests (DATA-03); production names are imported at runtime and are
+// never committed.
 
 import { parseCsvObjects, toCsv } from './csv.js';
 

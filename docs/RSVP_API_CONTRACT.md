@@ -10,11 +10,12 @@ The static site's RSVP page (`src/js/rsvp.js`) talks to a small server-side serv
 
 ## Session and security (RSVP-01, SEC-02, SEC-03)
 
-- Household credentials are random (≥128 bits for links; fallback codes with adequate entropy and rate limiting). Only digests are stored; credentials are scoped to one household and revocable.
-- `POST /session` establishes a session and sets an `HttpOnly; Secure; SameSite=Lax` cookie. A link-preview `GET` must never consume a credential or change data. Personal links carry the token in the URL fragment (`/rsvp.html#t=<token>`); the page removes it from the address bar on load and only sends it when the guest presses "Open my invitation". The request body is the same `{ "code": "<token or short code>" }` for both.
-- Every request re-checks that the session's household owns every guest and event ID in the payload (deny by default). Responses carry `Cache-Control: private, no-store`.
+- Guests open a household by choosing their name. `GET /guests` is a public, rate-limited directory of `{ name, partyId }` only (no emails, phones, addresses, notes or answers). `POST /session` with `{ "partyId" }` establishes a session and sets an `HttpOnly; Secure; SameSite=Lax` cookie.
+- Admin-issued link tokens and fallback codes still work as `{ "code": "<token or short code>" }` for support and tests. Only digests are stored; they are optional and are not issued by roster sync unless `"issueLinks": true`.
+- A link-preview `GET` must never open a session or change data. The guest page may keep `?party=<id>` in the query after the guest chooses a name; that id is not a secret.
+- Every request re-checks that the session's household owns every guest and event ID in the payload (deny by default). Guest session responses carry `Cache-Control: private, no-store`. The public name list may be cached briefly (`public, max-age=60`).
 - CORS: allow the site origin only, with `Access-Control-Allow-Credentials: true`.
-- Rate-limit `POST /session` per IP and per code. Never confirm whether a name is on the list.
+- Rate-limit `GET /guests` per IP and `POST /session` per IP (and per code / party). Unknown or revoked party ids look the same as an unknown code (`403 invalid_code`).
 
 ## Endpoints
 
@@ -22,7 +23,8 @@ All bodies are JSON. Errors use `{ "error": { "code": string, "message": string 
 
 | Method and path | Purpose | Success | Errors |
 |---|---|---|---|
-| `POST /session` `{ code }` | Exchange an invitation code (or link token) for a session | `200` **Session snapshot** | `403 invalid_code`, `429 rate_limited` |
+| `GET /guests` | Public name list for the RSVP dropdown | `200` `{ "guests": [ { "name", "partyId" } ] }` | `429 rate_limited` |
+| `POST /session` `{ partyId }` or `{ code }` | Open a household session | `200` **Session snapshot** | `403 invalid_code`, `429 rate_limited` |
 | `GET /session` | Resume an existing session | `200` snapshot | `401 invalid_session` |
 | `PUT /response` **Response payload** | Save the household's response atomically | `200` snapshot (with `reference`, new `revision`, `emailQueued`) | `400 validation`, `401 invalid_session`, `409 conflict` (body includes `latest` snapshot), `423 closed` |
 | `DELETE /session` | End the session (shared devices) | `204` | — |

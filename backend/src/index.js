@@ -1,10 +1,12 @@
-// Worker entry point: routes guest endpoints (docs/RSVP_API_CONTRACT.md), the public banner
-// endpoint, and /admin; the scheduled handler runs the mail outbox and the retention rule.
+// Worker entry point: routes guest endpoints (docs/RSVP_API_CONTRACT.md), the public name
+// directory, the public banner, and /admin; the scheduled handler runs the mail outbox and
+// the retention rule.
 
 import { readConfig } from './config.js';
 import { HttpError, json, errorResponse, corsHeaders, preflight, assertSameSite, readJson, applySecurityHeaders } from './http.js';
 import { requestLog } from './log.js';
 import { postSession, getSession, deleteSession } from './session.js';
+import { listPublicGuests } from './directory.js';
 import { putResponse } from './response.js';
 import { handleAdmin } from './admin/index.js';
 import { handleOps } from './ops.js';
@@ -17,6 +19,10 @@ async function route(request, env, cfg, url) {
   const path = url.pathname.replace(/\/+$/, '') || '/';
 
   if (path === '/health' && method === 'GET') return json(200, { ok: true, environment: cfg.environment });
+
+  if (path === '/guests' && method === 'GET') {
+    return await listPublicGuests(request, env, cfg);
+  }
 
   if (path === '/session') {
     assertSameSite(request, cfg.siteOrigin);

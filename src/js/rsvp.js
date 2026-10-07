@@ -56,14 +56,16 @@
   RsvpError.prototype = Object.create(Error.prototype);
 
   var MESSAGES = {
-    invalid_code: 'We could not find an invitation with that code. Please check the code on your invitation and try again.',
-    invalid_session: 'Your session has ended. Please enter your invitation code again; anything you had entered is kept on this page.',
+    invalid_code: 'We could not find that invitation. Please choose your name from the list, or contact us.',
+    invalid_session: 'Your session has ended. Please choose your name again; anything you had entered is kept on this page.',
     conflict: 'This household’s response was updated from another device. The latest answers are shown below; please review them before saving.',
     closed: cfg.closedText,
     rate_limited: 'Too many attempts. Please wait a few minutes and try again.',
     network: 'We could not reach the RSVP service. Nothing has been lost. Please check your connection and try again.',
     validation: 'Some of the answers could not be accepted. Please review them and try again.',
-    server_error: 'Something went wrong on our side. Nothing has been lost. Please try again in a moment.'
+    server_error: 'Something went wrong on our side. Please try again in a moment.',
+    directory_empty: 'The guest list is not available yet. Please try again later, or contact us so we can help you respond.',
+    directory_error: 'We could not load the guest list. Please try again, or contact us so we can help you respond.'
   };
 
   // ---------- adapters ----------
@@ -94,10 +96,27 @@
     }
     return {
       kind: 'preview',
-      openSession: function (code) {
+      listGuests: function () {
+        return wait(200).then(function () {
+          var guests = [];
+          households.forEach(function (h) {
+            h.guests.forEach(function (g) {
+              if (g.kind === 'named' && g.name) guests.push({ name: g.name, partyId: h.id });
+            });
+          });
+          guests.sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }); });
+          return { guests: guests };
+        });
+      },
+      openSession: function (codeOrParty) {
         return wait(350).then(function () {
-          var c = String(code || '').trim().toUpperCase();
-          var hh = households.filter(function (h) { return String(h.code).toUpperCase() === c; })[0];
+          var hh;
+          if (codeOrParty && typeof codeOrParty === 'object' && codeOrParty.partyId) {
+            hh = households.filter(function (h) { return h.id === codeOrParty.partyId; })[0];
+          } else {
+            var c = String(codeOrParty || '').trim().toUpperCase();
+            hh = households.filter(function (h) { return String(h.code).toUpperCase() === c; })[0];
+          }
           if (!hh) throw new RsvpError('invalid_code');
           current = hh; return snapshot();
         });
@@ -149,7 +168,13 @@
     }
     return {
       kind: 'live',
-      openSession: function (code) { return call('POST', '/session', { code: code }); },
+      listGuests: function () { return call('GET', '/guests'); },
+      openSession: function (codeOrParty) {
+        if (codeOrParty && typeof codeOrParty === 'object' && codeOrParty.partyId) {
+          return call('POST', '/session', { partyId: codeOrParty.partyId });
+        }
+        return call('POST', '/session', { code: codeOrParty });
+      },
       getSession: function () { return call('GET', '/session').catch(function (e) { if (e.code === 'invalid_session' || e.code === 'invalid_code') return null; throw e; }); },
       saveResponse: function (p) { return call('PUT', '/response', p); },
       endSession: function () { return call('DELETE', '/session').catch(function () { return null; }); }
@@ -158,28 +183,25 @@
 
   var adapter = mode === 'preview' ? mockAdapter(cfg.preview) : httpAdapter(cfg.apiBaseUrl);
 
-  // Private household links carry their credential in the URL fragment (#t=…) or query (?t=…).
-  // It is read once, removed from the address bar immediately so it is not kept in history or
-  // leaked through referrers, and only exchanged for a session when the guest presses the button
-  // (a link-preview fetch must never consume it — PRD SEC-02, IA-02).
-  var linkToken = null;
-  (function readLinkToken() {
-    var hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
-    var t = hashParams.get('t') || params.get('t');
-    if (!t) return;
-    linkToken = t;
-    hashParams.delete('t');
-    params.delete('t');
-    var clean = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + (hashParams.toString() ? '#' + hashParams.toString() : '');
-    try { window.history.replaceState(null, '', clean); } catch (e) { /* ignore */ }
-  })();
+  function currentSearch() { return new URLSearchParams(window.location.search); }
+  function writeSearch(next) {
+    var q = next.toString();
+    try { window.history.replaceState(null, '', window.location.pathname + (q ? '?' + q : '')); } catch (e) { /* ignore */ }
+  }
+  function setPartyParam(partyId) {
+    var next = currentSearch();
+    if (partyId) next.set('party', partyId);
+    else next.delete('party');
+    writeSearch(next);
+  }
   var eventById = {};
   cfg.events.forEach(function (e) { eventById[e.id] = e; });
 
   // ---------- state ----------
   var state = {
     step: 'access', session: null, answers: {}, plusOneNames: {}, contactEmail: '', notes: '', hotelStay: null, meals: {},
-    requestId: null, busy: false, notice: null, errors: {}, focusHeading: false
+    requestId: null, busy: false, notice: null, errors: {}, focusHeading: false,
+    guestList: null, guestListError: null, guestFilter: '', selectedPartyId: ''
   };
   var mealCfg = cfg.mealChoices && cfg.mealChoices.eventId && cfg.mealChoices.options && cfg.mealChoices.options.length ? cfg.mealChoices : null;
   function mealAsked(gid) { return !!mealCfg && state.answers[key(gid, mealCfg.eventId)] === 'attending'; }
@@ -255,24 +277,75 @@
     return el('button', attrs, state.busy && attrs['data-busy-label'] ? attrs['data-busy-label'] : label);
   }
 
+  function filteredGuests() {
+    var list = state.guestList || [];
+    var q = (state.guestFilter || '').trim().toLowerCase();
+    if (!q) return list;
+    return list.filter(function (g) { return g.name.toLowerCase().indexOf(q) !== -1; });
+  }
+
   function renderAccess() {
-    if (linkToken) {
-      var linkForm = el('form', { novalidate: true, onsubmit: onLinkSubmit },
-        el('p', { text: 'You followed a personal invitation link. Press the button to open your household’s invitation.' }),
-        el('div', { class: 'form-actions' }, busyButton('Open my invitation', { class: 'btn btn-primary', type: 'submit', 'data-action': 'open-link', 'data-busy-label': 'Opening…' })),
-        el('p', { class: 'hint' }, 'Not you? ', el('button', { class: 'text-button', type: 'button', onclick: function () { linkToken = null; render(); } }, 'Enter an invitation code instead'), '.')
-      );
-      return stepSection('access', [heading('Open your invitation'), linkForm, contactNode('Having trouble? Please contact ')]);
+    var intro = el('p', { text: 'Choose your name to open the RSVP for everyone on your invitation.' });
+    if (mode === 'preview') {
+      intro = el('p', { text: 'Preview with synthetic guests. Choose a sample name to try the household form.' });
     }
-    var form = el('form', { novalidate: true, onsubmit: onAccessSubmit });
+    if (state.guestList === null && !state.guestListError) {
+      return stepSection('access', [heading('Find your invitation'), intro, el('p', { class: 'hint', role: 'status', text: 'Loading the guest list…' })]);
+    }
+    if (state.guestListError || (state.guestList && !state.guestList.length)) {
+      var emptyMsg = state.guestListError ? MESSAGES.directory_error : MESSAGES.directory_empty;
+      return stepSection('access', [
+        heading('Find your invitation'),
+        el('div', { class: 'status is-error', role: 'status' }, icon('i-alert'), el('p', { text: emptyMsg })),
+        el('div', { class: 'form-actions' }, busyButton('Try again', { class: 'btn btn-secondary', type: 'button', 'data-action': 'retry-directory', onclick: function () { loadGuestList(); } })),
+        contactNode('You can also contact ')
+      ]);
+    }
+    var visible = filteredGuests();
+    var form = el('form', { class: 'rsvp-name-picker', novalidate: true, onsubmit: onAccessSubmit });
     append(form, el('div', { class: 'field' },
-      el('label', { for: 'code', text: 'Invitation code' }),
-      el('input', { class: 'input', id: 'code', name: 'code', type: 'text', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', required: true, 'aria-describedby': 'code-hint' + (state.errors.code ? ' code-error' : ''), 'aria-invalid': state.errors.code ? 'true' : null, value: state.codeValue || '' }),
-      el('p', { class: 'hint', id: 'code-hint' }, mode === 'preview' ? 'This is a preview with synthetic guests. Codes: ' + (cfg.preview.households || []).map(function (h) { return h.code; }).join(', ') + '.' : 'Your code is printed with your invitation. If you followed a personal link, you may not need it.'),
-      state.errors.code ? el('p', { class: 'error-text', id: 'code-error' }, icon('i-alert'), el('span', { text: state.errors.code })) : null
+      el('label', { for: 'guest-filter', text: 'Search names' }),
+      el('input', {
+        class: 'input', id: 'guest-filter', name: 'guest-filter', type: 'search', autocomplete: 'off',
+        spellcheck: 'false', value: state.guestFilter || '', 'aria-controls': 'guest-name',
+        'aria-describedby': 'guest-filter-hint',
+        oninput: function (e) { state.guestFilter = e.target.value; refreshNameOptions(); }
+      }),
+      el('p', { class: 'hint', id: 'guest-filter-hint', text: 'Optional. Type to narrow the list, then choose your name.' })
     ));
-    append(form, el('div', { class: 'form-actions' }, busyButton('Find my invitation', { class: 'btn btn-primary', type: 'submit', 'data-busy-label': 'Checking…' })));
-    return stepSection('access', [heading('Find your invitation'), form, contactNode('Lost your code? Please contact ')]);
+    var select = el('select', {
+      class: 'input', id: 'guest-name', name: 'guest-name', required: true,
+      'aria-invalid': state.errors.party ? 'true' : null,
+      'aria-describedby': 'guest-name-hint' + (state.errors.party ? ' guest-name-error' : ''),
+      onchange: function (e) { state.selectedPartyId = e.target.value; }
+    }, el('option', { value: '', text: 'Choose your name…' }));
+    visible.forEach(function (g) {
+      append(select, el('option', { value: g.partyId, selected: state.selectedPartyId === g.partyId ? true : null, text: g.name }));
+    });
+    append(form, el('div', { class: 'field' },
+      el('label', { for: 'guest-name', text: 'Your name' }),
+      select,
+      el('p', { class: 'hint', id: 'guest-name-hint', text: visible.length ? (visible.length + (visible.length === 1 ? ' name' : ' names') + ' shown, A to Z.') : 'No names match that search.' }),
+      state.errors.party ? el('p', { class: 'error-text', id: 'guest-name-error' }, icon('i-alert'), el('span', { text: state.errors.party })) : null
+    ));
+    append(form, el('div', { class: 'form-actions' }, busyButton('Continue', { class: 'btn btn-primary', type: 'submit', 'data-action': 'open-party', 'data-busy-label': 'Opening…' })));
+    return stepSection('access', [heading('Find your invitation'), intro, form, contactNode('If your name is missing, please contact ')]);
+  }
+
+  function refreshNameOptions() {
+    var select = document.getElementById('guest-name');
+    var hint = document.getElementById('guest-name-hint');
+    if (!select) return;
+    var visible = filteredGuests();
+    var current = state.selectedPartyId || select.value;
+    select.innerHTML = '';
+    append(select, el('option', { value: '', text: 'Choose your name…' }));
+    visible.forEach(function (g) {
+      append(select, el('option', { value: g.partyId, selected: current === g.partyId ? true : null, text: g.name }));
+    });
+    if (current && visible.some(function (g) { return g.partyId === current; })) select.value = current;
+    else { select.value = ''; state.selectedPartyId = ''; }
+    if (hint) hint.textContent = visible.length ? (visible.length + (visible.length === 1 ? ' name' : ' names') + ' shown, A to Z.') : 'No names match that search.';
   }
 
   function renderInvitees() {
@@ -476,7 +549,13 @@
       return;
     }
     if (code === 'closed') { state.step = 'closed'; render(); setNotice('error', MESSAGES.closed); return; }
-    if (code === 'invalid_session') { state.step = 'access'; render(); setNotice('error', MESSAGES.invalid_session); return; }
+    if (code === 'invalid_session') {
+      state.step = 'access';
+      setNotice('error', MESSAGES.invalid_session);
+      if (!state.guestList) loadGuestList();
+      else render();
+      return;
+    }
     var fields = code === 'validation' && err.extra && err.extra.error && err.extra.error.fields;
     if (fields && fields.length) {
       // Server-side field errors (audit QA-15): show them inline on the step that owns the field,
@@ -499,59 +578,62 @@
     setNotice('error', MESSAGES[code] || MESSAGES.server_error);
   }
 
-  function onAccessSubmit(e) {
-    e.preventDefault();
+  function resetLocalAnswers() {
+    state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = ''; state.hotelStay = null; state.meals = {};
+    state.selectedPartyId = '';
+  }
+
+  function applyOpenedSession(session) {
+    loadSession(session, true);
+    if (!rsvpOpen() && !session.reference) { state.step = 'closed'; state.focusHeading = true; render(); return; }
+    go(session.reference ? 'confirmation' : 'invitees');
+  }
+
+  function openParty(partyId) {
     if (state.busy) return;
-    var input = document.getElementById('code');
-    var code = (input.value || '').trim();
-    state.codeValue = code;
+    state.selectedPartyId = partyId;
     state.errors = {};
-    if (!code) { state.errors.code = 'Please enter your invitation code.'; render(); input = document.getElementById('code'); input.focus(); return; }
     state.busy = true; render(); setNotice(null);
-    adapter.openSession(code).then(function (session) {
+    adapter.openSession({ partyId: partyId }).then(function (session) {
       state.busy = false;
-      loadSession(session, true);
-      state.codeValue = '';
-      if (!rsvpOpen() && !session.reference) { state.step = 'closed'; state.focusHeading = true; render(); return; }
-      go(session.reference ? 'confirmation' : 'invitees');
+      setPartyParam(partyId);
+      applyOpenedSession(session);
     }).catch(function (err) {
       state.busy = false;
-      if (err.code === 'invalid_code') { state.errors.code = MESSAGES.invalid_code; render(); document.getElementById('code').focus(); return; }
+      setPartyParam('');
+      if (err.code === 'invalid_code') { state.errors.party = MESSAGES.invalid_code; render(); var sel = document.getElementById('guest-name'); if (sel) sel.focus(); return; }
       render(); handleError(err);
     });
   }
 
-  function onLinkSubmit(e) {
+  function onAccessSubmit(e) {
     e.preventDefault();
-    if (state.busy || !linkToken) return;
-    var token = linkToken;
-    state.busy = true; render(); setNotice(null);
-    adapter.openSession(token).then(function (session) {
-      state.busy = false;
-      linkToken = null;
-      loadSession(session, true);
-      if (!rsvpOpen() && !session.reference) { state.step = 'closed'; state.focusHeading = true; render(); return; }
-      go(session.reference ? 'confirmation' : 'invitees');
-    }).catch(function (err) {
-      state.busy = false;
-      if (err.code === 'invalid_code') { linkToken = null; state.errors.code = 'That invitation link is no longer valid. Please enter the code from your invitation, or contact us.'; render(); var c = document.getElementById('code'); if (c) c.focus(); return; }
-      render(); handleError(err);
-    });
+    if (state.busy) return;
+    var select = document.getElementById('guest-name');
+    var partyId = ((select && select.value) || state.selectedPartyId || '').trim();
+    state.selectedPartyId = partyId;
+    state.errors = {};
+    if (!partyId) { state.errors.party = 'Please choose your name from the list.'; render(); select = document.getElementById('guest-name'); if (select) select.focus(); return; }
+    openParty(partyId);
   }
 
   function onNotMine() {
     adapter.endSession().then(function () {
-      state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = ''; state.hotelStay = null; state.meals = {};
+      resetLocalAnswers();
+      setPartyParam('');
       go('access');
-      setNotice('info', 'You have been signed out of that invitation. Enter the code from your own invitation to continue.');
+      setNotice('info', 'You have been signed out of that invitation. Choose your own name to continue.');
+      if (!state.guestList) loadGuestList();
     });
   }
 
   function onSignOut() {
     adapter.endSession().then(function () {
-      state.session = null; state.answers = {}; state.plusOneNames = {}; state.contactEmail = ''; state.notes = ''; state.hotelStay = null; state.meals = {};
+      resetLocalAnswers();
+      setPartyParam('');
       go('access');
       setNotice('success', 'Thank you. You have been signed out of this invitation.');
+      if (!state.guestList) loadGuestList();
     });
   }
 
@@ -655,12 +737,42 @@
     });
   }
 
+  function loadGuestList() {
+    state.guestList = null;
+    state.guestListError = null;
+    state.busy = true;
+    render();
+    adapter.listGuests().then(function (data) {
+      state.busy = false;
+      state.guestList = (data && data.guests) ? data.guests.slice() : [];
+      state.guestListError = null;
+      var requested = currentSearch().get('party') || '';
+      if (requested && !state.session) {
+        openParty(requested);
+        return;
+      }
+      render();
+    }).catch(function (err) {
+      state.busy = false;
+      state.guestList = [];
+      state.guestListError = err && err.code ? err.code : 'network';
+      render();
+      if (err && (err.code === 'network' || err.code === 'rate_limited')) setNotice('error', MESSAGES[err.code] || MESSAGES.directory_error);
+    });
+  }
+
   // ---------- start ----------
   adapter.getSession().then(function (session) {
     if (session) {
       loadSession(session, false);
       state.step = session.reference ? 'confirmation' : (rsvpOpen() ? 'invitees' : 'closed');
+      render();
+      return;
     }
+    loadGuestList();
+  }).catch(function (err) {
     render();
-  }).catch(function (err) { render(); if (err && err.code === 'network') setNotice('error', MESSAGES.network); });
+    if (err && err.code === 'network') setNotice('error', MESSAGES.network);
+    loadGuestList();
+  });
 })();

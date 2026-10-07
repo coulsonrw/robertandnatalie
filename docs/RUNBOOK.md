@@ -35,11 +35,11 @@ Run this checklist once before invitations go out and again in the week before t
 
 ## 4. Correct a guest's RSVP
 
-Guests correct their own response through their link or code until `rsvp.cutoffAt`. After the cutoff, or on a guest's behalf at any time (phone or email response), use the admin correction endpoint of the RSVP service described in `backend/README.md`; it records the origin of the change and the staff account that made it (RSVP-04, ADMIN-02). Never edit the database by hand.
+Guests correct their own response by choosing their name again on the RSVP page until `rsvp.cutoffAt`. After the cutoff, or on a guest's behalf at any time (phone or email response), use the admin correction endpoint of the RSVP service described in `backend/README.md`; it records the origin of the change and the staff account that made it (RSVP-04, ADMIN-02). Never edit the database by hand.
 
-## 5. Issue, replace or revoke an invitation link
+## 5. Import the roster (name-picker RSVP)
 
-Personal links carry a random token in the URL fragment (`/rsvp.html#t=…`). Until Cloudflare Access exists, download Natalie’s guest list as CSV and issue one link per named guest with `POST /ops/roster/sync` (see `docs/RSVP_GUEST_LAUNCH.md`; D1 is the default store). After Access is on, use the admin credential endpoints in `backend/README.md` to issue a link or a short fallback code, to revoke one that was forwarded, and to issue a replacement. Revocation takes effect on the next request; the guest sees the neutral "no longer valid" message and the contact route (RSVP-01, SEC-02).
+Guests click RSVP and choose their name. Until Cloudflare Access exists, download Natalie’s guest list as CSV and import it with `POST /ops/roster/sync` (see `docs/RSVP_GUEST_LAUNCH.md`; D1 is the default store). The public name list is `GET /guests` (names and party ids only). After Access is on, use the admin import endpoints in `backend/README.md` to update the roster. Optional admin-issued codes or links remain available for support; they are not part of the guest path.
 
 ## 6. Export attendance safely
 
@@ -87,7 +87,7 @@ If the RSVP service is unavailable, guests see the network-error state with thei
 
 ## 13. Announce the RSVP opening date (audit IMP-02)
 
-Set `rsvp.opensAt` in `content/site.config.json` to the approved date-time with its offset (for example `2026-10-01T09:00:00-05:00`) only once the owners have approved it and the service is ready to open on that day. The not-yet-open state on `/rsvp.html` and the note under the welcome area then name the date in Central Time. Leave it `null` otherwise; the site says only that responses are not open yet. `rsvp.mode` is `live` and `rsvp.apiBaseUrl` is `https://api.robertandnatalie.wedding`. Guests still need issued household links (`docs/RSVP_GUEST_LAUNCH.md`). Confirmation mail stays on the `stub` provider until a mail identity is chosen.
+Set `rsvp.opensAt` in `content/site.config.json` to the approved date-time with its offset (for example `2026-10-01T09:00:00-05:00`) only once the owners have approved it and the service is ready to open on that day. The not-yet-open state on `/rsvp.html` and the note under the welcome area then name the date in Central Time. Leave it `null` otherwise; the site says only that responses are not open yet. `rsvp.mode` is `live` and `rsvp.apiBaseUrl` is `https://api.robertandnatalie.wedding`. Guests choose their name on `/rsvp.html` after the roster CSV is imported (`docs/RSVP_GUEST_LAUNCH.md`). Confirmation mail stays on the `stub` provider until a mail identity is chosen.
 
 ## 14. Publish Our Story (audit IMP-12/13)
 

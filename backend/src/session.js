@@ -1,55 +1,72 @@
 // POST / GET / DELETE /session (RSVP-01, SEC-02, SEC-03).
 //
-// * POST exchanges a link token or fallback code for a server-side session and sets an
-//   HttpOnly; Secure; SameSite=Lax cookie. Errors are neutral: unknown, revoked, expired and
-//   rate-limited codes all look the same to the caller apart from 429.
+// * POST opens a household session from a public party id (the guest name-picker) or, still,
+//   from an optional admin-issued link token / fallback code. Errors are neutral: unknown,
+//   revoked and rate-limited attempts look the same apart from 429.
 // * GET only reads the cookie. It never accepts a credential, so a link preview cannot consume
 //   one or change anything.
 // * DELETE revokes the session row and clears the cookie.
 
-import { HttpError, json, noContent, parseCookies, clientIp } from './http.js';
-import { credentialDigest, sessionDigest, newSessionToken, sha256Hex, normaliseCredential } from './crypto.js';
+import { HttpError, json, noContent, parseCookies } from './http.js';
+import { credentialDigest, sessionDigest, newSessionToken, normaliseCredential } from './crypto.js';
 import { one, run, stmt, batch, audit, nowIso, loadHousehold } from './db.js';
 import { buildSnapshot, rsvpWindow } from './snapshot.js';
+import { bump, enforceIpRateLimit } from './ratelimit.js';
 
 export const COOKIE_NAME = 'rn_session';
+
+const PARTY_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 function cookieHeader(value, maxAgeSeconds) {
   const parts = [`${COOKIE_NAME}=${value}`, 'Path=/', 'HttpOnly', 'Secure', 'SameSite=Lax', `Max-Age=${maxAgeSeconds}`];
   return parts.join('; ');
 }
 
-async function bump(db, bucket, windowSeconds) {
-  const windowStart = new Date(Math.floor(Date.now() / (windowSeconds * 1000)) * windowSeconds * 1000).toISOString();
-  const row = await one(
-    db,
-    `INSERT INTO rate_limit (bucket, window_start, count) VALUES (?, ?, 1)
-     ON CONFLICT (bucket, window_start) DO UPDATE SET count = count + 1
-     RETURNING count`,
-    bucket,
-    windowStart,
-  );
-  return row ? row.count : 1;
-}
-
-async function enforceRateLimits(db, cfg, request, digest) {
-  const ipHash = (await sha256Hex(`ip:${clientIp(request)}`)).slice(0, 32);
-  const ipCount = await bump(db, `ip:${ipHash}`, cfg.rateLimit.windowSeconds);
+async function enforceCodeRateLimits(db, cfg, request, digest) {
+  const { ipHash } = await enforceIpRateLimit(db, cfg, request, 'ip', cfg.rateLimit.perIp);
   const codeCount = await bump(db, `code:${digest.slice(0, 32)}`, cfg.rateLimit.windowSeconds);
-  if (ipCount > cfg.rateLimit.perIp || codeCount > cfg.rateLimit.perCode) {
+  if (codeCount > cfg.rateLimit.perCode) {
     throw new HttpError(429, 'rate_limited', 'Too many attempts. Please wait a few minutes and try again.');
   }
+  return ipHash;
 }
 
-const INVALID = () => new HttpError(403, 'invalid_code', 'We could not find an invitation with that code.');
+const INVALID = () => new HttpError(403, 'invalid_code', 'We could not find that invitation.');
 
-export async function postSession(request, env, cfg, body) {
+async function openHouseholdSession(db, cfg, householdId, { credentialId = null, kind }) {
+  const now = nowIso();
+  const token = newSessionToken();
+  const sid = await sessionDigest(cfg.secrets.sessionSecret, token);
+  const expiresAt = new Date(Date.now() + cfg.sessionTtlMs).toISOString();
+  const statements = [
+    stmt(db, 'INSERT INTO session (id, household_id, credential_id, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?)', sid, householdId, credentialId, now, expiresAt, now),
+    audit(db, { at: now, actorKind: 'guest', actorId: householdId, action: 'session.open', householdId, targetType: credentialId ? 'access_credential' : 'household', targetId: credentialId || householdId, details: { kind } }),
+  ];
+  if (credentialId) statements.splice(1, 0, stmt(db, 'UPDATE access_credential SET last_used_at = ? WHERE id = ?', now, credentialId));
+  await batch(db, statements);
+  const loaded = await loadHousehold(db, householdId);
+  const snapshot = buildSnapshot(loaded, await rsvpWindow(db, cfg));
+  return json(200, snapshot, { 'Set-Cookie': cookieHeader(token, Math.floor(cfg.sessionTtlMs / 1000)) });
+}
+
+async function postSessionByParty(request, env, cfg, partyId) {
   const db = env.DB;
-  const raw = body && typeof body.code === 'string' ? body.code : '';
+  if (!PARTY_ID.test(partyId)) throw INVALID();
+  await enforceIpRateLimit(db, cfg, request, 'ip', cfg.rateLimit.perIp);
+  await enforceIpRateLimit(db, cfg, request, `party:${partyId}`, cfg.rateLimit.perCode);
+
+  const row = await one(db, 'SELECT id, state FROM household WHERE id = ?', partyId);
+  if (!row || row.state !== 'active') throw INVALID();
+
+  return openHouseholdSession(db, cfg, row.id, { kind: 'party' });
+}
+
+async function postSessionByCode(request, env, cfg, raw) {
+  const db = env.DB;
   const normalised = normaliseCredential(raw);
   if (!normalised || normalised.length > 128) throw INVALID();
   const digest = await credentialDigest(cfg.secrets.credentialPepper, normalised);
-  await enforceRateLimits(db, cfg, request, digest);
+  await enforceCodeRateLimits(db, cfg, request, digest);
 
   const now = nowIso();
   const cred = await one(
@@ -61,18 +78,14 @@ export async function postSession(request, env, cfg, body) {
     throw INVALID();
   }
 
-  const token = newSessionToken();
-  const sid = await sessionDigest(cfg.secrets.sessionSecret, token);
-  const expiresAt = new Date(Date.now() + cfg.sessionTtlMs).toISOString();
-  await batch(db, [
-    stmt(db, 'INSERT INTO session (id, household_id, credential_id, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?)', sid, cred.household_id, cred.id, now, expiresAt, now),
-    stmt(db, 'UPDATE access_credential SET last_used_at = ? WHERE id = ?', now, cred.id),
-    audit(db, { at: now, actorKind: 'guest', actorId: cred.household_id, action: 'session.open', householdId: cred.household_id, targetType: 'access_credential', targetId: cred.id, details: { kind: cred.kind } }),
-  ]);
+  return openHouseholdSession(db, cfg, cred.household_id, { credentialId: cred.id, kind: cred.kind });
+}
 
-  const loaded = await loadHousehold(db, cred.household_id);
-  const snapshot = buildSnapshot(loaded, await rsvpWindow(db, cfg));
-  return json(200, snapshot, { 'Set-Cookie': cookieHeader(token, Math.floor(cfg.sessionTtlMs / 1000)) });
+export async function postSession(request, env, cfg, body) {
+  const partyId = body && typeof body.partyId === 'string' ? body.partyId.trim() : '';
+  if (partyId) return await postSessionByParty(request, env, cfg, partyId);
+  const raw = body && typeof body.code === 'string' ? body.code : '';
+  return await postSessionByCode(request, env, cfg, raw);
 }
 
 // Resolves the session cookie to a household id, or throws 401. Used by GET /session and PUT /response.

@@ -33,7 +33,7 @@ cd backend && npm ci && npm test   # RSVP service tests
 ## Stop rules (PRD TPL-01, TPL-11)
 
 - Do not record an approval on behalf of the owners; approver and date fields stay blank until they sign.
-- Do not set `site.launchApproved` to true or import a real roster into this repository. Rob directed private-link RSVP live on 5 October 2026 (`rsvp.mode` is `live`); guest names stay in Natalie’s sheet and are imported at runtime (`docs/RSVP_GUEST_LAUNCH.md`).
+- Do not set `site.launchApproved` to true or import a real roster into this repository. Rob directed name-picker RSVP (`rsvp.mode` is `live`); guest names stay in Natalie’s sheet and are imported at runtime (`docs/RSVP_GUEST_LAUNCH.md`).
 - Do not invent venue details, room-block terms, transport, dress code, contact details or a cutoff; leave the block `pending` and let the readiness report flag it.
 - Do not buy or adopt a template, add tracking, or publish photographs without recorded rights.
 

@@ -38,7 +38,7 @@ export function renderRsvp(view) {
   const main = `<main id="main" class="page-rsvp">
   <div class="container narrow">
     <h1 class="page-title">RSVP</h1>
-    <p class="lede">${r.mode === 'coming-soon' ? 'Responses are not open yet. When they are, you will respond here for each member of your household for the ceremony and the reception.' : r.mode === 'closed' ? 'Online responses have closed.' : `Respond for each member of your household for the ceremony and the reception. You can return to update your response until responses close${r.cutoffLabel ? ` on ${esc(r.cutoffLabel)}` : ''}.`}</p>
+    <p class="lede">${r.mode === 'coming-soon' ? 'Responses are not open yet. When they are, choose your name here and respond for each member of your household for the ceremony and the reception.' : r.mode === 'closed' ? 'Online responses have closed.' : `Choose your name, then respond for each member of your household for the ceremony and the reception. You can return to update your response until responses close${r.cutoffLabel ? ` on ${esc(r.cutoffLabel)}` : ''}.`}</p>
     ${staticBlock}
     <div id="rsvp-app" hidden></div>
     <script type="application/json" id="rsvp-config">${jsonForScript(clientConfig)}</script>
