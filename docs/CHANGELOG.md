@@ -4,6 +4,7 @@
 
 | Change | Instruction or reason | Affected requirements | Approvals reopened |
 |---|---|---|---|
+| Remove the “Colossians 3:14” citation label from Alabama chapter 10. The coda “Their Love Story Continues … It has only just begun” and the timeline close (To be continued… + verse + Colossians 3:14) stay. | Rob: take the citation line out of the Alabama chapter; keep the close. | CONTENT-01 | None |
 | Hide unpublished Our Story chapters (7–9 stay in the config as `published: false` drafts). Guests see chapters 1–6 and 10 with sequential Roman labels I–VII, then a photo-less “To be continued…” close with Colossians 3:14 below. The gold rail ends at the final dot. Chapter 10 is real approved copy (RN monogram is a photo stand-in, not Coming-soon copy); its citation label and coda are unchanged. RSVP untouched. | Rob: do not show coming-soon / placeholder chapters; keep draft data for later; end the timeline with “To be continued..” plus the Colossians 3:14 verse, without the rail running through the text. | CONTENT-01, DES-01, audit IMP-12/13 | None; `story.approval.note` records that 7–9 are unpublished drafts and that chapter 10 remains a real chapter |
 
 ## Repository changes (5 October 2026)

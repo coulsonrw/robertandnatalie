@@ -246,9 +246,10 @@ test('QA-07/08 timeline: published chapters 1–6 and 10, sequential labels, no 
   assert.match(chapterHtml('ch1'), /ch1-harvard-law-/);
   assert.match(chapterHtml('ch10'), /monogram-rn-/);
   assert.match(chapterHtml('ch10'), /Chapter VII/);
-  assert.match(chapterHtml('ch10'), /<p class="scripture">Colossians 3:14<\/p>/);
+  assert.doesNotMatch(chapterHtml('ch10'), /Colossians 3:14/);
   assert.match(chapterHtml('ch10'), /Their Love Story Continues/);
   assert.doesNotMatch(chapterHtml('ch10'), /put on love/);
+  assert.match(index, /id="story-continued"[\s\S]*Colossians 3:14/);
   assert.doesNotMatch(chapterHtml('ch10'), /ch1-harvard-law-/);
   assert.match(chapterHtml('ch1'), /data-sketch="\/img\/story\/ch1-sketch\.svg"/);
   assert.doesNotMatch(chapterHtml('ch10'), /data-sketch|class="sketch"|has-sketch/);
