@@ -51,10 +51,10 @@
   padding: 0 0 8px 52px; min-height: 36px; display: block;
 }
 .story-continued {
-  max-width: 1080px; margin: 0 auto;
-  padding: 8px var(--gutter) clamp(40px, 7vw, 80px) 52px;
+  display: block; max-width: 1080px; margin: 0 auto; text-align: center;
+  padding: 8px var(--gutter) clamp(40px, 7vw, 80px);
 }
-.story-continued .chapter-text { max-width: 36rem; }
+.story-continued .chapter-text { max-width: 36rem; margin-inline: auto; }
 .chapter-text .story-continued-title,
 h3.story-continued-title {
   font-family: var(--font-script); font-weight: 400; color: var(--gold-text);
@@ -167,7 +167,7 @@ h3.story-continued-title {
   .chapter:nth-child(even) .chapter-head,
   .chapter:nth-child(even) .chapter-body { grid-column: 1; }
   .chapter.is-continued-mark { padding: 0; min-height: 40px; }
-  .story-continued { padding: 12px var(--gutter) clamp(40px, 7vw, 80px); text-align: center; }
+  .story-continued { display: block; padding: 12px var(--gutter) clamp(40px, 7vw, 80px); text-align: center; }
   .story-continued .chapter-text { margin-inline: auto; }
 }
 
