@@ -10,7 +10,7 @@
     "deploy": "wrangler deploy",
     "migrate:local": "wrangler d1 migrations apply rsvp --local",
     "migrate:remote": "wrangler d1 migrations apply rsvp --remote",
-    "test": "vitest run",
+    "test": "vitest run && node scripts/check-wrangler-config.mjs",
     "test:watch": "vitest"
   },
   "devDependencies": {

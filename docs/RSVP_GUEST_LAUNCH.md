@@ -117,7 +117,7 @@ Re-run the CSV roster sync after any roster edit; ids are derived from the Guest
 ## Remaining owner work
 
 - Set `OPS_BOOTSTRAP_TOKEN` if needed, deploy the Worker, `migrate:remote`, POST the 14-party CSV. Guests then use the site RSVP button — no links to store or send.
-- Turn on Cloudflare Email Sending (Workers Paid + domain onboarding + the one-line switch below) when Rob is ready to deliver opted-in confirmations. Production stays `MAIL_PROVIDER=stub` until then.
+- Cloudflare Email Sending is configured in `wrangler.toml` (`MAIL_PROVIDER = "cloudflare"`, `[[send_email]]` **after** `[vars]`). Deploy the Worker from this revision so opted-in confirmations leave the stub. Domain onboarding for `robertandnatalie.wedding` still has to be complete in the dashboard.
 - Cloudflare Access + MFA for `/admin`.
 - Details contact route, dress code, children policy, G3 `site.launchApproved`.
 - Token expiry 31 December 2026 (extend before the March 2027 retention run). This is the Cloudflare API token, not a guest RSVP link.
@@ -125,9 +125,9 @@ Re-run the CSV roster sync after any roster edit; ids are derived from the Guest
 
 ## Confirmation email (Cloudflare Email Sending)
 
-Primary provider: **Cloudflare Email Sending** (`MAIL_PROVIDER = "cloudflare"`), `env.EMAIL.send()`, from `Robert and Natalie <rsvp@robertandnatalie.wedding>`. Sending to guest inboxes requires the **Workers Paid** plan (Email Sending is not available on Workers Free). Production stays on `MAIL_PROVIDER = "stub"` until Paid is live and `robertandnatalie.wedding` is onboarded — adding the `send_email` binding or flipping the provider earlier can deploy a Worker whose `EMAIL` binding is missing, and opted-in mail would then retry and be abandoned.
+Primary provider: **Cloudflare Email Sending** (`MAIL_PROVIDER = "cloudflare"`), `env.EMAIL.send()`, from `Robert and Natalie <rsvp@robertandnatalie.wedding>`. Sending to guest inboxes requires the **Workers Paid** plan (now active). `webhook` remains a documented relay. Resend was not added.
 
-`webhook` remains a documented relay. Resend was not added.
+**Do not put `[[send_email]]` inside `[vars]`.** Wrangler treats a table header as the end of `[vars]`. Every later key (`COORDINATOR_EMAIL`, `ACCESS_*`, `GOOGLE_SHEETS_*`) then becomes an unexpected field on `send_email[0]`; wrangler only warns, and those vars never reach the Worker. The binding belongs at the **end** of `backend/wrangler.toml`, after the secrets comment. `backend/scripts/check-wrangler-config.mjs` (part of `npm test`) fails if the binding sits inside `[vars]` and runs `wrangler deploy --dry-run`, which fails on “Unexpected fields”.
 
 ### Onboard `robertandnatalie.wedding` for sending
 
@@ -152,17 +152,19 @@ dig TXT _dmarc.robertandnatalie.wedding
 
 Root MX / Email Routing is a separate product. Do not replace existing root MX records just to send RSVP mail.
 
-### One switch to go live
+### Going live
 
-After Paid + the domain is onboarded, in `backend/wrangler.toml`:
+`backend/wrangler.toml` now has `MAIL_PROVIDER = "cloudflare"` and this **after** `[vars]`:
 
-1. Uncomment the `[[send_email]]` block (`name = "EMAIL"`, `allowed_sender_addresses = ["rsvp@robertandnatalie.wedding"]`).
-2. Set `MAIL_PROVIDER = "cloudflare"`.
-3. Deploy the Worker (`cd backend && npm run deploy`). Apply `0005_email_confirmation.sql` with `npm run migrate:remote` if that migration is not already on production D1.
+```toml
+[[send_email]]
+name = "EMAIL"
+allowed_sender_addresses = ["rsvp@robertandnatalie.wedding"]
+```
 
-No new secrets. `MAIL_FROM` stays `Robert and Natalie <rsvp@robertandnatalie.wedding>`. The existing 5-minute cron, retries and coordinator alerts are unchanged.
+Deploy the Worker (`cd backend && npm run deploy`). `0005_email_confirmation.sql` is already applied. No new secrets. `MAIL_FROM` stays `Robert and Natalie <rsvp@robertandnatalie.wedding>`. The existing 5-minute cron, retries and coordinator alerts are unchanged.
 
-Until that switch, opted-in guests still see the on-page confirmation; the outbox row is marked sent by the stub and no inbox message is delivered.
+If you add another binding later, keep it outside `[vars]` — never drop a `[[table]]` into the middle of the vars list.
 
 ## Optional later: Google Sheets
 
