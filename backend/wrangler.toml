@@ -70,13 +70,22 @@ RATE_LIMIT_PER_IP = "20"
 RATE_LIMIT_PER_CODE = "10"
 RATE_LIMIT_PER_DIRECTORY = "60"
 
-# Mail (RSVP-07). MAIL_PROVIDER: "stub" (marks mail as sent without delivering; local/dev only) or
-# "webhook" (POSTs a JSON envelope to MAIL_WEBHOOK_URL with a bearer secret; see src/mail/provider.js
-# and README "Mail"). MAIL_FROM must be an address the owners control.
+# Mail (RSVP-07). Primary provider is Cloudflare Email Sending ("cloudflare") once Workers Paid
+# and the sending domain are onboarded. Leave "stub" until then: adding a send_email binding
+# before Paid / domain onboarding can deploy a Worker whose EMAIL binding is missing, and
+# setting MAIL_PROVIDER = "cloudflare" in that state would retry and abandon guest mail.
+# "webhook" remains a relay option. MAIL_FROM must be an address the owners control.
 MAIL_PROVIDER = "stub"
 MAIL_FROM = "Robert and Natalie <rsvp@robertandnatalie.wedding>"
 MAIL_MAX_ATTEMPTS = "8"
 MAIL_MAX_AGE_HOURS = "48"
+
+# One switch after Workers Paid + Email Sending onboarding for robertandnatalie.wedding
+# (see docs/RSVP_GUEST_LAUNCH.md): uncomment the binding, set MAIL_PROVIDER = "cloudflare",
+# deploy. Do not uncomment this while the account is still on Workers Free.
+# [[send_email]]
+# name = "EMAIL"
+# allowed_sender_addresses = ["rsvp@robertandnatalie.wedding"]
 # Where coordinator alerts are emailed (abandoned mail, retention applied). Empty = API only.
 COORDINATOR_EMAIL = ""
 
@@ -106,6 +115,7 @@ GOOGLE_SHEETS_ANSWERS_TAB = "RSVP Answers"
 #   SESSION_SECRET      32+ random bytes. HMAC key for session-cookie digests.
 #   MAIL_WEBHOOK_URL    only for MAIL_PROVIDER = "webhook".
 #   MAIL_WEBHOOK_TOKEN  only for MAIL_PROVIDER = "webhook".
+#   Cloudflare Email Sending uses the EMAIL send_email binding (no secret).
 #   OPS_BOOTSTRAP_TOKEN owner bootstrap for /ops/roster/sync (import the CSV roster without Access).
 #   GOOGLE_SERVICE_ACCOUNT_JSON  full service-account JSON (or GOOGLE_SERVICE_ACCOUNT_EMAIL
 #                                plus GOOGLE_PRIVATE_KEY). Share the sheet with that client_email.

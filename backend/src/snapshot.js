@@ -73,6 +73,7 @@ export function buildSnapshot(loaded, window, cfg = {}) {
     hotelStay: state.hotel_stay || null,
     extraGuestCap,
     extraGuestsRemaining: Math.max(0, extraGuestCap - extraCount),
+    emailConfirmation: !!household.email_confirmation_opt_in,
     revision: state.revision,
     reference: state.reference || null,
     submittedAt: state.last_submitted_at || null,

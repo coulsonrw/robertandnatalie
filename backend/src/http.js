@@ -16,7 +16,7 @@ export class HttpError extends Error {
 }
 
 // 400 validation with field-level detail. Paths name the payload member concerned:
-//   contactEmail | contactPhone | mailingAddress | notes | hotelStay | guestNames.<guestId> |
+//   contactEmail | emailConfirmation | contactPhone | mailingAddress | notes | hotelStay | guestNames.<guestId> |
 //   guestDietary.<guestId> | addedGuests | removedGuestIds | responses |
 //   responses.<guestId>.<eventId>.status | responses.<guestId>.<eventId>.meal | plusOneNames.<guestId>
 // Only ids that belong to the caller's own household ever appear in a path.

@@ -15,7 +15,7 @@ Set in both `content/site.config.json` → `rsvp.cutoffAt` and `backend/wrangler
 1. They click **RSVP** on the site (`/rsvp.html`).
 2. The page loads a collapsed native dropdown of **party labels** from the Worker (`GET /guests`) — one row per household, sorted A to Z. It starts at “- Select -”; Continue stays disabled until they pick a party.
 3. Choosing a label opens that **party** page — one form per invitation row in the roster.
-4. They answer attending / declining for each person and event, can edit each full name, add extra guests (up to 2), and fill dietary notes, contact email/phone, optional mailing address, Grand Hotel stay, and a message to the couple.
+4. They answer attending / declining for each person and event, can edit each full name, add extra guests (up to 2), and fill dietary notes, optional phone, optional mailing address, Grand Hotel stay, and a message to the couple. Contact email is optional: they tick **Email me a confirmation of our RSVP** if they want a copy emailed.
 
 A forwarded or bookmarked party URL (`/rsvp.html?party=<id>`) opens the same household form. Plus-ones (named or unnamed) answer on the host household’s page. Parties can add extra guests up to `extraGuestCap` (default 2). The **Add a guest** control is hidden once the party is at that cap.
 
@@ -33,7 +33,7 @@ Nothing in this list is spent money. Generate tokens with `node -e "console.log(
 |---|---|---|
 | `OPS_BOOTSTRAP_TOKEN` | `npx wrangler secret put OPS_BOOTSTRAP_TOKEN` (from `backend/`) | Import the CSV roster without Cloudflare Access |
 | `CREDENTIAL_PEPPER`, `SESSION_SECRET` | already set (23 Sep 2026) | Sessions |
-| `MAIL_WEBHOOK_URL`, `MAIL_WEBHOOK_TOKEN` | only if `MAIL_PROVIDER=webhook` | Actual confirmation email. Safe to leave `stub` |
+| `MAIL_WEBHOOK_URL`, `MAIL_WEBHOOK_TOKEN` | only if `MAIL_PROVIDER=webhook` | Relay. Not needed for Cloudflare Email Sending |
 | Cloudflare Access (`ACCESS_*`, `OWNER_EMAILS`, `COORDINATOR_EMAILS`) | still unset | Admin UI. Not required for guest RSVP or `/ops` bootstrap |
 
 If `OPS_BOOTSTRAP_TOKEN` is missing, `/ops/*` returns `503 bootstrap_unavailable`. RSVPs always save to D1 once a household exists. Google Sheet secrets are not part of this path; see [Optional later: Google Sheets](#optional-later-google-sheets).
@@ -42,7 +42,10 @@ No new Worker secrets are required for the name-picker flow.
 
 ## Ops steps (do these in order)
 
-Do **not** skip the remote migration after a Worker deploy that includes new SQL. This change adds **`0004_party_details.sql`** (household phone/address and `guest.origin` so parties can add extra guests). It is additive and backward compatible. Apply it with `npm run migrate:remote` after deploy — do not edit older migration files. The steps below are the same launch path as before, minus issuing links.
+Do **not** skip the remote migration after a Worker deploy that includes new SQL. Apply new files with `npm run migrate:remote` after deploy — do not edit older migration files.
+
+- **`0004_party_details.sql`** — household phone/address and `guest.origin` (already applied in production).
+- **`0005_email_confirmation.sql`** — `household.email_confirmation_opt_in` (default 0) and optional `mail_outbox.body_html`. Additive and backward compatible.
 
 1. Set `OPS_BOOTSTRAP_TOKEN` if it is not already set (`npx wrangler secret put OPS_BOOTSTRAP_TOKEN` from `backend/`).
 2. Deploy the Worker: `cd backend && npm run deploy`.
@@ -55,7 +58,7 @@ npm run migrate:remote
 
 4. Import the 14-party roster CSV (below). After that, `GET https://api.robertandnatalie.wedding/guests` should list **14 party labels** and party ids only, A to Z.
 
-(`0003_hotel_stay.sql` adds `household_response.hotel_stay` if that migration has not already been applied. `0004_party_details.sql` adds `household.contact_phone`, `household.mailing_address`, and `guest.origin`.)
+(`0003_hotel_stay.sql` and `0004_party_details.sql` are already applied in production. `0005_email_confirmation.sql` adds the confirmation opt-in flag and optional HTML mail bodies.)
 
 Parties can add up to **2 extra guests** (`rsvp.extraGuestCap` / `EXTRA_GUEST_CAP`, Rob 7 October 2026). That cap is one number for every household. The form hides **Add a guest** at the limit; the Worker rejects a third extra. `GET /guests` still returns only party labels and ids — never emails, phones, addresses, notes or answers.
 
@@ -107,18 +110,59 @@ Settled labels (do not invent fuller names, and do not keep the old 16-row sheet
 - **Mama & Daddy** stays as written (two named guests: Mama, Daddy).
 - Single-name parties are one guest.
 
-The RSVP form still collects a contact email when anyone attends. Site contact email/phone on Details stay TBD and do not block this ship.
+Contact email is optional. A confirmation is queued only when the party ticks **Email me a confirmation of our RSVP** and enters a valid address — on the first save and on later edits. The on-page confirmation is unchanged for everyone. Site contact email/phone on Details stay TBD and do not block this ship.
 
 Re-run the CSV roster sync after any roster edit; ids are derived from the Guest Name cell so the same row updates in place. After sync, `GET /guests` must show those 14 labels once each, A to Z.
 
 ## Remaining owner work
 
 - Set `OPS_BOOTSTRAP_TOKEN` if needed, deploy the Worker, `migrate:remote`, POST the 14-party CSV. Guests then use the site RSVP button — no links to store or send.
-- Mail provider if confirmation email is wanted.
+- Turn on Cloudflare Email Sending (Workers Paid + domain onboarding + the one-line switch below) when Rob is ready to deliver opted-in confirmations. Production stays `MAIL_PROVIDER=stub` until then.
 - Cloudflare Access + MFA for `/admin`.
 - Details contact route, dress code, children policy, G3 `site.launchApproved`.
 - Token expiry 31 December 2026 (extend before the March 2027 retention run). This is the Cloudflare API token, not a guest RSVP link.
 - Optional later: Google Sheets answers tab (below).
+
+## Confirmation email (Cloudflare Email Sending)
+
+Primary provider: **Cloudflare Email Sending** (`MAIL_PROVIDER = "cloudflare"`), `env.EMAIL.send()`, from `Robert and Natalie <rsvp@robertandnatalie.wedding>`. Sending to guest inboxes requires the **Workers Paid** plan (Email Sending is not available on Workers Free). Production stays on `MAIL_PROVIDER = "stub"` until Paid is live and `robertandnatalie.wedding` is onboarded — adding the `send_email` binding or flipping the provider earlier can deploy a Worker whose `EMAIL` binding is missing, and opted-in mail would then retry and be abandoned.
+
+`webhook` remains a documented relay. Resend was not added.
+
+### Onboard `robertandnatalie.wedding` for sending
+
+The zone must already be on Cloudflare DNS (it is).
+
+1. Upgrade the owners’ Cloudflare account to **Workers Paid**.
+2. In the dashboard: **Compute → Email Service → Email Sending → Onboard Domain**.
+3. Choose `robertandnatalie.wedding`. Cloudflare adds sending DNS on a `cf-bounce` subdomain (not the root MX used by Email Routing):
+   - MX on `cf-bounce.robertandnatalie.wedding` → Cloudflare bounce hosts
+   - TXT SPF on `cf-bounce.robertandnatalie.wedding` (`v=spf1 include:_spf.mx.cloudflare.net ~all`)
+   - TXT DKIM on `cf-bounce._domainkey.robertandnatalie.wedding`
+   - TXT DMARC on `_dmarc.robertandnatalie.wedding` (start with `p=none` if the dashboard offers a choice)
+4. Wait 5–15 minutes (up to 24 hours). Confirm in **Email Sending → Settings** that those records show configured/locked.
+5. Optional checks:
+
+```bash
+dig TXT cf-bounce.robertandnatalie.wedding
+dig TXT cf-bounce._domainkey.robertandnatalie.wedding
+dig MX cf-bounce.robertandnatalie.wedding
+dig TXT _dmarc.robertandnatalie.wedding
+```
+
+Root MX / Email Routing is a separate product. Do not replace existing root MX records just to send RSVP mail.
+
+### One switch to go live
+
+After Paid + the domain is onboarded, in `backend/wrangler.toml`:
+
+1. Uncomment the `[[send_email]]` block (`name = "EMAIL"`, `allowed_sender_addresses = ["rsvp@robertandnatalie.wedding"]`).
+2. Set `MAIL_PROVIDER = "cloudflare"`.
+3. Deploy the Worker (`cd backend && npm run deploy`). Apply `0005_email_confirmation.sql` with `npm run migrate:remote` if that migration is not already on production D1.
+
+No new secrets. `MAIL_FROM` stays `Robert and Natalie <rsvp@robertandnatalie.wedding>`. The existing 5-minute cron, retries and coordinator alerts are unchanged.
+
+Until that switch, opted-in guests still see the on-page confirmation; the outbox row is marked sent by the stub and no inbox message is delivered.
 
 ## Optional later: Google Sheets
 

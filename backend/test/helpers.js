@@ -112,7 +112,7 @@ export async function freshSession(householdId = 'hh_example') {
 }
 
 export function fullAnswer(snapshot, status = 'attending', overrides = {}) {
-  return {
+  const payload = {
     requestId: crypto.randomUUID(),
     revision: snapshot.revision,
     responses: snapshot.entitlements.map((e) => ({ guestId: e.guestId, eventId: e.eventId, status })),
@@ -122,6 +122,8 @@ export function fullAnswer(snapshot, status = 'attending', overrides = {}) {
     hotelStay: status === 'attending' ? 'yes' : null,
     ...overrides,
   };
+  if (payload.emailConfirmation === undefined && payload.contactEmail) payload.emailConfirmation = true;
+  return payload;
 }
 
 export async function count(sql, ...params) {

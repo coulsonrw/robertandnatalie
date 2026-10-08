@@ -243,8 +243,16 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
   const anyoneAttending = attendingGuests.size > 0;
   if (contactEmail.length > 254 || (contactEmail && !EMAIL_RE.test(contactEmail))) {
     problem('contactEmail', 'Please enter a valid email address.');
-  } else if (anyoneAttending && !contactEmail && !partial) {
-    problem('contactEmail', 'A contact email is needed so we can confirm your response.');
+  }
+
+  let emailConfirmation = payload.emailConfirmation;
+  if (emailConfirmation === undefined || emailConfirmation === null) {
+    emailConfirmation = partial ? !!(loaded.household.email_confirmation_opt_in) : false;
+  } else if (typeof emailConfirmation !== 'boolean') {
+    throw fail('emailConfirmation', 'Please say whether you would like a confirmation email.');
+  }
+  if (emailConfirmation && !contactEmail && !partial) {
+    problem('contactEmail', 'Please enter a valid email address so we can send the confirmation.');
   }
 
   let contactPhone = payload.contactPhone === undefined || payload.contactPhone === null
@@ -293,6 +301,7 @@ export function validatePayload(payload, loaded, { partial = false } = {}) {
   return {
     answered, meals, nameUpdates, namedNameUpdates, dietaryUpdates,
     contactEmail, contactPhone, mailingAddress, notes, hotelStay, anyoneAttending,
+    emailConfirmation,
   };
 }
 
@@ -393,19 +402,22 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
   const nextEmail = change.contactEmail || null;
   const nextPhone = change.contactPhone || null;
   const nextAddress = change.mailingAddress || null;
+  const nextOptIn = change.emailConfirmation ? 1 : 0;
   if (
     (loaded.household.contact_email || '') !== (change.contactEmail || '')
     || (loaded.household.contact_phone || '') !== (change.contactPhone || '')
     || (loaded.household.mailing_address || '') !== (change.mailingAddress || '')
+    || Number(loaded.household.email_confirmation_opt_in || 0) !== nextOptIn
   ) {
     statements.push(stmt(
       db,
-      'UPDATE household SET contact_email = ?, contact_phone = ?, mailing_address = ?, updated_at = ? WHERE id = ?',
-      nextEmail, nextPhone, nextAddress, now, loaded.household.id,
+      'UPDATE household SET contact_email = ?, contact_phone = ?, mailing_address = ?, email_confirmation_opt_in = ?, updated_at = ? WHERE id = ?',
+      nextEmail, nextPhone, nextAddress, nextOptIn, now, loaded.household.id,
     ));
     if ((loaded.household.contact_email || '') !== (change.contactEmail || '')) changedFields.push('contactEmail');
     if ((loaded.household.contact_phone || '') !== (change.contactPhone || '')) changedFields.push('contactPhone');
     if ((loaded.household.mailing_address || '') !== (change.mailingAddress || '')) changedFields.push('mailingAddress');
+    if (Number(loaded.household.email_confirmation_opt_in || 0) !== nextOptIn) changedFields.push('emailConfirmation');
   }
 
   if ((loaded.notes || '') !== change.notes) {
@@ -438,7 +450,7 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
   }
 
   const reference = loaded.state.reference || newReference();
-  const emailQueued = !!change.contactEmail;
+  const emailQueued = !!(change.emailConfirmation && change.contactEmail);
   const hasState = !!(await one(db, 'SELECT 1 AS x FROM household_response WHERE household_id = ?', loaded.household.id));
   if (hasState) {
     statements.push(stmt(
@@ -462,6 +474,7 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
       contact_email: change.contactEmail || null,
       contact_phone: change.contactPhone || null,
       mailing_address: change.mailingAddress || null,
+      email_confirmation_opt_in: change.emailConfirmation ? 1 : 0,
     },
     guests: loaded.guests.map((g) => {
       let next = g;
@@ -483,12 +496,29 @@ export async function commitResponse({ env, cfg, loaded, change, expectedRevisio
   const snapshot = buildSnapshot(after, await rsvpWindow(db, cfg), cfg);
 
   if (emailQueued) {
-    const mail = confirmationMail(cfg, { reference, events, summary: attendanceSummary(loaded, change.answered, events, change.nameUpdates || new Map(), change.namedNameUpdates || new Map()), householdLabel: loaded.household.label });
+    const nameUpdates = change.nameUpdates || new Map();
+    const namedNameUpdates = change.namedNameUpdates || new Map();
+    const summary = attendanceSummary(after, change.answered, events, nameUpdates, namedNameUpdates);
+    const extraGuests = after.guests
+      .filter((g) => (g.origin || 'roster') === 'guest' || g.added)
+      .map((g) => (g.kind === 'plus-one' ? (nameUpdates.get(g.id) || g.plus_one_name || 'Guest') : (namedNameUpdates.get(g.id) || g.display_name)))
+      .filter(Boolean);
+    const dietary = after.guests.map((g) => {
+      const name = g.kind === 'plus-one'
+        ? (nameUpdates.get(g.id) || g.plus_one_name || 'Guest')
+        : ((namedNameUpdates && namedNameUpdates.get(g.id)) || g.display_name);
+      const note = (nextDietary[g.id] || '').trim();
+      return note ? { name, note } : null;
+    }).filter(Boolean);
+    const mail = confirmationMail(cfg, {
+      reference, events, summary, extraGuests, dietary,
+      householdLabel: loaded.household.label,
+    });
     statements.push(stmt(
       db,
-      `INSERT INTO mail_outbox (id, household_id, kind, to_email, subject, body_text, dedupe_key, state, attempts, next_attempt_at, created_at)
-       VALUES (?, ?, 'confirmation', ?, ?, ?, ?, 'queued', 0, ?, ?)`,
-      newId('m'), loaded.household.id, change.contactEmail, mail.subject, mail.text, `confirmation:${loaded.household.id}:${nextRevision}`, now, now,
+      `INSERT INTO mail_outbox (id, household_id, kind, to_email, subject, body_text, body_html, dedupe_key, state, attempts, next_attempt_at, created_at)
+       VALUES (?, ?, 'confirmation', ?, ?, ?, ?, ?, 'queued', 0, ?, ?)`,
+      newId('m'), loaded.household.id, change.contactEmail, mail.subject, mail.text, mail.html, `confirmation:${loaded.household.id}:${nextRevision}`, now, now,
     ));
   }
 
