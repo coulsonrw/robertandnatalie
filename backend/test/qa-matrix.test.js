@@ -117,8 +117,8 @@ describe('QA-15 field-level validation', () => {
   });
 
   it('a single problem is the message itself, and a foreign id never appears in a path', async () => {
-    const one = await (await guest(s.cookie, 'PUT', '/response', fullAnswer(s.snapshot, 'attending', { contactEmail: '' }))).json();
-    expect(one.error.fields).toEqual([{ path: 'contactEmail', message: 'A contact email is needed so we can confirm your response.' }]);
+    const one = await (await guest(s.cookie, 'PUT', '/response', fullAnswer(s.snapshot, 'attending', { emailConfirmation: true, contactEmail: '' }))).json();
+    expect(one.error.fields).toEqual([{ path: 'contactEmail', message: 'Please enter a valid email address so we can send the confirmation.' }]);
     expect(one.error.message).toBe(one.error.fields[0].message);
     const foreign = fullAnswer(s.snapshot);
     foreign.responses.push({ guestId: 'g_taylor', eventId: 'ceremony', status: 'attending' });

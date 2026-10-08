@@ -77,7 +77,7 @@
       if (!stores[hh.id]) stores[hh.id] = {
         revision: 0,
         responses: hh.entitlements.map(function (e) { return { guestId: e.guestId, eventId: e.eventId, status: 'pending', meal: null }; }),
-        plusOneNames: {}, guestNames: {}, guestDietary: {}, contactEmail: hh.contactEmail || '', contactPhone: hh.contactPhone || '', mailingAddress: hh.mailingAddress || '', notes: '', hotelStay: null, reference: null, submittedAt: null, seen: {}
+        plusOneNames: {}, guestNames: {}, guestDietary: {}, contactEmail: hh.contactEmail || '', contactPhone: hh.contactPhone || '', mailingAddress: hh.mailingAddress || '', notes: '', hotelStay: null, emailConfirmation: false, reference: null, submittedAt: null, seen: {}
       };
       return stores[hh.id];
     }
@@ -96,7 +96,8 @@
         notes: store.notes, hotelStay: store.hotelStay || null, revision: store.revision, reference: store.reference, submittedAt: store.submittedAt,
         extraGuestCap: cfg.extraGuestCap || 2,
         extraGuestsRemaining: Math.max(0, (cfg.extraGuestCap || 2) - hh.guests.filter(function (g) { return g.kind === 'plus-one' || g.added; }).length),
-        emailQueued: false, rsvp: { open: true, cutoffAt: cfg.cutoffAt }
+        emailConfirmation: !!store.emailConfirmation,
+        emailQueued: !!(store.emailConfirmation && store.contactEmail && store.reference), rsvp: { open: true, cutoffAt: cfg.cutoffAt }
       };
     }
     return {
@@ -149,6 +150,7 @@
           store.contactEmail = p.contactEmail || '';
           store.contactPhone = p.contactPhone || '';
           store.mailingAddress = p.mailingAddress || '';
+          store.emailConfirmation = !!p.emailConfirmation;
           store.notes = p.notes || '';
           store.hotelStay = p.hotelStay || null;
           (p.removedGuestIds || []).forEach(function (id) {
@@ -226,7 +228,7 @@
   // ---------- state ----------
   var state = {
     step: 'access', session: null, answers: {}, plusOneNames: {}, guestNames: {}, guestDietary: {},
-    contactEmail: '', contactPhone: '', mailingAddress: '', notes: '', hotelStay: null, meals: {},
+    contactEmail: '', contactPhone: '', mailingAddress: '', notes: '', hotelStay: null, meals: {}, emailConfirmation: false,
     requestId: null, busy: false, notice: null, errors: {}, focusHeading: false,
     guestList: null, guestListError: null, selectedPartyId: '', removedGuestIds: []
   };
@@ -264,6 +266,7 @@
     if (!sameHousehold || !state.mailingAddress) state.mailingAddress = session.household.mailingAddress || '';
     if (!sameHousehold || !state.notes) state.notes = session.notes || '';
     if (!sameHousehold || !state.hotelStay) state.hotelStay = session.hotelStay || null;
+    if (!sameHousehold) state.emailConfirmation = !!session.emailConfirmation;
     if (!sameHousehold) state.removedGuestIds = [];
   }
   function guests() { return state.session.household.guests; }
@@ -463,11 +466,31 @@
   function renderDetails() {
     var form = el('form', { novalidate: true, onsubmit: function (e) { e.preventDefault(); onDetailsContinue(); } });
     append(form, el('div', { class: 'field' },
-      el('label', { for: 'contactEmail', text: 'Contact email' }),
-      el('input', { class: 'input', id: 'contactEmail', type: 'email', autocomplete: 'email', inputmode: 'email', required: true, value: state.contactEmail, 'aria-invalid': state.errors.contactEmail ? 'true' : null, 'aria-describedby': 'email-hint' + (state.errors.contactEmail ? ' email-error' : ''), oninput: function (e) { state.contactEmail = e.target.value; } }),
-      el('p', { class: 'hint', id: 'email-hint', text: 'Used to confirm your response and reach you if plans change. Not shared with anyone else.' }),
-      state.errors.contactEmail ? el('p', { class: 'error-text', id: 'email-error' }, icon('i-alert'), el('span', { text: state.errors.contactEmail })) : null
+      el('label', { class: 'checkbox-row', for: 'emailConfirmation' },
+        el('input', {
+          type: 'checkbox', id: 'emailConfirmation', name: 'emailConfirmation',
+          checked: state.emailConfirmation ? true : null,
+          onchange: function (e) {
+            state.emailConfirmation = !!e.target.checked;
+            if (state.errors.contactEmail) delete state.errors.contactEmail;
+            render();
+            var focusId = state.emailConfirmation ? 'contactEmail' : 'emailConfirmation';
+            var focusEl = document.getElementById(focusId);
+            if (focusEl) focusEl.focus();
+          }
+        }),
+        el('span', { text: 'Email me a confirmation of our RSVP' })
+      ),
+      el('p', { class: 'hint', id: 'email-opt-in-hint', text: 'Optional. Tick this if you would like a copy of this response emailed to you.' })
     ));
+    if (state.emailConfirmation) {
+      append(form, el('div', { class: 'field' },
+        el('label', { for: 'contactEmail', text: 'Email address' }),
+        el('input', { class: 'input', id: 'contactEmail', type: 'email', autocomplete: 'email', inputmode: 'email', required: true, value: state.contactEmail, 'aria-invalid': state.errors.contactEmail ? 'true' : null, 'aria-describedby': 'email-hint' + (state.errors.contactEmail ? ' email-error' : ''), oninput: function (e) { state.contactEmail = e.target.value; } }),
+        el('p', { class: 'hint', id: 'email-hint', text: 'We will send the confirmation only to this address. Not shared with anyone else.' }),
+        state.errors.contactEmail ? el('p', { class: 'error-text', id: 'email-error' }, icon('i-alert'), el('span', { text: state.errors.contactEmail })) : null
+      ));
+    }
     append(form, el('div', { class: 'field' },
       el('label', { for: 'contactPhone', text: 'Phone number' }),
       el('input', { class: 'input', id: 'contactPhone', type: 'tel', autocomplete: 'tel', inputmode: 'tel', maxlength: '40', value: state.contactPhone, 'aria-invalid': state.errors.contactPhone ? 'true' : null, 'aria-describedby': 'phone-hint' + (state.errors.contactPhone ? ' phone-error' : ''), oninput: function (e) { state.contactPhone = e.target.value; } }),
@@ -547,7 +570,7 @@
     var open = rsvpOpen();
     var details = el('dl', { class: 'review-details' });
     if (anyoneAttending()) {
-      append(details, el('div', {}, el('dt', { text: 'Contact email' }), el('dd', { text: state.contactEmail || '—' })));
+      append(details, el('div', {}, el('dt', { text: 'Confirmation email' }), el('dd', { text: state.emailConfirmation && state.contactEmail ? ('Yes — ' + state.contactEmail) : 'No' })));
       append(details, el('div', {}, el('dt', { text: 'Phone' }), el('dd', { text: state.contactPhone || '—' })));
       append(details, el('div', {}, el('dt', { text: 'Mailing address' }), el('dd', { text: state.mailingAddress || '—' })));
       append(details, el('div', {}, el('dt', { text: 'Grand Hotel stay' }), el('dd', { text: state.hotelStay === 'yes' ? 'Yes' : state.hotelStay === 'no' ? 'No' : state.hotelStay === 'undecided' ? 'Not sure yet' : '—' })));
@@ -575,8 +598,8 @@
     var when = s.submittedAt ? new Date(s.submittedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '';
     var parts = [stepper('confirmation'), heading('Thank you — your response is saved'),
       el('p', { class: 'reference' }, 'Reference ', el('strong', { text: s.reference || '—' })),
-      el('p', { text: (when ? 'Saved ' + when + '. ' : '') + (s.emailQueued && state.contactEmail ? 'A confirmation will be emailed to ' + state.contactEmail + '.' : 'Please keep this reference for your records.') }),
-      (!s.emailQueued && anyoneAttending()) ? el('div', { class: 'status', role: 'note' }, icon('i-info'), el('p', { text: 'A confirmation email is not available' + (mode === 'preview' ? ' in this preview' : ' right now') + '. Your response is saved under the reference above; if you would like a copy, please contact us.' })) : null,
+      el('p', { text: (when ? 'Saved ' + when + '. ' : '') + (s.emailQueued && state.emailConfirmation && state.contactEmail ? 'A confirmation will be emailed to ' + state.contactEmail + '.' : 'Please keep this reference for your records.') }),
+      (state.emailConfirmation && !s.emailQueued) ? el('div', { class: 'status', role: 'note' }, icon('i-info'), el('p', { text: 'A confirmation email is not available' + (mode === 'preview' ? ' in this preview' : ' right now') + '. Your response is saved under the reference above; if you would like a copy, please contact us.' })) : null,
       summaryTable()];
     if (rsvpOpen()) parts.push(el('p', { text: 'You can come back and change your response until responses close.' }));
     parts.push(el('div', { class: 'form-actions' },
@@ -644,7 +667,7 @@
         if ((m = /^guestDietary\.([^.]+)$/.exec(path))) { mapped['dietary:' + m[1]] = f.message; attendance = true; return; }
         if ((m = /^addedGuests\.(\d+)\.name$/.exec(path))) { mapped.addedGuests = f.message; attendance = true; return; }
         if (path === 'addedGuests' || path === 'removedGuestIds') { mapped[path] = f.message; attendance = true; return; }
-        if (path === 'contactEmail' || path === 'contactPhone' || path === 'mailingAddress' || path === 'notes' || path === 'hotelStay') { mapped[path] = f.message; details = true; }
+        if (path === 'contactEmail' || path === 'emailConfirmation' || path === 'contactPhone' || path === 'mailingAddress' || path === 'notes' || path === 'hotelStay') { mapped[path] = f.message; details = true; }
       });
       if (attendance || details) {
         state.step = attendance ? 'attendance' : 'details';
@@ -658,7 +681,7 @@
 
   function resetLocalAnswers() {
     state.session = null; state.answers = {}; state.plusOneNames = {}; state.guestNames = {}; state.guestDietary = {};
-    state.contactEmail = ''; state.contactPhone = ''; state.mailingAddress = ''; state.notes = ''; state.hotelStay = null; state.meals = {};
+    state.contactEmail = ''; state.contactPhone = ''; state.mailingAddress = ''; state.notes = ''; state.hotelStay = null; state.meals = {}; state.emailConfirmation = false;
     state.selectedPartyId = ''; state.removedGuestIds = [];
   }
 
@@ -790,12 +813,14 @@
 
   function onDetailsContinue() {
     state.errors = {};
-    var email = (state.contactEmail || '').trim();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      state.errors.contactEmail = 'Please enter a valid email address so we can confirm your response.';
-      render(); document.getElementById('contactEmail').focus(); return;
+    if (state.emailConfirmation) {
+      var email = (state.contactEmail || '').trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        state.errors.contactEmail = 'Please enter a valid email address so we can send the confirmation.';
+        render(); document.getElementById('contactEmail').focus(); return;
+      }
+      state.contactEmail = email;
     }
-    state.contactEmail = email;
     state.notes = (state.notes || '').slice(0, 500);
     if (!state.hotelStay) {
       state.errors.hotelStay = 'Please say whether you will stay at The Grand Hotel.';
@@ -825,7 +850,8 @@
       guestDietary: {},
       addedGuests: [],
       removedGuestIds: (state.removedGuestIds || []).slice(),
-      contactEmail: anyoneAttending() ? state.contactEmail : (state.contactEmail || ''),
+      emailConfirmation: !!state.emailConfirmation,
+      contactEmail: state.emailConfirmation ? state.contactEmail : (state.contactEmail || ''),
       contactPhone: anyoneAttending() ? (state.contactPhone || '') : '',
       mailingAddress: anyoneAttending() ? (state.mailingAddress || '') : '',
       notes: anyoneAttending() ? state.notes : '',

@@ -35,7 +35,7 @@ export async function raiseAlert(db, cfg, { kind, subject, details }) {
 
 export async function processOutbox(env, cfg, { provider, limit = 25 } = {}) {
   const db = env.DB;
-  const mailer = providerFor(cfg, provider);
+  const mailer = providerFor(cfg, provider, env);
   const now = nowIso();
   const due = await all(db, `SELECT * FROM mail_outbox WHERE state = 'queued' AND next_attempt_at <= ? ORDER BY next_attempt_at LIMIT ?`, now, limit);
   const result = { attempted: 0, sent: 0, failed: 0, abandoned: 0 };
@@ -44,7 +44,9 @@ export async function processOutbox(env, cfg, { provider, limit = 25 } = {}) {
     result.attempted += 1;
     const attempts = row.attempts + 1;
     try {
-      const { messageId } = await mailer.send({ from: cfg.mail.from, to: row.to_email, subject: row.subject, text: row.body_text });
+      const { messageId } = await mailer.send({
+        from: cfg.mail.from, to: row.to_email, subject: row.subject, text: row.body_text, html: row.body_html || undefined,
+      });
       await batch(db, [
         stmt(db, `UPDATE mail_outbox SET state = 'sent', attempts = ?, sent_at = ?, provider_message_id = ?, last_error = NULL WHERE id = ? AND state = 'queued'`, attempts, nowIso(), messageId || null, row.id),
         audit(db, { actorKind: 'system', actorId: 'outbox', action: 'mail.sent', householdId: row.household_id, targetType: 'mail_outbox', targetId: row.id, details: { kind: row.kind, attempts, provider: mailer.name } }),

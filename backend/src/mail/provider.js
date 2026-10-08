@@ -1,16 +1,23 @@
 // Narrow mail-provider adapter (PRD §11 "transactional email provider behind a narrow adapter").
 //
-// Interface: provider.send({ from, to, subject, text }) -> Promise<{ messageId: string }>.
+// Interface: provider.send({ from, to, subject, text, html? }) -> Promise<{ messageId: string }>.
 // Throwing (or rejecting) means "not accepted"; the outbox will retry until MAIL_MAX_ATTEMPTS or
 // MAIL_MAX_AGE_HOURS, then abandon and alert the coordinator. Acceptance by a provider is not
 // proof of inbox delivery (RSVP-07).
 //
-// Providers included:
-//   stub     - accepts everything, delivers nothing. For tests and local development only.
-//   webhook  - POSTs {from,to,subject,text} as JSON to MAIL_WEBHOOK_URL with
-//              Authorization: Bearer MAIL_WEBHOOK_TOKEN. Use it to plug in the owners' chosen
-//              transactional provider through a tiny relay, or replace it with a direct adapter
-//              written against that provider's current API documentation (not supplied here).
+// Providers:
+//   stub       - accepts everything, delivers nothing. Tests and local development.
+//   cloudflare - Cloudflare Email Sending via the send_email binding (`env.EMAIL.send()`).
+//                Primary production provider once Workers Paid and the sending domain are on.
+//                https://developers.cloudflare.com/email-service/api/send-emails/workers-api/
+//   webhook    - POSTs {from,to,subject,text,html} as JSON to MAIL_WEBHOOK_URL with a bearer token.
+
+export function parseFromAddress(from) {
+  const raw = String(from || '').trim();
+  const m = raw.match(/^(.*)<([^>]+)>\s*$/);
+  if (m) return { name: m[1].trim().replace(/^"|"$/g, ''), email: m[2].trim() };
+  return { email: raw };
+}
 
 export function stubProvider() {
   const sent = [];
@@ -34,7 +41,9 @@ export function webhookProvider(cfg) {
       const res = await fetch(cfg.mail.webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.mail.webhookToken}` },
-        body: JSON.stringify({ from: message.from, to: message.to, subject: message.subject, text: message.text }),
+        body: JSON.stringify({
+          from: message.from, to: message.to, subject: message.subject, text: message.text, html: message.html || null,
+        }),
       });
       if (!res.ok) throw new Error(`mail relay responded ${res.status}`);
       let id = null;
@@ -44,11 +53,33 @@ export function webhookProvider(cfg) {
   };
 }
 
-export function providerFor(cfg, override) {
+export function cloudflareProvider(env) {
+  return {
+    name: 'cloudflare',
+    async send(message) {
+      if (!env || !env.EMAIL || typeof env.EMAIL.send !== 'function') {
+        throw new Error('EMAIL send_email binding is not configured');
+      }
+      const from = parseFromAddress(message.from);
+      if (!from.email) throw new Error('MAIL_FROM is missing');
+      const result = await env.EMAIL.send({
+        to: message.to,
+        from: from.name ? { email: from.email, name: from.name } : from.email,
+        subject: message.subject,
+        text: message.text,
+        html: message.html || undefined,
+      });
+      return { messageId: (result && (result.messageId || result.id)) || `cf-${Date.now()}` };
+    },
+  };
+}
+
+export function providerFor(cfg, override, env) {
   if (override) return override;
   switch (cfg.mail.provider) {
     case 'stub': return stubProvider();
     case 'webhook': return webhookProvider(cfg);
+    case 'cloudflare': return cloudflareProvider(env);
     default: throw new Error(`Unknown MAIL_PROVIDER "${cfg.mail.provider}"`);
   }
 }

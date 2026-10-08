@@ -71,8 +71,8 @@ describe('events from site.config.json (DATA-01)', () => {
   });
 });
 
-describe('confirmation mail (RSVP-07, SEC-05)', () => {
-  it('includes date, summary and correction route, and has no notes field at all', () => {
+describe('confirmation mail (RSVP-07)', () => {
+  it('includes date, summary and correction route; household notes stay out unless dietary is passed', () => {
     const cfg = readConfig(env);
     const events = [{ id: 'ceremony', label: 'Ceremony', name: 'Saint Francis Chapel', starts_at_utc: '2026-12-19T20:00:00.000Z', timezone: 'America/Chicago' }];
     const mail = confirmationMail(cfg, { reference: 'RN-TESTTEST', householdLabel: 'The Example Household', events, summary: [{ event: events[0], attending: ['Alex Example'], declining: ['Sam Example'] }] });
@@ -82,6 +82,8 @@ describe('confirmation mail (RSVP-07, SEC-05)', () => {
     expect(mail.text).toContain('Attending: Alex Example');
     expect(mail.text).toContain('Declining: Sam Example');
     expect(mail.text).toContain('https://robertandnatalie.wedding/rsvp.html');
-    expect(mail.text.toLowerCase()).not.toContain('dietary:');
+    expect(mail.html).toContain('The Example Household');
+    expect(mail.text).not.toContain('Dietary notes');
+    expect(mail.text).not.toContain('Vegetarian, please.');
   });
 });
