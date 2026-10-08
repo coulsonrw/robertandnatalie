@@ -139,14 +139,14 @@
     "enabled": true,
     "heading": "The Details",
     "dressCode": {
-      "text": null,
+      "text": "Formal to Business Casual",
       "tbdNote": "Dress code TBD.",
       "approval": {
-        "state": "pending",
+        "state": "approved",
         "owner": "Robert / Natalie",
-        "source": null,
-        "reviewed": "2026-10-04",
-        "note": "Dress code not yet decided (PRD \u00a716). Until text is supplied and approved the Details card shows a TBD row; the attire FAQ stays unpublished."
+        "source": "Rob, 8 October 2026: dress code is Formal to Business Casual.",
+        "reviewed": "2026-10-08",
+        "note": "Published as Formal to Business Casual. The Details card no longer shows a TBD row; the attire FAQ is published with the same wording."
       }
     },
     "children": {
@@ -683,13 +683,13 @@
     {
       "id": "attire",
       "question": "What should I wear?",
-      "answer": null,
+      "answer": "Formal to Business Casual",
       "approval": {
-        "state": "pending",
+        "state": "approved",
         "owner": "Robert / Natalie",
-        "source": null,
-        "reviewed": "2026-09-21",
-        "note": "Dress code not yet decided (PRD \u00a716). Not published."
+        "source": "Rob, 8 October 2026: dress code is Formal to Business Casual.",
+        "reviewed": "2026-10-08",
+        "note": "Published. Answer is Formal to Business Casual (same wording as details.dressCode)."
       }
     },
     {

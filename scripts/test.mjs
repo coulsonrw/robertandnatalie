@@ -412,8 +412,9 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   assert.deepEqual([...d.matchAll(/<li>(.*?)<\/li>/g)].map((m) => text(m[1])), ['Saturday, December 19, 2026', '2:00 p.m. · Ceremony', '4:00 p.m. · Reception']);
   const cards = [...d.matchAll(/<article class="details-card([^"]*)"[\s\S]*?<\/article>/g)].map((m) => ({ full: /--full/.test(m[1]), title: text(m[0].match(/<h3[^>]*>(.*?)<\/h3>/)[1]), body: [...m[0].matchAll(/<p class="details-card-body">(.*?)<\/p>/g)].map((x) => text(x[1])), tbd: (m[0].match(/<span class="tbd-note">(.*?)<\/span>/) || [])[1] ?? null, badgeHidden: /<span class="tbd-badge" aria-hidden="true">TBD<\/span>/.test(m[0]) }));
   assert.deepEqual(cards.map((c) => c.title), ['Dress Code', 'Between Ceremony & Reception', 'Transport & Parking', 'Children', 'Charity', 'Contact Us']);
-  assert.deepEqual(cards.map((c) => c.tbd), ['Dress code TBD.', 'Plans for the time between TBD.', 'Parking and shuttle details TBD.', 'Children policy TBD.', 'TBD', 'Email and phone TBD.']);
-  assert.ok(cards.every((c) => c.badgeHidden), 'the badge is visual only; the note carries the word TBD');
+  assert.deepEqual(cards.map((c) => c.tbd), [null, 'Plans for the time between TBD.', 'Parking and shuttle details TBD.', 'Children policy TBD.', 'TBD', 'Email and phone TBD.']);
+  assert.deepEqual(cards[0].body, ['Formal to Business Casual']);
+  assert.ok(cards.filter((c) => c.tbd).every((c) => c.badgeHidden), 'the badge is visual only; the note carries the word TBD');
   assert.deepEqual(cards.map((c) => c.full), [false, false, false, false, false, true], 'Contact Us spans the grid');
   assert.deepEqual(cards[1].body, ['Ceremony 2:00 p.m. at Saint Francis Chapel, reception 4:00 p.m. at The Grand Hotel — about two hours apart.']);
   assert.deepEqual(cards[2].body, [
@@ -423,8 +424,10 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   assert.match(d, /<a href="tel:\+12519289201">\(251\) 928-9201<\/a>/);
   assert.match(d, /<a href="https:\/\/www\.marriott\.com\/en-us\/hotels\/ptlak-the-grand-hotel-golf-resort-and-spa-autograph-collection\/overview\/" rel="noopener">Reservations website<\/a>/);
   assert.doesNotMatch(d, /Room Block|Room block rate/, 'no Room Block card or TBD');
-  for (const i of [0, 3, 4, 5]) assert.deepEqual(cards[i].body, [], `${cards[i].title} has no body until the owners supply it`);
+  for (const i of [3, 4, 5]) assert.deepEqual(cards[i].body, [], `${cards[i].title} has no body until the owners supply it`);
   assert.doesNotMatch(d, /Registry|celebrate with you|Everything you need/i, 'no registry and no copy in the couple\'s voice');
+  const questions = html.slice(html.indexOf('<section id="questions"'), html.indexOf('</section>', html.indexOf('<section id="questions"')));
+  assert.match(questions, /<details class="faq" id="faq-attire">\s*<summary>What should I wear\?<\/summary>\s*<div class="faq-body"><p>Formal to Business Casual<\/p><\/div>\s*<\/details>/);
   assert.doesNotMatch(b.read('styles/site.css').split('The Details (direction A')[1].split('*/').slice(1).join('').replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-f]{3,8}\b|Playfair|Inter\b|teal/i, 'the details styles use site tokens only');
   const css = b.read('styles/site.css');
   assert.match(css, /\.details-band \{[^}]*background: var\(--ink\);/, 'the title band is the footer\'s dark ink (Rob, 3:22 PM ET)');

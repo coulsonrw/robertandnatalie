@@ -4,6 +4,7 @@
 
 | Change | Instruction or reason | Affected requirements | Approvals reopened |
 |---|---|---|---|
+| Publish the dress code as **Formal to Business Casual** on The Details card and the attire FAQ (“What should I wear?”). No extra attire guidance. RSVP and confirmation-email copy did not mention attire and were left unchanged. | Rob: the wedding site’s dress code should read exactly “Formal to Business Casual”. | CONTENT-04, §16 | `config.details.dressCode` and `config.faqs[attire]` move from pending to approved |
 | Turn on Cloudflare Email Sending: `MAIL_PROVIDER = "cloudflare"` and `[[send_email]]` (`EMAIL`, `rsvp@robertandnatalie.wedding`) placed **after** `[vars]`. A binding in the middle of `[vars]` swallows later keys; wrangler only warns. | Rob: Workers Paid is active; switch confirmation email on. | RSVP-07, ARCH-03 | None |
 
 ## Repository changes (7 October 2026)
