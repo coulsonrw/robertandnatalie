@@ -1,5 +1,11 @@
 # Change log
 
+## Repository changes (8 October 2026)
+
+| Change | Instruction or reason | Affected requirements | Approvals reopened |
+|---|---|---|---|
+| Turn on Cloudflare Email Sending: `MAIL_PROVIDER = "cloudflare"` and `[[send_email]]` (`EMAIL`, `rsvp@robertandnatalie.wedding`) placed **after** `[vars]`. A binding in the middle of `[vars]` swallows later keys; wrangler only warns. | Rob: Workers Paid is active; switch confirmation email on. | RSVP-07, ARCH-03 | None |
+
 ## Repository changes (7 October 2026)
 
 | Change | Instruction or reason | Affected requirements | Approvals reopened |

@@ -70,22 +70,15 @@ RATE_LIMIT_PER_IP = "20"
 RATE_LIMIT_PER_CODE = "10"
 RATE_LIMIT_PER_DIRECTORY = "60"
 
-# Mail (RSVP-07). Primary provider is Cloudflare Email Sending ("cloudflare") once Workers Paid
-# and the sending domain are onboarded. Leave "stub" until then: adding a send_email binding
-# before Paid / domain onboarding can deploy a Worker whose EMAIL binding is missing, and
-# setting MAIL_PROVIDER = "cloudflare" in that state would retry and abandon guest mail.
-# "webhook" remains a relay option. MAIL_FROM must be an address the owners control.
-MAIL_PROVIDER = "stub"
+# Mail (RSVP-07). Cloudflare Email Sending is the live provider. MAIL_FROM must be an
+# address the owners control. The send_email binding lives AFTER this [vars] table — never
+# inside it. A [[send_email]] table in the middle of [vars] makes every later key parse as
+# fields of send_email[0]; wrangler only warns, and COORDINATOR_EMAIL / ACCESS_* /
+# GOOGLE_SHEETS_* disappear from the Worker.
+MAIL_PROVIDER = "cloudflare"
 MAIL_FROM = "Robert and Natalie <rsvp@robertandnatalie.wedding>"
 MAIL_MAX_ATTEMPTS = "8"
 MAIL_MAX_AGE_HOURS = "48"
-
-# One switch after Workers Paid + Email Sending onboarding for robertandnatalie.wedding
-# (see docs/RSVP_GUEST_LAUNCH.md): uncomment the binding, set MAIL_PROVIDER = "cloudflare",
-# deploy. Do not uncomment this while the account is still on Workers Free.
-# [[send_email]]
-# name = "EMAIL"
-# allowed_sender_addresses = ["rsvp@robertandnatalie.wedding"]
 # Where coordinator alerts are emailed (abandoned mail, retention applied). Empty = API only.
 COORDINATOR_EMAIL = ""
 
@@ -120,3 +113,9 @@ GOOGLE_SHEETS_ANSWERS_TAB = "RSVP Answers"
 #   GOOGLE_SERVICE_ACCOUNT_JSON  full service-account JSON (or GOOGLE_SERVICE_ACCOUNT_EMAIL
 #                                plus GOOGLE_PRIVATE_KEY). Share the sheet with that client_email.
 # See .dev.vars.example for local development values.
+
+# Cloudflare Email Sending (RSVP-07). Must stay after [vars] — see the MAIL_PROVIDER comment.
+# name = EMAIL; restrict senders to the RSVP from-address.
+[[send_email]]
+name = "EMAIL"
+allowed_sender_addresses = ["rsvp@robertandnatalie.wedding"]
