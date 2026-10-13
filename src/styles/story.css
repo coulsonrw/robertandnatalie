@@ -128,6 +128,9 @@ h3.story-continued-title {
     .draw-scrub:not(.js-progress) .sketch.is-ready .l3 path { animation-range: cover 20% cover 40%; }
     .draw-scrub:not(.js-progress) .sketch.is-ready .l4 path { animation-range: cover 25% cover 44%; }
     .draw-scrub:not(.js-progress) .sketch.is-ready .l5 path { animation-range: cover 28% cover 46%; }
+    /* Colour start/end are rewritten by story.js (animation-range + --colour-*). These
+       spans are the fallback before that measure: the photo fades over 12% of the sketch's
+       cover travel and the line overlay over the last 8%, ending together. */
     .draw-scrub:not(.js-progress) .sketch.is-ready .sketch-photo { animation: sk-fade linear both; animation-timeline: --sketch; animation-range: cover 46% cover 58%; }
     .draw-scrub:not(.js-progress) .sketch.is-ready .sketch-svg { animation: sk-settle linear both; animation-timeline: --sketch; animation-range: cover 50% cover 58%; }
     .draw-scrub:not(.js-progress) .timeline { view-timeline: --tl block; }
@@ -137,8 +140,8 @@ h3.story-continued-title {
     stroke-dasharray: 1 2;
     stroke-dashoffset: clamp(0, calc(1.02 * (1 - (var(--p, 0) - var(--s)) / var(--d))), 1.02);
   }
-  .draw-scrub.js-progress .sketch.is-ready .sketch-photo { opacity: clamp(0, calc((var(--p, 0) - .46) / .12), 1); }
-  .draw-scrub.js-progress .sketch.is-ready .sketch-svg { opacity: clamp(0, calc(1 - (var(--p, 0) - .50) / .08), 1); }
+  .draw-scrub.js-progress .sketch.is-ready .sketch-photo { opacity: clamp(0, calc((var(--p, 0) - var(--colour-start, .46)) / (var(--colour-end, .58) - var(--colour-start, .46))), 1); }
+  .draw-scrub.js-progress .sketch.is-ready .sketch-svg { opacity: clamp(0, calc(1 - (var(--p, 0) - var(--ink-start, .50)) / (var(--colour-end, .58) - var(--ink-start, .50))), 1); }
   .draw-once .sketch.is-ready .sketch-svg path {
     stroke-dasharray: 1 2; stroke-dashoffset: 1.02;
     transition: stroke-dashoffset 1.5s var(--ease-draw) calc((var(--s) - .10) * 4s);
