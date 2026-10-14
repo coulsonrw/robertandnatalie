@@ -25,6 +25,8 @@ Event details (venues, start times) come from the owners' instructions in the PR
 | `src/styles`, `src/js`, `src/img`, `src/fonts` | Stylesheet, progressive-enhancement scripts, crest renditions, self-hosted fonts. |
 | `assets/` | Original artwork (A1 crest, A2 invitation) and the asset manifest. Photos of unconfirmed provenance sit in `assets/review/` and are not published. |
 | `docs/` | PRD, decision record and register, gap analysis and traceability, delivery plan, acceptance tests and results log, runbook, changelog, sources, RSVP API contract, content approval register, selection package, evidence, proofs and font licences. |
+| `memory/` | Notes for the next agent: decisions, gotchas and how-tos. Read `memory/INDEX.md` first. | 
+| `AGENTS.md` | Short pointer into `memory/` for coding agents. |
 | `AGENT_START_HERE.md` | Reading order, stop rules and commands for anyone picking the work up. |
 | `backend/` | RSVP service (Cloudflare Workers + D1) with tests; deployed on 23 September 2026 into the owners' Cloudflare account as `robertandnatalie-rsvp-api` on `https://api.robertandnatalie.wedding` (see its README, "Deployment status"); Access, mail provider, cutoff and the site's `rsvp.apiBaseUrl`/`rsvp.mode` switch remain owner decisions. |
 | `.github/workflows/` | `ci.yml` validates and builds on pull requests; `deploy.yml` builds and publishes `main` to GitHub Pages; `domain-check.yml` (run by hand) reports the Pages settings and the custom domain's DNS answers, HTTPS behaviour and certificate as observed from a GitHub-hosted runner. |

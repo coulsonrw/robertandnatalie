@@ -15,6 +15,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+      - name: Check agent memory notes
+        run: node scripts/check-memory.mjs
       - name: Validate configuration
         run: npm run check
       - name: Unit tests and automated AT-02
