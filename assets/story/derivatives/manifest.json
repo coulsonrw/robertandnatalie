@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-05T18:08:30.788Z",
+  "generatedAt": "2026-10-14T04:21:57.008Z",
   "images": {
     "monogram-rn": {
       "id": "monogram-rn",
@@ -238,6 +238,72 @@
           "jpg": "ch1-harvard-law-1175.jpg",
           "bytesWebp": 188724,
           "bytesJpg": 267526
+        }
+      ]
+    },
+    "ch1-robert": {
+      "id": "ch1-robert",
+      "role": "chapter",
+      "source": "assets/story/originals/ch1-robert.jpg",
+      "width": 1137,
+      "height": 1383,
+      "sizes": [
+        {
+          "w": 480,
+          "h": 584,
+          "webp": "ch1-robert-480.webp",
+          "jpg": "ch1-robert-480.jpg",
+          "bytesWebp": 11404,
+          "bytesJpg": 24677
+        },
+        {
+          "w": 800,
+          "h": 973,
+          "webp": "ch1-robert-800.webp",
+          "jpg": "ch1-robert-800.jpg",
+          "bytesWebp": 23020,
+          "bytesJpg": 56306
+        },
+        {
+          "w": 1137,
+          "h": 1383,
+          "webp": "ch1-robert-1137.webp",
+          "jpg": "ch1-robert-1137.jpg",
+          "bytesWebp": 42282,
+          "bytesJpg": 106841
+        }
+      ]
+    },
+    "ch1-natalie": {
+      "id": "ch1-natalie",
+      "role": "chapter",
+      "source": "assets/story/originals/ch1-natalie.jpg",
+      "width": 1066,
+      "height": 1600,
+      "sizes": [
+        {
+          "w": 480,
+          "h": 720,
+          "webp": "ch1-natalie-480.webp",
+          "jpg": "ch1-natalie-480.jpg",
+          "bytesWebp": 12100,
+          "bytesJpg": 28323
+        },
+        {
+          "w": 800,
+          "h": 1201,
+          "webp": "ch1-natalie-800.webp",
+          "jpg": "ch1-natalie-800.jpg",
+          "bytesWebp": 28018,
+          "bytesJpg": 72650
+        },
+        {
+          "w": 1066,
+          "h": 1600,
+          "webp": "ch1-natalie-1066.webp",
+          "jpg": "ch1-natalie-1066.jpg",
+          "bytesWebp": 53236,
+          "bytesJpg": 101131
         }
       ]
     }

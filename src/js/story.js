@@ -28,6 +28,69 @@
 
   if (reduce.matches) return;
 
+  // Scroll-sketch → colour. The colour photo (and the line overlay leaving it) finishes
+  // when the chapter title's top edge meets the bottom of the sticky nav. Nav height is
+  // measured from the header, not a fixed pixel offset, so it holds on phones and desktops.
+  // The fade keeps its previous length (photo 12% of the sketch's cover travel, lines 8%).
+  var PHOTO_SPAN = 0.12;
+  var INK_SPAN = 0.08;
+  function layoutTop(el) {
+    var y = 0;
+    for (var node = el; node; node = node.offsetParent) y += node.offsetTop;
+    return y;
+  }
+  function tuneColour(sketch) {
+    var chapter = sketch.closest('.chapter');
+    var title = chapter && chapter.querySelector('.chapter-head h2, .chapter-head h3');
+    var photo = sketch.querySelector('.sketch-photo');
+    if (!title || !photo) return;
+    var header = document.querySelector('.site-header');
+    var navBottom = header ? header.getBoundingClientRect().height : 0;
+    var sr = sketch.getBoundingClientRect();
+    var span = window.innerHeight + sr.height;
+    if (!(span > 0)) return;
+    // Layout tops, not getBoundingClientRect: the chapter text slides in with a
+    // transform, and that transform is gone by the time the title reaches the nav.
+    // One pixel early so percentage rounding cannot leave a sliver of the sketch
+    // on the frame where the title's top meets the nav.
+    var end = (window.innerHeight - navBottom - (layoutTop(sketch) - layoutTop(title)) - 1) / span;
+    if (end < 0) end = 0;
+    if (end > 1) end = 1;
+    var photoStart = end - PHOTO_SPAN;
+    if (photoStart < 0) photoStart = 0;
+    var inkStart = end - INK_SPAN;
+    if (inkStart < 0) inkStart = 0;
+    if (end - photoStart < 0.0001) photoStart = Math.max(0, end - 0.0001);
+    if (end - inkStart < 0.0001) inkStart = Math.max(0, end - 0.0001);
+    sketch.style.setProperty('--colour-start', photoStart.toFixed(4));
+    sketch.style.setProperty('--colour-end', end.toFixed(4));
+    sketch.style.setProperty('--ink-start', inkStart.toFixed(4));
+    function pct(n) { return (Math.floor(n * 10000) / 100).toFixed(2) + '%'; }
+    var endPct = pct(end);
+    photo.style.animationRange = 'cover ' + pct(photoStart) + ' cover ' + endPct;
+    var svg = sketch.querySelector('.sketch-svg');
+    if (svg) svg.style.animationRange = 'cover ' + pct(inkStart) + ' cover ' + endPct;
+  }
+  function tuneAll() { sketches.forEach(tuneColour); }
+  tuneAll();
+  // Title size changes when webfonts finish, and the nav height changes with the viewport.
+  // Both move the scroll point where the title meets the nav, so measure again then.
+  window.addEventListener('resize', tuneAll);
+  window.addEventListener('load', function () { requestAnimationFrame(function () { requestAnimationFrame(tuneAll); }); });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { requestAnimationFrame(function () { requestAnimationFrame(tuneAll); }); });
+  }
+  if (window.ResizeObserver) {
+    var header = document.querySelector('.site-header');
+    var ro = new ResizeObserver(function () { tuneAll(); });
+    if (header) ro.observe(header);
+    sketches.forEach(function (s) { ro.observe(s); });
+    chapters.forEach(function (c) {
+      var head = c.querySelector('.chapter-head');
+      if (head) ro.observe(head);
+    });
+  }
+
   function startDraw() {
     var ready = sketches.filter(function (s) { return s.classList.contains('is-ready'); });
     if (mode === 'once') {
@@ -83,6 +146,7 @@
     svg.setAttribute('aria-hidden', 'true');
     svg.setAttribute('focusable', 'false');
     el.appendChild(document.importNode(svg, true));
+    tuneColour(el);
     el.classList.add('is-ready');
     return true;
   }

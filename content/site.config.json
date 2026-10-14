@@ -329,7 +329,7 @@
           "And then, Harvard brought them to the same place.",
           "Cairo, Egypt."
         ],
-        "imageId": "ch1-harvard-law",
+        "imageIds": ["ch1-robert", "ch1-natalie"],
         "textApproved": true,
         "comingSoon": false,
         "published": true
@@ -521,12 +521,12 @@
         }
       },
       {
-        "id": "ch1-harvard-law",
+        "id": "ch1-robert",
         "role": "chapter",
         "kind": "photo",
-        "source": "assets/story/originals/ch1-harvard-law.jpg",
-        "sketch": "assets/story/sketches/ch1-sketch.svg",
-        "alt": "Natalie in Harvard Law School graduation gown and mortarboard, holding a diploma portfolio and gavel.",
+        "source": "assets/story/originals/ch1-robert.jpg",
+        "sketch": "assets/story/sketches/ch1-robert-sketch.svg",
+        "alt": "Robert in a navy suit, white shirt and navy tie, hands in his pockets.",
         "caption": null,
         "photographer": "Robert & Natalie",
         "rightsConfirmed": true,
@@ -535,7 +535,25 @@
         "visibility": "public",
         "focalPoint": {
           "x": 0.5,
-          "y": 0.38
+          "y": 0.28
+        }
+      },
+      {
+        "id": "ch1-natalie",
+        "role": "chapter",
+        "kind": "photo",
+        "source": "assets/story/originals/ch1-natalie.jpg",
+        "sketch": "assets/story/sketches/ch1-natalie-sketch.svg",
+        "alt": "Natalie in a navy blazer and white shirt, arms crossed, wearing a gold necklace.",
+        "caption": null,
+        "photographer": "Robert & Natalie",
+        "rightsConfirmed": true,
+        "subjectsApproved": true,
+        "publicationApproved": true,
+        "visibility": "public",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.22
         }
       },
       {
@@ -651,7 +669,7 @@
       "owner": "Robert",
       "source": "Owner document (story.chapters.json); Rob chat request via Babbage, 5 October 2026; owner approval to ship scroll-sketch → colour reveal on chapters 2–6; Rob attached Natalie’s Harvard Law graduation portrait for chapter 1 (5 October 2026 via Babbage); Rob follow-up via Babbage, 5 October 2026 ~2:37 PM ET, to give chapter 1 the same scroll-sketch → colour reveal",
       "reviewed": "2026-10-05",
-      "note": "Rob asked to add Our Story (5 October 2026 via Babbage). Chapter copy from the owner document is approved as-is for chapters 1–6 and 10. Chapter 10 is a real chapter (approved closing copy); the RN monogram is only a photo stand-in, not Coming-soon placeholder copy. Chapters 7–9 stay in this file as unpublished drafts (published: false, Coming soon…). Guests see 1–6 and 10, then a To be continued beat. Photos for chapters 1–6 are approved for public site use. Chapter 1 is Natalie’s Harvard Law graduation portrait with the same OpenCV/Potrace scroll-sketch → full-colour reveal as chapters 2–6 (Rob follow-up via Babbage, 5 October 2026 ~2:37 PM ET). Sketches are separate line-art overlays traced from the published photo derivatives; the photographs themselves are unchanged (no AI, no cream/greyscale/sepia on the photos)."
+      "note": "Rob asked to add Our Story (5 October 2026 via Babbage). Chapter copy from the owner document is approved as-is for chapters 1–6 and 10. Chapter 10 is a real chapter (approved closing copy); the RN monogram is only a photo stand-in, not Coming-soon placeholder copy. Chapters 7–9 stay in this file as unpublished drafts (published: false, Coming soon…). Guests see 1–6 and 10, then a To be continued beat. Photos for chapters 1–6 are approved for public site use. Chapter 1 shows two portraits Rob supplied (14 October 2026): Robert on the left of the timeline and Natalie on the right, each with the same OpenCV/Potrace scroll-sketch → full-colour reveal as chapters 2–6. The earlier Harvard Law graduation portrait file stays in the repository and is no longer referenced. Sketches are separate line-art overlays traced from the published photo derivatives; the photographs themselves are unchanged (no AI, no cream/greyscale/sepia on the photos)."
     }
   },
   "faqs": [
