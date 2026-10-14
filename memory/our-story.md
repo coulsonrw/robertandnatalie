@@ -1,7 +1,7 @@
 ---
 title: Our Story
 updated: 2026-10-14
-verified_against: bbfaca928e1b2357507c3d2231deb07c0a8cad6d
+verified_against: ef840946df09e33288e8f4649ba28c132de00493
 related:
   - content/site.config.json
   - src/js/story.js
@@ -9,6 +9,8 @@ related:
   - scripts/templates/storyTimeline.mjs
   - scripts/build.mjs
   - assets/story/sketches/README.md
+  - assets/story/sketches/ch1-robert-sketch.svg
+  - assets/story/sketches/ch1-natalie-sketch.svg
   - assets/story/sketches/ch2-sketch.svg
   - docs/OUR_STORY_INTAKE.md
 ---
@@ -21,7 +23,7 @@ Published, in stored order, shown as Chapters I–VII:
 
 | Stored id | Title | Picture |
 |---|---|---|
-| ch1 | Two Worlds | Two portraits, Robert left of the rail and Natalie right (`imageIds`: `ch1-robert`, `ch1-natalie`). On a phone they sit side by side; below 340px Robert stacks above Natalie. |
+| ch1 | Two Worlds | Two portraits, Robert left of the rail and Natalie right (`imageIds`: `ch1-robert`, `ch1-natalie`), each with a real line-sketch overlay. On a phone they sit side by side; below 340px Robert stacks above Natalie. |
 | ch2 | With love, from Cairo | `ch2-cairo` |
 | ch3 | Cape Town | `ch3-boat` |
 | ch4 | An African Safari like no other… She said YES! | `ch4-engagement` |
@@ -53,7 +55,7 @@ Pull request #25. The colour photo, and the lines leaving it, must be finished w
 
 ## How a line-sketch file is made
 
-The overlay is an edge trace, not a drawing and not a generated photograph. The recipe used to replace the Chapter 1 portraits (pull request #27) is the one to repeat. Chapters 2–6 were traced the same way earlier and committed as SVG; the generator script is not in the repository. Their path counts follow the same five-way split, largest lines in `l1` and the smallest half in `l5`.
+The overlay is an edge trace, not a drawing and not a generated photograph. The recipe used for the Chapter 1 portraits (pull request #27, merged) is the one to repeat. Chapters 2–6 were traced the same way earlier and committed as SVG; the generator script is not in the repository. Their path counts follow the same five-way split, largest lines in `l1` and the smallest half in `l5`. The Chapter 1 files on `main` match it too: Robert has 180 paths (9, 14, 22, 45, 90) and Natalie has 192 (10, 14, 24, 48, 96).
 
 1. **Frame the photo the way the page crops it.** Portrait frames are 3:4. The trace is built at 1200×1600. Cover-crop the source to that aspect, biased to the same anchor as `.sketch.is-portrait .sketch-photo img` (`object-position: center 15%`): if the photo is taller than 3:4, the window starts 15% of the way down the leftover height. Owner originals live in `assets/story/originals/` and are gitignored; the committed derivatives are what the site serves. Trace the picture guests actually see.
 
@@ -69,6 +71,8 @@ Point `story.images[].sketch` at `assets/story/sketches/<name>.svg`. The build c
 
 ## Gotcha: a new photo with a bad sketch only fades
 
-Pull requests #26 and #27. Replacing a photograph does not create a sketch. The Chapter 1 portraits shipped in #26 with overlay files that look valid to the build (five `l1`–`l5` groups, `pathLength="1"`) but do not draw on the picture. On `main` at the commit above, `ch1-robert-sketch.svg` and `ch1-natalie-sketch.svg` use `viewBox="0 0 900 1200"` and a handful of paths whose coordinates sit around 4000–8000, outside that box. Potrace’s 10× y-flipped space was written through without the group transform, so the lines never appear and the guest only sees the colour fade. The scroll code in `story.js` was already fine.
+Replacing a photograph does not create a sketch. Pull request #26 shipped the Chapter 1 portraits with overlay files that looked valid to the build (five `l1`–`l5` groups, `pathLength="1"`) but did not draw on the picture. Those files used `viewBox="0 0 900 1200"` and a handful of paths whose coordinates sat around 4000–8000, outside that box. Potrace’s 10× y-flipped space was written through without the group transform, so the lines never appeared and the guest only saw the colour fade. The scroll code in `story.js` was already fine.
 
-#27 (open at the time of this note) replaces those two files with real edge traces from the steps above. Until that is merged, chapter 1 on `main` still has the off-canvas overlays. Any new photo needs a sketch generated the same way, then checked mid-scroll: lines visible on the face, and full colour once the chapter title meets the nav. A file that merely exists is not enough.
+Pull request #27 is merged. On `main`, `ch1-robert-sketch.svg` and `ch1-natalie-sketch.svg` are real edge traces: `viewBox="0 0 1200 1600"`, five layers, and `transform="translate(0,1600) scale(0.1,-0.1)"` on each group. They sketch in the same way as chapters 2–6.
+
+Any new photo still needs a sketch generated the same way, then checked mid-scroll: lines visible on the face, and full colour once the chapter title meets the nav. A file that merely exists is not enough.

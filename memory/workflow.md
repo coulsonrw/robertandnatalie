@@ -1,7 +1,7 @@
 ---
 title: Workflow
 updated: 2026-10-14
-verified_against: bbfaca928e1b2357507c3d2231deb07c0a8cad6d
+verified_against: ef840946df09e33288e8f4649ba28c132de00493
 related:
   - .github/workflows/ci.yml
   - .github/workflows/deploy.yml
