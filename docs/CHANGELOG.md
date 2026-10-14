@@ -1,5 +1,11 @@
 # Change log
 
+## Repository changes (14 October 2026)
+
+| Change | Instruction or reason | Affected requirements | Approvals reopened |
+|---|---|---|---|
+| Our Story chapter 1 (“Two Worlds”) uses two portraits Rob supplied: Robert on the left of the timeline and Natalie on the right, matching size, tops aligned. On a phone they sit side by side, or Robert first if the row is too narrow. Each keeps the scroll-sketch → colour reveal. The old Harvard Law graduation portrait is no longer referenced; its files stay in the repository. | Rob: replace the chapter 1 photo with the two supplied portraits. | CONTENT-01, DES-01, audit IMP-12/13 | None; `story.approval.note` records the pair |
+
 ## Repository changes (8 October 2026)
 
 | Change | Instruction or reason | Affected requirements | Approvals reopened |

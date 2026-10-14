@@ -296,6 +296,10 @@ function storyLayout(s) { return s?.layout === 'timeline' ? 'timeline' : 'narrat
 // numerals are sequential among published chapters (stored number is the
 // owner-document id). To publish: fill the copy, comingSoon: false,
 // published: true, textApproved: true. See story.chaptersNote / docs/OUR_STORY_INTAKE.md.
+function chapterImageIds(ch) {
+  if (Array.isArray(ch.imageIds) && ch.imageIds.length) return ch.imageIds;
+  return ch.imageId ? [ch.imageId] : [];
+}
 function chapterIsPublished(ch) {
   if (typeof ch.published === 'boolean') return ch.published;
   return !ch.comingSoon;
@@ -353,6 +357,7 @@ function validateStory(c) {
     if (!ch.title) fail(`${t}: title is required`);
     if (!Array.isArray(ch.paragraphs) || !ch.paragraphs.length || ch.paragraphs.some((x) => typeof x !== 'string' || !x.trim())) fail(`${t}: paragraphs must hold at least one non-empty string`);
     if (ch.imageId && !ids.has(ch.imageId)) fail(`${t}: imageId "${ch.imageId}" is not in story.images`);
+    if (ch.imageIds != null && (!Array.isArray(ch.imageIds) || !ch.imageIds.length || ch.imageIds.some((id) => typeof id !== 'string' || !ids.has(id)))) fail(`${t}: imageIds must be a non-empty list of story.images ids`);
     if (ch.published != null && typeof ch.published !== 'boolean') fail(`${t}: published must be true or false when set`);
     if (ch.comingSoon && (ch.paragraphs.length !== 1 || ch.paragraphs[0] !== 'Coming soon…')) fail(`${t}: coming-soon chapters must use the body "Coming soon…" only`);
     if (chapterIsPublished(ch) && ch.comingSoon) fail(`${t}: a published chapter cannot use coming-soon placeholder copy`);
@@ -369,7 +374,7 @@ function validateStory(c) {
     for (const ch of chapters) {
       if (!chapterIsPublished(ch)) continue;
       const t = `story.chapters[${ch.id}]`;
-      if (!ch.imageId) fail(`${t}: imageId is required when the chapter is published`);
+      if (!chapterImageIds(ch).length) fail(`${t}: imageId or imageIds is required when the chapter is published`);
       if (ch.textApproved !== true) fail(`${t}: textApproved must be true before publication`);
     }
   } else {
@@ -411,20 +416,24 @@ function storyView(c) {
   };
   if (layout !== 'timeline') return base;
   const publishedChapters = (s.chapters ?? []).filter(chapterIsPublished);
-  const usedImageIds = new Set(publishedChapters.map((ch) => ch.imageId).filter(Boolean));
+  const usedImageIds = new Set(publishedChapters.flatMap((ch) => chapterImageIds(ch)));
   return {
     ...base,
     images: images.filter((im) => usedImageIds.has(im.id)),
-    chapters: publishedChapters.map((ch, i) => ({
-      id: ch.id,
-      number: i + 1,
-      title: ch.title,
-      when: ch.when ?? null,
-      place: ch.place ?? null,
-      paragraphs: ch.paragraphs,
-      comingSoon: false,
-      image: ch.imageId ? byId[ch.imageId] ?? null : null,
-    })),
+    chapters: publishedChapters.map((ch, i) => {
+      const pics = chapterImageIds(ch).map((id) => byId[id]).filter(Boolean);
+      return {
+        id: ch.id,
+        number: i + 1,
+        title: ch.title,
+        when: ch.when ?? null,
+        place: ch.place ?? null,
+        paragraphs: ch.paragraphs,
+        comingSoon: false,
+        image: pics[0] ?? null,
+        images: pics,
+      };
+    }),
     continued: (s.chapters ?? []).some((ch) => !chapterIsPublished(ch)),
     // No verse text exists in the owner document — only the Ch10 citation label
     // "Colossians 3:14". The verse wording is NIV; the visible citation is the

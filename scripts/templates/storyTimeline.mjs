@@ -54,10 +54,10 @@ export function storyTimeline(view, { headingLevel = 2 } = {}) {
     const n = ch.number ?? i + 1;
     const r = roman(n);
     const when = [ch.when, ch.place].filter(Boolean).map(esc).join(' <span class="dot" aria-hidden="true">·</span> ');
-    const fig = ch.image
-      ? `<figure class="chapter-figure">${chapterPicture(ch.image, { eager: i === 0 })}${ch.image.caption ? `<figcaption>${esc(ch.image.caption)}</figcaption>` : ''}</figure>`
-      : '';
-    const cls = ['chapter', ch.image?.kind === 'photo' ? 'has-photo' : 'has-mark', ch.image?.sketch ? 'has-sketch' : ''].filter(Boolean).join(' ');
+    const pics = ch.images?.length ? ch.images : (ch.image ? [ch.image] : []);
+    const figures = pics.map((im) => `<figure class="chapter-figure">${chapterPicture(im, { eager: i === 0 })}${im.caption ? `<figcaption>${esc(im.caption)}</figcaption>` : ''}</figure>`);
+    const fig = pics.length > 1 ? `<div class="chapter-portraits">${figures.join('')}</div>` : (figures[0] ?? '');
+    const cls = ['chapter', pics.some((im) => im.kind === 'photo') ? 'has-photo' : 'has-mark', pics.some((im) => im.sketch) ? 'has-sketch' : '', pics.length > 1 ? 'is-pair' : ''].filter(Boolean).join(' ');
     return `<li class="${cls}" id="story-${esc(ch.id)}" aria-labelledby="story-${esc(ch.id)}-title">
   <span class="chapter-marker" aria-hidden="true">${esc(r)}</span>
   <div class="chapter-head chapter-text">

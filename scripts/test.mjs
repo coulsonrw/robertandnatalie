@@ -220,7 +220,9 @@ test('QA-07/08 timeline: published chapters 1–6 and 10, sequential labels, no 
   assert.doesNotMatch(index, /\(NIV\)/);
   assert.match(index, /class="chapter is-continued-mark"/);
   assert.match(index, /is-real-photo/);
-  assert.match(index, /\/img\/story\/ch1-harvard-law-/);
+  assert.match(index, /\/img\/story\/ch1-robert-/);
+  assert.match(index, /\/img\/story\/ch1-natalie-/);
+  assert.doesNotMatch(index, /ch1-harvard-law/);
   assert.match(index, /\/img\/story\/ch2-cairo-/);
   assert.match(index, /\/img\/story\/ch3-boat-/);
   assert.match(index, /\/img\/story\/ch4-engagement-/);
@@ -230,7 +232,12 @@ test('QA-07/08 timeline: published chapters 1–6 and 10, sequential labels, no 
   assert.doesNotMatch(index, /\/img\/story\/placeholder-monogram-/);
   assert.ok(!b.exists('img/story/placeholder-monogram-800.webp'), 'unpublished placeholder art is not deployed');
   assert.match(index, /data-draw="scrub"/);
-  for (const n of [1, 2, 3, 4, 5, 6]) {
+  assert.match(index, /class="chapter has-photo has-sketch is-pair" id="story-ch1"/);
+  assert.match(index, /data-sketch="\/img\/story\/ch1-robert-sketch\.svg"/);
+  assert.match(index, /data-sketch="\/img\/story\/ch1-natalie-sketch\.svg"/);
+  assert.ok(b.exists('img/story/ch1-robert-sketch.svg'), 'robert sketch copied');
+  assert.ok(b.exists('img/story/ch1-natalie-sketch.svg'), 'natalie sketch copied');
+  for (const n of [2, 3, 4, 5, 6]) {
     assert.match(index, new RegExp(`class="chapter has-photo has-sketch" id="story-ch${n}"`));
     assert.match(index, new RegExp(`data-sketch="/img/story/ch${n}-sketch\\.svg"`));
     assert.ok(b.exists(`img/story/ch${n}-sketch.svg`), `ch${n} sketch copied`);
@@ -243,15 +250,21 @@ test('QA-07/08 timeline: published chapters 1–6 and 10, sequential labels, no 
     const next = rest.indexOf('\n<li class="chapter');
     return index.slice(start, next === -1 ? undefined : start + needle.length + next);
   }
-  assert.match(chapterHtml('ch1'), /ch1-harvard-law-/);
+  const ch1 = chapterHtml('ch1');
+  assert.match(ch1, /class="chapter-portraits"/);
+  assert.ok(ch1.indexOf('ch1-robert-') !== -1 && ch1.indexOf('ch1-robert-') < ch1.indexOf('ch1-natalie-'), 'Robert is before Natalie');
+  assert.match(ch1, /Robert in a navy suit, white shirt and navy tie/);
+  assert.match(ch1, /Natalie in a navy blazer and white shirt/);
+  assert.doesNotMatch(ch1, /ch1-harvard-law|graduation gown/);
   assert.match(chapterHtml('ch10'), /monogram-rn-/);
   assert.match(chapterHtml('ch10'), /Chapter VII/);
   assert.doesNotMatch(chapterHtml('ch10'), /Colossians 3:14/);
   assert.match(chapterHtml('ch10'), /Their Love Story Continues/);
   assert.doesNotMatch(chapterHtml('ch10'), /put on love/);
   assert.match(index, /id="story-continued"[\s\S]*Colossians 3:14/);
-  assert.doesNotMatch(chapterHtml('ch10'), /ch1-harvard-law-/);
-  assert.match(chapterHtml('ch1'), /data-sketch="\/img\/story\/ch1-sketch\.svg"/);
+  assert.doesNotMatch(chapterHtml('ch10'), /ch1-harvard-law-|ch1-robert-|ch1-natalie-/);
+  assert.match(ch1, /data-sketch="\/img\/story\/ch1-robert-sketch\.svg"/);
+  assert.match(ch1, /data-sketch="\/img\/story\/ch1-natalie-sketch\.svg"/);
   assert.doesNotMatch(chapterHtml('ch10'), /data-sketch|class="sketch"|has-sketch/);
   assert.doesNotMatch(index, /sepia\(/);
   assert.doesNotMatch(css, /sepia\(|grayscale\(/);
@@ -261,7 +274,9 @@ test('QA-07/08 timeline: published chapters 1–6 and 10, sequential labels, no 
   assert.doesNotMatch(index, /style="object-position/);
   assert.match(index, /styles\/story\.css/);
   assert.match(index, /js\/story\.js/);
-  assert.ok(b.exists('img/story/ch1-harvard-law-800.webp'));
+  assert.ok(b.exists('img/story/ch1-robert-800.webp'));
+  assert.ok(b.exists('img/story/ch1-natalie-800.webp'));
+  assert.ok(!b.exists('img/story/ch1-harvard-law-800.webp'), 'the old chapter 1 portrait is not deployed');
   assert.ok(b.exists('img/story/ch2-cairo-800.webp'));
   assert.ok(!b.exists('story-preview.html'));
   fs.rmSync(b.tmp, { recursive: true, force: true });
