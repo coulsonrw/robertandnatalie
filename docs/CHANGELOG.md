@@ -4,6 +4,7 @@
 
 | Change | Instruction or reason | Affected requirements | Approvals reopened |
 |---|---|---|---|
+| Chapter 1 portraits now sketch in, then fill with colour, the same way chapters 2–6 do. The first pair of overlays were a few paths drawn outside the picture, so only the colour fade showed. They are replaced with OpenCV edge traces run through Potrace and split into the same five line layers. The scroll timing from the nav-bar change is unchanged. | Rob: the new portraits just fade in; they should sketch in like the other chapters. | CONTENT-01, DES-01 | None |
 | Our Story chapter 1 (“Two Worlds”) uses two portraits Rob supplied: Robert on the left of the timeline and Natalie on the right, matching size, tops aligned. On a phone they sit side by side, or Robert first if the row is too narrow. Each keeps the scroll-sketch → colour reveal. The old Harvard Law graduation portrait is no longer referenced; its files stay in the repository. | Rob: replace the chapter 1 photo with the two supplied portraits. | CONTENT-01, DES-01, audit IMP-12/13 | None; `story.approval.note` records the pair |
 
 ## Repository changes (8 October 2026)
