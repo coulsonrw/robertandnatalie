@@ -10,6 +10,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "check": "node scripts/build.mjs --check",
+    "check:memory": "node scripts/check-memory.mjs",
     "register": "node scripts/build.mjs --register",
     "serve": "node scripts/serve.mjs",
     "proofs": "node scripts/proofs.mjs",
