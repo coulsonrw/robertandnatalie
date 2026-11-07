@@ -27,6 +27,8 @@ test('event times resolve in the event time zone', () => {
   assert.equal(clockLabel(p), '2:00 p.m.');
   assert.deepEqual(formalDateLines(p), ['On Saturday, The Nineteenth of December', 'Two Thousand Twenty-Six']);
   assert.equal(formalTimeLine('Ceremony', p, 'Afternoon'), 'Ceremony at Two O’Clock in the Afternoon');
+  assert.equal(formalTimeLine('Ceremony', zonedParts('2026-12-19T12:00:00-06:00', 'America/Chicago'), 'Afternoon'), 'Ceremony at Twelve Noon');
+  assert.equal(formalTimeLine('Reception', zonedParts('2026-12-19T13:00:00-06:00', 'America/Chicago'), 'Afternoon'), 'Reception at One O’Clock in the Afternoon');
   assert.equal(formalTimeLine('Reception', zonedParts('2026-12-19T16:00:00-06:00', 'America/Chicago'), 'Evening'), 'Reception at Four O’Clock in the Evening');
   assert.equal(formalTimeLine('Ceremony', zonedParts('2026-12-19T15:30:00-06:00', 'America/Chicago'), 'Afternoon'), 'Ceremony at Half Past Three in the Afternoon');
 });
@@ -96,10 +98,10 @@ function instantOf(tzidLine) {
   return Date.parse(`${local}${guess.offset}`);
 }
 
-test('QA-23 (file level): calendar files parse, start at 20:00Z and 22:00Z on the wedding day, keep stable UIDs and invent no end time', () => {
+test('QA-23 (file level): calendar files parse, start at 18:00Z and 19:00Z on the wedding day, keep stable UIDs and invent no end time', () => {
   const b = buildWith(readConfig(), { preview: false });
   b.run();
-  const expected = { ceremony: '2026-12-19T20:00:00Z', reception: '2026-12-19T22:00:00Z' };
+  const expected = { ceremony: '2026-12-19T18:00:00Z', reception: '2026-12-19T19:00:00Z' };
   const uids = {};
   for (const [id, iso] of Object.entries(expected)) {
     const text = b.read(`calendar/${id}.ics`);
@@ -391,6 +393,8 @@ test('live RSVP: name-picker talks to the API origin and does not hard-code gues
   assert.match(rsvp, /connect-src 'self' https:\/\/api\.robertandnatalie\.wedding/);
   assert.match(rsvp, /"apiBaseUrl":"https:\/\/api\.robertandnatalie\.wedding"/);
   assert.match(rsvp, /"mode":"live"/);
+  assert.match(rsvp, /"shortWhen":"12:00 p\.m\."/);
+  assert.match(rsvp, /"shortWhen":"1:00 p\.m\."/);
   assert.match(js, /Will you stay at The Grand Hotel\?/);
   assert.match(js, /hotelStay/);
   assert.match(js, /\/guests/);
@@ -424,14 +428,19 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   const d = section(html);
   assert.ok(html.indexOf('id="details"') > html.indexOf('class="hero"') && html.indexOf('id="details"') < html.indexOf('id="wedding-day"'), 'between the hero and Wedding Day');
   assert.match(d, /<h2 id="details-title">The Details<\/h2>/);
-  assert.deepEqual([...d.matchAll(/<li>(.*?)<\/li>/g)].map((m) => text(m[1])), ['Saturday, December 19, 2026', '2:00 p.m. · Ceremony', '4:00 p.m. · Reception']);
+  assert.deepEqual([...d.matchAll(/<li>(.*?)<\/li>/g)].map((m) => text(m[1])), ['Saturday, December 19, 2026', '12:00 p.m. · Ceremony', '1:00 p.m. · Reception']);
+  assert.match(html, /Ceremony at Twelve Noon/);
+  assert.match(html, /Reception at One O’Clock in the Afternoon/);
+  assert.match(html, /<time datetime="2026-12-19T12:00:00-06:00">12:00 p\.m\.<\/time>/);
+  assert.match(html, /<time datetime="2026-12-19T13:00:00-06:00">1:00 p\.m\.<\/time>/);
+  assert.doesNotMatch(html, /Two O’Clock|Four O’Clock|(?<!\d)2:00 p\.m\.|(?<!\d)4:00 p\.m\./);
   const cards = [...d.matchAll(/<article class="details-card([^"]*)"[\s\S]*?<\/article>/g)].map((m) => ({ full: /--full/.test(m[1]), title: text(m[0].match(/<h3[^>]*>(.*?)<\/h3>/)[1]), body: [...m[0].matchAll(/<p class="details-card-body">(.*?)<\/p>/g)].map((x) => text(x[1])), tbd: (m[0].match(/<span class="tbd-note">(.*?)<\/span>/) || [])[1] ?? null, badgeHidden: /<span class="tbd-badge" aria-hidden="true">TBD<\/span>/.test(m[0]) }));
   assert.deepEqual(cards.map((c) => c.title), ['Dress Code', 'Between Ceremony & Reception', 'Transport & Parking', 'Children', 'Charity', 'Contact Us']);
   assert.deepEqual(cards.map((c) => c.tbd), [null, 'Plans for the time between TBD.', 'Parking and shuttle details TBD.', 'Children policy TBD.', 'TBD', 'Email and phone TBD.']);
   assert.deepEqual(cards[0].body, ['Formal to Business Casual']);
   assert.ok(cards.filter((c) => c.tbd).every((c) => c.badgeHidden), 'the badge is visual only; the note carries the word TBD');
   assert.deepEqual(cards.map((c) => c.full), [false, false, false, false, false, true], 'Contact Us spans the grid');
-  assert.deepEqual(cards[1].body, ['Ceremony 2:00 p.m. at Saint Francis Chapel, reception 4:00 p.m. at The Grand Hotel — about two hours apart.']);
+  assert.deepEqual(cards[1].body, ['Ceremony 12:00 p.m. at Saint Francis Chapel, reception 1:00 p.m. at The Grand Hotel — about one hour apart.']);
   assert.deepEqual(cards[2].body, [
     'Saint Francis Chapel: 17280 Scenic Highway 98, Fairhope, Alabama 36532. The Grand Hotel: One Grand Boulevard, Point Clear, Alabama 36564.',
     'The Grand Hotel — general reservations (251) 928-9201 · Reservations website.',
@@ -504,7 +513,7 @@ test('One place per fact (Rob, Q12): addresses, the hotel number and the contact
     }
     // Wedding Day keeps its own content: times, directions, calendar files and venue links.
     const wd = section(b.read('index.html'), 'wedding-day');
-    for (const keep of ['Directions', 'Add to calendar', 'Open in Apple Maps', 'Venue website', '2:00 p.m.', '4:00 p.m.']) assert.ok(wd.includes(keep), `Wedding Day keeps ${keep}`);
+    for (const keep of ['Directions', 'Add to calendar', 'Open in Apple Maps', 'Venue website', '12:00 p.m.', '1:00 p.m.']) assert.ok(wd.includes(keep), `Wedding Day keeps ${keep}`);
     fs.rmSync(b.tmp, { recursive: true, force: true });
   }
 });
@@ -522,7 +531,7 @@ test('Times read "2:00 p.m." everywhere (Rob, Q13): no AM/PM variants in any ren
   }
   const index = b.read('index.html');
   assert.match(index, /<time datetime="2026-12-19T10:30:00-06:00">10:30 a\.m\.<\/time> <span aria-hidden="true">·<\/span> Ceremony<\/li>/, 'Details pill');
-  assert.match(index, /Ceremony 10:30 a\.m\. at Saint Francis Chapel, reception 4:00 p\.m\. at The Grand Hotel/, 'Details between card');
+  assert.match(index, /Ceremony 10:30 a\.m\. at Saint Francis Chapel, reception 1:00 p\.m\. at The Grand Hotel/, 'Details between card');
   fs.rmSync(b.tmp, { recursive: true, force: true });
 });
 

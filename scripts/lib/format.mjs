@@ -83,7 +83,9 @@ export function formalDateLines(parts) {
 }
 
 // "Ceremony at Two O’Clock in the Afternoon"
+// 12:00 is "Twelve Noon", not "Twelve O’Clock in the Afternoon", so the invitation names noon.
 export function formalTimeLine(label, parts, dayPart) {
+  if (parts.hour === 12 && parts.minute === 0) return `${label} at Twelve Noon`;
   const h12 = parts.hour % 12 === 0 ? 12 : parts.hour % 12;
   const hourWord = ONES[h12];
   let time;

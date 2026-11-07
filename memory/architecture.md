@@ -1,7 +1,7 @@
 ---
 title: Architecture
-updated: 2026-10-14
-verified_against: ef840946df09e33288e8f4649ba28c132de00493
+updated: 2026-11-07
+verified_against: c2360625236038111c380a6e1f27c580cbf37714
 related:
   - .github/workflows/deploy.yml
   - backend/wrangler.toml
@@ -9,6 +9,9 @@ related:
   - backend/src/mail/provider.js
   - backend/migrations/0001_init.sql
   - content/site.config.json
+  - scripts/lib/format.mjs
+  - src/img/invitation-frame-800.jpg
+  - assets/invitation-approved-charcoal.png
   - src/js/rsvp.js
   - CNAME
 ---
@@ -18,6 +21,10 @@ The public site and the RSVP service are two deploys that share one content file
 ## The site
 
 `content/site.config.json` is the source for guest-facing copy, events, and the RSVP switch. `npm run build` (`scripts/build.mjs`) writes a static `dist/` with no runtime dependencies. GitHub Actions publishes that directory to GitHub Pages on every push to `main` (`.github/workflows/deploy.yml`, `SITE_PREVIEW=0`). The custom domain is `robertandnatalie.wedding` (`CNAME`). The Pages source is the Actions workflow, so a push to `main` is a production deploy.
+
+Ceremony and reception start times come only from `events[].startsAt`, in `America/Chicago`. On 19 December 2026 that offset is `-06:00`. `formalTimeLine` in `scripts/lib/format.mjs` writes the invitation. At 12:00 exactly the line is “Ceremony at Twelve Noon” and does not append `formalDayPart`. Other hours stay “at … O’Clock in the {formalDayPart}”. Clock labels everywhere else stay in the “12:00 p.m.” / “1:00 p.m.” style. `endsAt` stays null, and the calendar files have `DTSTART` and no `DTEND`. The Details phrase “about N hour(s) apart” is the gap between the two start times, not a ceremony duration or a reception end.
+
+Rob set the ceremony to `2026-12-19T12:00:00-06:00` and the reception to `2026-12-19T13:00:00-06:00` (`formalDayPart` Afternoon) on 7 November 2026. Publication of that change waits for his review. The guest-facing frames in `src/img/invitation-frame-*` have the artwork wording removed; the live text is painted over them. `assets/invitation-approved-charcoal.png` still shows the earlier “Two O’Clock” / “Four O’Clock” wording and is not copied into `dist/`.
 
 ## The RSVP service
 
