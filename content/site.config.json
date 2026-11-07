@@ -61,7 +61,7 @@
       "id": "ceremony",
       "label": "Ceremony",
       "name": "Saint Francis Chapel",
-      "startsAt": "2026-12-19T14:00:00-06:00",
+      "startsAt": "2026-12-19T12:00:00-06:00",
       "endsAt": null,
       "formalDayPart": "Afternoon",
       "venue": {
@@ -85,18 +85,18 @@
       "approval": {
         "state": "carried-forward",
         "owner": "Coordinator / venue",
-        "source": "Chapel name and start time: PRD v1.1 \u00a701. Address and website: previous site (repository history, commit e67972f).",
+        "source": "Chapel name: PRD v1.1 \u00a701. Start time: Rob, 7 November 2026 (ceremony at 12 noon). Address and website: previous site (repository history, commit e67972f).",
         "reviewed": "2026-09-21",
-        "note": "Exact chapel address, entrance, arrival, parking and accessibility notes require coordinator confirmation before guest launch (PRD \u00a716). Unconfirmed items are omitted from the page."
+        "note": "Start time set to 12 noon on Rob's instruction of 7 November 2026; publication of that change waits for his review. Exact chapel address, entrance, arrival, parking and accessibility notes require coordinator confirmation before guest launch (PRD \u00a716). Unconfirmed items are omitted from the page. endsAt stays null."
       }
     },
     {
       "id": "reception",
       "label": "Reception",
       "name": "The Grand Hotel",
-      "startsAt": "2026-12-19T16:00:00-06:00",
+      "startsAt": "2026-12-19T13:00:00-06:00",
       "endsAt": null,
-      "formalDayPart": "Evening",
+      "formalDayPart": "Afternoon",
       "venue": {
         "name": "The Grand Hotel",
         "alsoKnownAs": null,
@@ -118,9 +118,9 @@
       "approval": {
         "state": "approved",
         "owner": "Robert / Natalie; coordinator for entrance details",
-        "source": "Venue and start time: PRD v1.1 \u00a701. Resort address: PRD \u00a707 CONTENT-03 [S5].",
+        "source": "Venue: PRD v1.1 \u00a701. Start time: Rob, 7 November 2026 (reception at 1:00 p.m.). Resort address: PRD \u00a707 CONTENT-03 [S5].",
         "reviewed": "2026-09-21",
-        "note": "Resort address is verified; reception room, guest entrance and parking are unconfirmed and omitted."
+        "note": "Start time set to 1:00 p.m. on Rob's instruction of 7 November 2026; publication of that change waits for his review. formalDayPart is Afternoon so the invitation does not say Evening. Resort address is verified; reception room, guest entrance and parking are unconfirmed and omitted. endsAt stays null."
       }
     }
   ],

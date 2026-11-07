@@ -62,11 +62,12 @@ describe('events from site.config.json (DATA-01)', () => {
     const config = JSON.parse(env.TEST_SITE_CONFIG);
     const events = normaliseEvents(config);
     expect(events.map((e) => e.id)).toEqual(['ceremony', 'reception']);
-    expect(events[0]).toMatchObject({ startsAtUtc: '2026-12-19T20:00:00.000Z', startsAtLocal: '2026-12-19T14:00:00-06:00', timezone: 'America/Chicago', endsAtUtc: null, name: 'Saint Francis Chapel' });
-    expect(events[1]).toMatchObject({ startsAtUtc: '2026-12-19T22:00:00.000Z', name: 'The Grand Hotel' });
+    expect(events[0]).toMatchObject({ startsAtUtc: '2026-12-19T18:00:00.000Z', startsAtLocal: '2026-12-19T12:00:00-06:00', timezone: 'America/Chicago', endsAtUtc: null, name: 'Saint Francis Chapel' });
+    expect(events[1]).toMatchObject({ startsAtUtc: '2026-12-19T19:00:00.000Z', startsAtLocal: '2026-12-19T13:00:00-06:00', timezone: 'America/Chicago', endsAtUtc: null, name: 'The Grand Hotel' });
     const sql = eventsToSql(config, '2026-09-21T00:00:00.000Z');
     expect(sql).toContain("INSERT INTO event");
-    expect(sql).toContain("'2026-12-19T14:00:00-06:00'");
+    expect(sql).toContain("'2026-12-19T12:00:00-06:00'");
+    expect(sql).toContain("'2026-12-19T13:00:00-06:00'");
     expect(sql).not.toContain('?');
   });
 });
