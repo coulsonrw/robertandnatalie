@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { zonedParts, clockLabel, longDate, formalDateLines, formalTimeLine, timeZoneLabel, numberWords } from './lib/format.mjs';
+import { zonedParts, clockLabel, longDate, formalDateLines, formalTimeLine, timeZoneLabel } from './lib/format.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { mapsLinks } from './lib/html.mjs';
 import { renderIndex, renderCelebration, renderStoryPreview } from './templates/index.mjs';
@@ -186,13 +186,15 @@ function validate(c) {
 }
 
 // The Details (direction A card layout in the site palette; Rob, 4 Oct 2026). The section adds no facts of its
-// own: owner-supplied answers live in details.dressCode / children / charity, everything else is derived from
-// existing keys, and anything still unknown renders as a TBD row whose wording comes from this block.
+// own: the dress code is the owner-supplied answer, everything else is derived from existing keys, and anything
+// still unknown renders as a TBD row whose wording comes from this block. Rob, 8 Nov 2026: the Children card,
+// the Charity card, and the Between Ceremony & Reception card are not shown. Ceremony and reception start times
+// stay on the glance pills, the hero, the invitation, and the Wedding Day cards.
 // It is also the one place on the page for venue addresses, the hotel's general reservations (phone and
 // reservations website) and the guest contact route (Rob, Q12; room-block card removed 5 Oct 2026): Wedding Day,
 // Travel & Stay and Questions point here instead of repeating them.
-const DETAILS_OWNER_KEYS = ['dressCode', 'children', 'charity'];
-const DETAILS_TBD_KEYS = ['between', 'transport', 'contact'];
+const DETAILS_OWNER_KEYS = ['dressCode'];
+const DETAILS_TBD_KEYS = ['transport', 'contact'];
 function validateDetails(c) {
   const d = c.details;
   if (!d) return;
@@ -226,17 +228,8 @@ function detailsView(c, events, contact) {
     ...events.map((ev) => ({ time: clockLabel(ev.parts), datetime: ev.startsAt, label: ev.label })),
   ];
 
-  // Between: the two start times, venues and the gap, all from events[]; plans for the gap from travel.betweenVenues.
-  const between = { body: [], tbd: null };
-  if (events.length === 2) {
-    const [a, b] = events;
-    const mins = Math.round((new Date(b.startsAt) - new Date(a.startsAt)) / 60000);
-    const hours = mins / 60;
-    const gap = mins > 0 && Number.isInteger(hours) && hours <= 12 ? ` — about ${numberWords(hours).toLowerCase()} hour${hours === 1 ? '' : 's'} apart` : '';
-    between.body.push([`${a.label} ${clockLabel(a.parts)} at ${a.name}, ${b.label.toLowerCase()} ${clockLabel(b.parts)} at ${b.name}${gap}.`]);
-  }
+  // Inter-venue transport text, when approved, still feeds the Travel section. It does not open a Details card.
   const plans = supplied(c.travel.betweenVenues);
-  if (plans) between.body.push([plans]); else between.tbd = d.tbdNotes.between;
 
   // Transport & Parking: addresses as written in events[].venue; parking only where a venue has confirmed it;
   // hotel general reservations (phone + reservations website) folded here (Rob, 5 Oct 2026: no wedding room block).
@@ -270,10 +263,7 @@ function detailsView(c, events, contact) {
   const card = (id, title, icon, v, full = false) => ({ id, title, icon, body: v.body && v.body.length ? v.body : null, tbd: v.tbd, full });
   const cards = [
     card('dress-code', 'Dress Code', 'd-shirt', owner('dressCode')),
-    card('between', 'Between Ceremony & Reception', 'd-clock', between),
     card('transport', 'Transport & Parking', 'd-car', transport),
-    card('children', 'Children', 'd-baby', owner('children')),
-    card('charity', 'Charity', 'd-gift', owner('charity')),
     card('contact', 'Contact Us', 'd-mail', contactCard, true),
   ];
   return { heading: d.heading, glance, cards, tbdCount: cards.filter((x) => x.tbd).length };
