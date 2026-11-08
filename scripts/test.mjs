@@ -435,20 +435,20 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   assert.match(html, /<time datetime="2026-12-19T13:00:00-06:00">1:00 p\.m\.<\/time>/);
   assert.doesNotMatch(html, /Two O’Clock|Four O’Clock|(?<!\d)2:00 p\.m\.|(?<!\d)4:00 p\.m\./);
   const cards = [...d.matchAll(/<article class="details-card([^"]*)"[\s\S]*?<\/article>/g)].map((m) => ({ full: /--full/.test(m[1]), title: text(m[0].match(/<h3[^>]*>(.*?)<\/h3>/)[1]), body: [...m[0].matchAll(/<p class="details-card-body">(.*?)<\/p>/g)].map((x) => text(x[1])), tbd: (m[0].match(/<span class="tbd-note">(.*?)<\/span>/) || [])[1] ?? null, badgeHidden: /<span class="tbd-badge" aria-hidden="true">TBD<\/span>/.test(m[0]) }));
-  assert.deepEqual(cards.map((c) => c.title), ['Dress Code', 'Between Ceremony & Reception', 'Transport & Parking', 'Children', 'Charity', 'Contact Us']);
-  assert.deepEqual(cards.map((c) => c.tbd), [null, 'Plans for the time between TBD.', 'Parking and shuttle details TBD.', 'Children policy TBD.', 'TBD', 'Email and phone TBD.']);
+  assert.deepEqual(cards.map((c) => c.title), ['Dress Code', 'Transport & Parking', 'Contact Us']);
+  assert.deepEqual(cards.map((c) => c.tbd), [null, 'Parking and shuttle details TBD.', 'Email and phone TBD.']);
   assert.deepEqual(cards[0].body, ['Formal to Business Casual']);
   assert.ok(cards.filter((c) => c.tbd).every((c) => c.badgeHidden), 'the badge is visual only; the note carries the word TBD');
-  assert.deepEqual(cards.map((c) => c.full), [false, false, false, false, false, true], 'Contact Us spans the grid');
-  assert.deepEqual(cards[1].body, ['Ceremony 12:00 p.m. at Saint Francis Chapel, reception 1:00 p.m. at The Grand Hotel — about one hour apart.']);
-  assert.deepEqual(cards[2].body, [
+  assert.deepEqual(cards.map((c) => c.full), [false, false, true], 'Contact Us spans the grid');
+  assert.deepEqual(cards[1].body, [
     'Saint Francis Chapel: 17280 Scenic Highway 98, Fairhope, Alabama 36532. The Grand Hotel: One Grand Boulevard, Point Clear, Alabama 36564.',
     'The Grand Hotel — general reservations (251) 928-9201 · Reservations website.',
   ]);
   assert.match(d, /<a href="tel:\+12519289201">\(251\) 928-9201<\/a>/);
   assert.match(d, /<a href="https:\/\/www\.marriott\.com\/en-us\/hotels\/ptlak-the-grand-hotel-golf-resort-and-spa-autograph-collection\/overview\/" rel="noopener">Reservations website<\/a>/);
   assert.doesNotMatch(d, /Room Block|Room block rate/, 'no Room Block card or TBD');
-  for (const i of [3, 4, 5]) assert.deepEqual(cards[i].body, [], `${cards[i].title} has no body until the owners supply it`);
+  assert.deepEqual(cards[2].body, [], 'Contact Us has no body until the owners supply it');
+  assert.doesNotMatch(d, /id="details-between"|id="details-children"|id="details-charity"|Between Ceremony|Children policy|Charity|Plans for the time between/);
   assert.doesNotMatch(d, /Registry|celebrate with you|Everything you need/i, 'no registry and no copy in the couple\'s voice');
   const questions = html.slice(html.indexOf('<section id="questions"'), html.indexOf('</section>', html.indexOf('<section id="questions"')));
   assert.match(questions, /<details class="faq" id="faq-attire">\s*<summary>What should I wear\?<\/summary>\s*<div class="faq-body"><p>Formal to Business Casual<\/p><\/div>\s*<\/details>/);
@@ -470,7 +470,11 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   const d2 = section(s.read('index.html'));
   assert.match(d2, /<p class="details-card-body">Example dress code\.<\/p>/);
   assert.match(d2, /<a href="mailto:hello@example\.invalid">hello@example\.invalid<\/a>/);
-  assert.match(d2, /<p class="details-card-body">Example plans\.<\/p>/);
+  assert.doesNotMatch(d2, /Example plans|Between Ceremony|Children policy|Charity/);
+  const travel = s.read('index.html');
+  const travelSection = travel.slice(travel.indexOf('<section id="travel-stay"'), travel.indexOf('</section>', travel.indexOf('<section id="travel-stay"')));
+  assert.match(travelSection, /Between the venues/);
+  assert.match(travelSection, /Example plans\./);
   for (const gone of ['Dress code TBD.', 'Email and phone TBD.', 'Plans for the time between TBD.']) assert.ok(!d2.includes(gone), `${gone} removed`);
   assert.ok(d2.includes('Parking and shuttle details TBD.'), 'parking stays TBD until a venue confirms it');
   fs.rmSync(s.tmp, { recursive: true, force: true });
@@ -531,7 +535,8 @@ test('Times read "2:00 p.m." everywhere (Rob, Q13): no AM/PM variants in any ren
   }
   const index = b.read('index.html');
   assert.match(index, /<time datetime="2026-12-19T10:30:00-06:00">10:30 a\.m\.<\/time> <span aria-hidden="true">·<\/span> Ceremony<\/li>/, 'Details pill');
-  assert.match(index, /Ceremony 10:30 a\.m\. at Saint Francis Chapel, reception 1:00 p\.m\. at The Grand Hotel/, 'Details between card');
+  assert.match(index, /<time datetime="2026-12-19T13:00:00-06:00">1:00 p\.m\.<\/time> <span aria-hidden="true">·<\/span> Reception<\/li>/, 'Details reception pill');
+  assert.doesNotMatch(index, /Between Ceremony|Children policy|id="details-charity"/);
   fs.rmSync(b.tmp, { recursive: true, force: true });
 });
 

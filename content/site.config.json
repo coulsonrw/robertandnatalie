@@ -149,30 +149,7 @@
         "note": "Published as Formal to Business Casual. The Details card no longer shows a TBD row; the attire FAQ is published with the same wording."
       }
     },
-    "children": {
-      "text": null,
-      "tbdNote": "Children policy TBD.",
-      "approval": {
-        "state": "pending",
-        "owner": "Robert / Natalie",
-        "source": null,
-        "reviewed": "2026-10-04",
-        "note": "Children and plus-one policy still to be confirmed. Until then the Details card shows a TBD row."
-      }
-    },
-    "charity": {
-      "text": null,
-      "tbdNote": "TBD",
-      "approval": {
-        "state": "pending",
-        "owner": "Robert / Natalie",
-        "source": null,
-        "reviewed": "2026-10-04",
-        "note": "PRD v1.2 plans a charity note in lieu of gifts; charity and wording TBD. Replaces any Registry card. Until then the Details card shows a TBD row."
-      }
-    },
     "tbdNotes": {
-      "between": "Plans for the time between TBD.",
       "transport": "Parking and shuttle details TBD.",
       "contact": "Email and phone TBD."
     },
@@ -181,7 +158,7 @@
       "owner": "Robert / Natalie",
       "source": "Layout: direction A card layout in the site palette, decided by Rob on 4 October 2026 (3:12 PM ET); title band switched to the footer's dark --ink with --gold-footer content (3:22 PM ET). Figma h9O9RkNe6T5hdTB1oviAXl nodes 67:584 / 67:706. Facts are derived from events, travel.hotel, travel.betweenVenues and contact. Room Block card removed 5 October 2026 (Rob via Babbage: no wedding room blocks).",
       "reviewed": "2026-10-05",
-      "note": "Heading, card titles and TBD notes follow the build spec; no copy in the couple's voice. Each TBD row disappears once its source key (details.dressCode/children/charity.text, travel.betweenVenues.text, events[].venue.parking, contact.email/phone) is supplied and approved. Hotel general reservations (phone and reservations website) live in the Transport & Parking card (Rob, 5 October 2026: no wedding room block). Set enabled to false to omit the section."
+      "note": "Heading, card titles and TBD notes follow the build spec; no copy in the couple's voice. Each TBD row disappears once its source key (details.dressCode.text, events[].venue.parking, contact.email/phone) is supplied and approved. Hotel general reservations (phone and reservations website) live in the Transport & Parking card (Rob, 5 October 2026: no wedding room block). Rob, 8 November 2026: the Children card, the Charity card, and the Between Ceremony & Reception card are not shown. Ceremony and reception start times stay on the glance pills and the Wedding Day cards. Set enabled to false to omit the section."
     }
   },
   "banner": {
