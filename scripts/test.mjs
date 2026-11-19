@@ -328,8 +328,8 @@ test('QA-07/08 timeline: a missing sketch overlay file fails the build', () => {
 
 test('IMP-02/07: the opening date and the deadline appear only when set, and then everywhere at once', () => {
   const live = buildWith(readConfig(), { preview: false }); live.run();
-  assert.match(live.read('rsvp.html'), /"cutoffAt":"2026-11-15T23:59:59-06:00"/);
-  assert.match(live.read('index.html'), /Please respond by Sunday, November 15, 2026 at 11:59 p\.m\. Central Time \(CST\)\./);
+  assert.match(live.read('rsvp.html'), /"cutoffAt":"2026-11-29T23:59:59-06:00"/);
+  assert.match(live.read('index.html'), /Please respond by Sunday, November 29, 2026 at 11:59 p\.m\. Central Time \(CST\)\./);
   assert.doesNotMatch(live.read('index.html'), /Responses are not open yet/);
   fs.rmSync(live.tmp, { recursive: true, force: true });
 
