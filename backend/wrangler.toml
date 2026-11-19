@@ -52,10 +52,10 @@ WEDDING_DATE = "2026-12-19"
 EVENT_TIMEZONE = "America/Chicago"
 WEDDING_DESTINATION = "Point Clear, Alabama"
 
-# RSVP cutoff (RSVP-04). ISO 8601 with the event-local offset. Proposed 15 Nov 2026 end of day
+# RSVP cutoff (RSVP-04). ISO 8601 with the event-local offset. 29 Nov 2026 end of day
 # America/Chicago (CST is UTC−6). Keep content/site.config.json rsvp.cutoffAt identical (DATA-01).
 # Overridable without a redeploy through /admin/content/rsvp-settings once Access exists.
-RSVP_CUTOFF_AT = "2026-11-15T23:59:59-06:00"
+RSVP_CUTOFF_AT = "2026-11-29T23:59:59-06:00"
 # Extra guests a party may add on the RSVP form (beyond named roster guests).
 EXTRA_GUEST_CAP = "2"
 

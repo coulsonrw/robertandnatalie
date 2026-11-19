@@ -751,7 +751,7 @@
   "rsvp": {
     "mode": "live",
     "apiBaseUrl": "https://api.robertandnatalie.wedding",
-    "cutoffAt": "2026-11-15T23:59:59-06:00",
+    "cutoffAt": "2026-11-29T23:59:59-06:00",
     "opensAt": null,
     "allowPreview": true,
     "comingSoonText": "Responses are not being accepted yet. When they open, choose your invitation on this page to respond for your household, and this page will show the response deadline.",
@@ -911,7 +911,7 @@
       "owner": "Robert / Natalie / technical lead",
       "source": "PRD \u00a708\u2013\u00a711",
       "reviewed": "2026-10-08",
-      "note": "Name-picker RSVP is wired to https://api.robertandnatalie.wedding with cutoff 2026-11-15T23:59:59-06:00 (America/Chicago). Guests choose their party from GET /guests (one label per household) and respond for that party. Rob settled a 14-party roster imported through /ops/roster/sync when OPS_BOOTSTRAP_TOKEN is set. Mail is live on Cloudflare (MAIL_PROVIDER=cloudflare). Access is still unset. Approval stays pending until Rob confirms the imported roster. Synthetic preview fixtures (PRD \u00a714) are unchanged."
+      "note": "Name-picker RSVP is wired to https://api.robertandnatalie.wedding with cutoff 2026-11-29T23:59:59-06:00 (reopened 18 Nov 2026; was 15 Nov) (America/Chicago). Guests choose their party from GET /guests (one label per household) and respond for that party. Rob settled a 14-party roster imported through /ops/roster/sync when OPS_BOOTSTRAP_TOKEN is set. Mail is live on Cloudflare (MAIL_PROVIDER=cloudflare). Access is still unset. Approval stays pending until Rob confirms the imported roster. Synthetic preview fixtures (PRD \u00a714) are unchanged."
     },
     "mealChoices": {
       "eventId": null,

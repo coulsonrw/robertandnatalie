@@ -1,7 +1,7 @@
 ---
 title: Architecture
-updated: 2026-11-08
-verified_against: 016e9dd1a0d08ad6e10ad419f120a7036e5bfc52
+updated: 2026-11-19
+verified_against: ace2afd4ebe49b1819230d15281e611068c49716
 related:
   - .github/workflows/deploy.yml
   - backend/wrangler.toml
@@ -28,7 +28,7 @@ Rob set the ceremony to `2026-12-19T12:00:00-06:00` and the reception to `2026-1
 
 ## The RSVP service
 
-The API is a Cloudflare Worker, `robertandnatalie-rsvp-api`, on `https://api.robertandnatalie.wedding` (`backend/wrangler.toml` route). It stores RSVPs in D1: binding `DB`, database name `rsvp`. The browser talks to it from `src/js/rsvp.js`. In the site config, `rsvp.mode` is `live` and `rsvp.apiBaseUrl` is that same host. The cutoff mirrored in both places is `2026-11-15T23:59:59-06:00` (America/Chicago).
+The API is a Cloudflare Worker, `robertandnatalie-rsvp-api`, on `https://api.robertandnatalie.wedding` (`backend/wrangler.toml` route). It stores RSVPs in D1: binding `DB`, database name `rsvp`. The browser talks to it from `src/js/rsvp.js`. In the site config, `rsvp.mode` is `live` and `rsvp.apiBaseUrl` is that same host. The cutoff mirrored in both places is `2026-11-29T23:59:59-06:00` (America/Chicago). Rob reopened RSVP on 18 November 2026; the previous cutoff was `2026-11-15T23:59:59-06:00`. The live API was already reopened with a D1 override, so this config change does not redeploy the Worker. The next Worker deploy still has to ship the same `RSVP_CUTOFF_AT`, or the override is what guests hit.
 
 A cron trigger (`*/5 * * * *`) sends queued mail and applies retention. Admin routes expect Cloudflare Access; guest RSVP and the roster bootstrap do not.
 
