@@ -1,6 +1,6 @@
 ---
 title: RSVP
-updated: 2026-10-14
+updated: 2026-11-25
 verified_against: ef840946df09e33288e8f4649ba28c132de00493
 related:
   - src/js/rsvp.js
@@ -26,7 +26,7 @@ Rob replaced private per-party links with a name picker (pull request #19). The 
 
 `GET /guests` (`backend/src/directory.js`) returns one row per active household, `{ name, partyId }` only, sorted A to Z by label. It does not return email, phone, address, notes, answers, or each person’s name. The household label is the dropdown text. A `?party=` URL opens that same household. The preview mode (`?preview=1`) uses the synthetic households in `content/site.config.json`; those fixtures are not the roster.
 
-The party form then collects attendance per person and event, editable names, per-guest dietary notes, optional phone, optional mailing address, Grand Hotel stay, a message to the couple, and extra guests. The cap is `rsvp.extraGuestCap` / `EXTRA_GUEST_CAP`, set to 2 (Rob, 7 October 2026). The form hides “Add a guest” at the cap; the Worker rejects another.
+The party form then collects attendance per person and event, editable names, per-guest dietary notes, optional phone, optional mailing address, Grand Hotel stay, a message to the couple, and extra guests. The cap is `rsvp.extraGuestCap` / `EXTRA_GUEST_CAP`, set to 2 (Rob, 7 October 2026). The form hides “Add a guest” at the cap; the Worker rejects another. A guest added on the form has a temporary `new-…` id and goes to the Worker only inside `addedGuests`. Never put that id in `guestNames` or `guestDietary`: the Worker refuses unknown ids with a 400 (“A name was given for someone not on this invitation.”). Until 25 November 2026 the page did exactly that, so no party could save an RSVP with an added guest.
 
 How the roster is imported is in `docs/RSVP_GUEST_LAUNCH.md`. The CSV stays out of git. Do not copy labels or addresses into this folder.
 
