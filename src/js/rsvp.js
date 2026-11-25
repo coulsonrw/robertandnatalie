@@ -859,12 +859,13 @@
     };
     guests().forEach(function (g) {
       var name = guestDisplayName(g);
-      payload.guestNames[g.id] = name;
-      payload.guestDietary[g.id] = (state.guestDietary[g.id] || '').trim();
+      var dietary = (state.guestDietary[g.id] || '').trim();
       if (String(g.id).indexOf('new-') === 0) {
+        // A guest added on this form has no server id yet. Send them only in addedGuests: the
+        // Worker refuses guestNames / guestDietary keys it does not know ("not on this invitation").
         payload.addedGuests.push({
           name: name,
-          dietary: payload.guestDietary[g.id],
+          dietary: dietary,
           responses: entitlementsFor(g.id).map(function (eid) {
             var row = { eventId: eid, status: state.answers[key(g.id, eid)] };
             if (mealCfg && eid === mealCfg.eventId && row.status === 'attending') row.meal = state.meals[g.id] || null;
@@ -873,6 +874,8 @@
         });
         return;
       }
+      payload.guestNames[g.id] = name;
+      payload.guestDietary[g.id] = dietary;
       entitlementsFor(g.id).forEach(function (eid) {
         var row = { guestId: g.id, eventId: eid, status: state.answers[key(g.id, eid)] };
         if (mealCfg && eid === mealCfg.eventId && row.status === 'attending') row.meal = state.meals[g.id] || null;
