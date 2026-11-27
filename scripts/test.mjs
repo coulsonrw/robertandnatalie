@@ -456,6 +456,9 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   assert.match(questions, /<details class="faq" id="faq-attire">\s*<summary>What should I wear\?<\/summary>\s*<div class="faq-body"><p>Formal to Business Casual<\/p><\/div>\s*<\/details>/);
   assert.doesNotMatch(b.read('styles/site.css').split('The Details (direction A')[1].split('*/').slice(1).join('').replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-f]{3,8}\b|Playfair|Inter\b|teal/i, 'the details styles use site tokens only');
   const css = b.read('styles/site.css');
+  assert.match(css, /#details-dress-code, #details-contact \{ float: left; clear: left/, 'Dress Code and Contact Us stack in the left column');
+  assert.match(css, /#details-transport \{ float: right/, 'Transport & Parking sits in the right column and does not size the left-column gap');
+  assert.match(css, /#details-dress-code \{ margin-bottom: 24px/, 'the left-column gap matches the 24px column gap');
   assert.match(css, /\.details-band \{[^}]*background: var\(--ink\);/, 'the title band is the footer\'s dark ink (Rob, 3:22 PM ET)');
   assert.doesNotMatch(css.match(/\.details-band \{[^}]*\}/)[0], /border/, 'no hairline under the dark band');
   for (const sel of ['\\.details-band h2', '\\.details-waves', '\\.details-flourish']) assert.match(css, new RegExp(`${sel} \\{[^}]*var\\(--gold-footer\\)`), `${sel} uses --gold-footer on the dark band`);

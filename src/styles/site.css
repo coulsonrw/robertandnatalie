@@ -559,7 +559,19 @@ body.is-entry .site { display: none; }
 .details-divider > span:not(.diamond) { width: 202px; height: 1px; background: var(--gold-rule); }
 .details-divider .diamond { width: 7px; height: 7px; background: var(--gold); transform: rotate(45deg); margin: 0 1.5px; }
 .details-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; width: 100%; }
-@media (min-width: 760px) { .details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; } }
+/* On a two-row grid the first row is as tall as Transport & Parking, which leaves a hole
+   under Dress Code. Desktop therefore stacks the left column in normal flow and places
+   Transport & Parking in the right column, so the gap under Dress Code stays the same
+   24px as the column gap (Rob, 27 November 2026). Mobile keeps the single-column grid
+   and source order: Dress Code, Transport & Parking, Contact Us. */
+@media (min-width: 760px) {
+  .details-grid { display: block; }
+  .details-grid::after { content: ""; display: table; clear: both; }
+  #details-transport { float: right; width: calc((100% - 24px) / 2); }
+  #details-dress-code, #details-contact { float: left; clear: left; width: calc((100% - 24px) / 2); }
+  #details-dress-code { margin-bottom: 24px; }
+  .details-card--full { float: none; clear: both; width: 100%; margin-bottom: 24px; }
+}
 .details-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 24px; background: var(--paper-light); border: 1px solid var(--gold-rule); border-radius: var(--radius); box-shadow: var(--shadow-card); }
 .details-card--full { grid-column: 1 / -1; }
 .details-card-head { display: flex; align-items: center; gap: 14px; }
