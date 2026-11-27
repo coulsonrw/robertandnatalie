@@ -32,7 +32,7 @@ Approval states: **approved** (owner-approved), **draft** (wording drafted by th
 | `config.faqs[parking]` | pending | Coordinator / venues | — | 2026-09-21 | Parking at both venues unconfirmed. Not published. |
 | `config.faqs[access-needs]` | draft | Robert / Natalie | PRD CONTENT-04, SEC-05 | 2026-09-21 |  |
 | `config.faqs[contact]` | pending | Robert / Natalie | — | 2026-09-21 | Contact route not yet supplied. The contact block is rendered from the contact section once set. |
-| `config.contact` | pending | Robert / Natalie | — | 2026-09-21 | Private contact route required before guest launch (PRD §03 exception path, CONTENT-04). |
+| `config.contact` | approved | Robert / Natalie | Rob, 27 November 2026: publish coulsonrw@gmail.com and (202) 746-6124 on the Contact Us card. | 2026-11-27 | Published. The Contact Us card is the one place for the guest contact route. |
 | `config.rsvp` | pending | Robert / Natalie / technical lead | PRD §08–§11 | 2026-10-08 | Name-picker RSVP is wired to https://api.robertandnatalie.wedding with cutoff 2026-11-29T23:59:59-06:00 (reopened 18 Nov 2026; was 15 Nov) (America/Chicago). Guests choose their party from GET /guests (one label per household) and respond for that party. Rob settled a 14-party roster imported through /ops/roster/sync when OPS_BOOTSTRAP_TOKEN is set. Mail is live on Cloudflare (MAIL_PROVIDER=cloudflare). Access is still unset. Approval stays pending until Rob confirms the imported roster. Synthetic preview fixtures (PRD §14) are unchanged. |
 | `config.privacy` | draft | Robert / Natalie | PRD SEC-04, SEC-06 | 2026-10-05 | RSVP provider named as Cloudflare Workers and D1 in the owners' account (deployed 23 September 2026). Proposed retention remains 90 days after the wedding. Formal wording approval still sits with Robert / Natalie; the notice does not claim legal compliance. |
 
@@ -41,14 +41,13 @@ Approval states: **approved** (owner-approved), **draft** (wording drafted by th
 | Level | Item | Detail |
 |---|---|---|
 | blocker | Guest release (G3) not recorded | site.launchApproved is false. Set it to true only when RELEASE-01 is satisfied and the owners have approved release; `npm run build -- --strict` fails while any blocker remains. |
-| blocker | No private contact route | contact.email / contact.phone are null (PRD CONTENT-04, §03 exception path). |
 | blocker | Saint Francis Chapel: entrance unconfirmed | events[ceremony].venue.entrance is null; omitted from the page (PRD CONTENT-02, §16). Essential for guest launch (PRD §15 risk controls). |
 | blocker | Saint Francis Chapel: venue details not confirmed | events[ceremony].approval.state is "carried-forward"; the coordinator must confirm the address before RSVP goes live (PRD §15 risk controls, §16). |
 | blocker | The Grand Hotel: entrance unconfirmed | events[reception].venue.entrance is null; omitted from the page (PRD CONTENT-02, §16). Essential for guest launch (PRD §15 risk controls). |
 | review | Saint Francis Chapel: parking unconfirmed | events[ceremony].venue.parking is null; omitted from the page (PRD CONTENT-02, §16). |
 | review | The Grand Hotel: parking unconfirmed | events[reception].venue.parking is null; omitted from the page (PRD CONTENT-02, §16). |
 | review | Synthetic RSVP preview is enabled | rsvp.allowPreview is true, so /rsvp.html?preview=1 shows the labeled synthetic household. Set it to false before guest launch (PRD RELEASE-01). |
-| review | The Details: 2 TBD row(s) shown to guests | Transport & Parking, Contact Us. Each TBD row disappears once its source key is supplied and approved (details.*, travel.betweenVenues, events[].venue.parking, contact). |
+| review | The Details: 1 TBD row(s) shown to guests | Transport & Parking. Each TBD row disappears once its source key is supplied and approved (details.*, travel.betweenVenues, events[].venue.parking, contact). |
 | review | config.story: Our Story is published | 9 image(s) with recorded rights, subject and publication approval; confirm captions and copy before guest launch (audit QA-07). |
 | review | Airports awaiting verification | JKA are prefilled but unpublished until the coordinator verifies December 2026 service and approves them (audit IMP-15). |
 | review | config.events[ceremony]: carried-forward | Start time set to 12 noon on Rob's instruction of 7 November 2026; publication of that change waits for his review. Exact chapel address, entrance, arrival, parking and accessibility notes require coordinator confirmation before guest launch (PRD §16). Unconfirmed items are omitted from the page. endsAt stays null. |
@@ -67,7 +66,6 @@ Approval states: **approved** (owner-approved), **draft** (wording drafted by th
 | review | config.faqs[parking]: pending, not published | Parking at both venues unconfirmed. Not published. |
 | review | config.faqs[access-needs]: draft | PRD CONTENT-04, SEC-05 |
 | review | config.faqs[contact]: pending, not published | Contact route not yet supplied. The contact block is rendered from the contact section once set. |
-| review | config.contact: pending, not published | Private contact route required before guest launch (PRD §03 exception path, CONTENT-04). |
 | review | config.rsvp: pending, not published | Name-picker RSVP is wired to https://api.robertandnatalie.wedding with cutoff 2026-11-29T23:59:59-06:00 (reopened 18 Nov 2026; was 15 Nov) (America/Chicago). Guests choose their party from GET /guests (one label per household) and respond for that party. Rob settled a 14-party roster imported through /ops/roster/sync when OPS_BOOTSTRAP_TOKEN is set. Mail is live on Cloudflare (MAIL_PROVIDER=cloudflare). Access is still unset. Approval stays pending until Rob confirms the imported roster. Synthetic preview fixtures (PRD §14) are unchanged. |
 | review | config.privacy: draft | RSVP provider named as Cloudflare Workers and D1 in the owners' account (deployed 23 September 2026). Proposed retention remains 90 days after the wedding. Formal wording approval still sits with Robert / Natalie; the notice does not claim legal compliance. |
 | info | Urgent logistics banner is off | Set banner.active with an approved message to publish wedding-day logistics above every page (ADMIN-04, OPS-02). |

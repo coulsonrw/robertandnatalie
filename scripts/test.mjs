@@ -436,10 +436,10 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   assert.doesNotMatch(html, /Two O’Clock|Four O’Clock|(?<!\d)2:00 p\.m\.|(?<!\d)4:00 p\.m\./);
   const cards = [...d.matchAll(/<article class="details-card([^"]*)"[\s\S]*?<\/article>/g)].map((m) => ({ full: /--full/.test(m[1]), title: text(m[0].match(/<h3[^>]*>(.*?)<\/h3>/)[1]), body: [...m[0].matchAll(/<p class="details-card-body">(.*?)<\/p>/g)].map((x) => text(x[1])), tbd: (m[0].match(/<span class="tbd-note">(.*?)<\/span>/) || [])[1] ?? null, badgeHidden: /<span class="tbd-badge" aria-hidden="true">TBD<\/span>/.test(m[0]) }));
   assert.deepEqual(cards.map((c) => c.title), ['Dress Code', 'Transport & Parking', 'Contact Us']);
-  assert.deepEqual(cards.map((c) => c.tbd), [null, 'Parking and shuttle details TBD.', 'Email and phone TBD.']);
+  assert.deepEqual(cards.map((c) => c.tbd), [null, 'Parking and shuttle details TBD.', null]);
   assert.deepEqual(cards[0].body, ['Formal to Business Casual']);
   assert.ok(cards.filter((c) => c.tbd).every((c) => c.badgeHidden), 'the badge is visual only; the note carries the word TBD');
-  assert.deepEqual(cards.map((c) => c.full), [false, false, true], 'Contact Us spans the grid');
+  assert.deepEqual(cards.map((c) => c.full), [false, false, false], 'Contact Us sits under Dress Code and does not span the grid');
   assert.deepEqual(cards[1].body, [
     'Saint Francis Chapel: 17280 Scenic Highway 98, Fairhope, Alabama 36532. The Grand Hotel: One Grand Boulevard, Point Clear, Alabama 36564.',
     'The Grand Hotel — general reservations (251) 928-9201 · Reservations website.',
@@ -447,7 +447,9 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   assert.match(d, /<a href="tel:\+12519289201">\(251\) 928-9201<\/a>/);
   assert.match(d, /<a href="https:\/\/www\.marriott\.com\/en-us\/hotels\/ptlak-the-grand-hotel-golf-resort-and-spa-autograph-collection\/overview\/" rel="noopener">Reservations website<\/a>/);
   assert.doesNotMatch(d, /Room Block|Room block rate/, 'no Room Block card or TBD');
-  assert.deepEqual(cards[2].body, [], 'Contact Us has no body until the owners supply it');
+  assert.deepEqual(cards[2].body, ['coulsonrw@gmail.com · (202) 746-6124']);
+  assert.match(d, /<a href="mailto:coulsonrw@gmail.com">coulsonrw@gmail.com<\/a>/);
+  assert.match(d, /<a href="tel:\+12027466124">\(202\) 746-6124<\/a>/);
   assert.doesNotMatch(d, /id="details-between"|id="details-children"|id="details-charity"|Between Ceremony|Children policy|Charity|Plans for the time between/);
   assert.doesNotMatch(d, /Registry|celebrate with you|Everything you need/i, 'no registry and no copy in the couple\'s voice');
   const questions = html.slice(html.indexOf('<section id="questions"'), html.indexOf('</section>', html.indexOf('<section id="questions"')));
