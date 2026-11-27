@@ -261,10 +261,11 @@ function detailsView(c, events, contact) {
   } else contactCard.tbd = d.tbdNotes.contact;
 
   const card = (id, title, icon, v, full = false) => ({ id, title, icon, body: v.body && v.body.length ? v.body : null, tbd: v.tbd, full });
+  // Contact Us is a compact first-column card under Dress Code. It does not span the grid (Rob, 27 November 2026).
   const cards = [
     card('dress-code', 'Dress Code', 'd-shirt', owner('dressCode')),
     card('transport', 'Transport & Parking', 'd-car', transport),
-    card('contact', 'Contact Us', 'd-mail', contactCard, true),
+    card('contact', 'Contact Us', 'd-mail', contactCard),
   ];
   return { heading: d.heading, glance, cards, tbdCount: cards.filter((x) => x.tbd).length };
 }

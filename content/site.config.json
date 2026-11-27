@@ -736,16 +736,16 @@
     }
   ],
   "contact": {
-    "email": null,
-    "phone": null,
-    "phoneDisplay": null,
+    "email": "coulsonrw@gmail.com",
+    "phone": "+12027466124",
+    "phoneDisplay": "(202) 746-6124",
     "note": null,
     "approval": {
-      "state": "pending",
+      "state": "approved",
       "owner": "Robert / Natalie",
-      "source": null,
-      "reviewed": "2026-09-21",
-      "note": "Private contact route required before guest launch (PRD \u00a703 exception path, CONTENT-04)."
+      "source": "Rob, 27 November 2026: publish coulsonrw@gmail.com and (202) 746-6124 on the Contact Us card.",
+      "reviewed": "2026-11-27",
+      "note": "Published. The Contact Us card is the one place for the guest contact route."
     }
   },
   "rsvp": {

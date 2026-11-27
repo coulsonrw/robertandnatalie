@@ -1,7 +1,7 @@
 ---
 title: Architecture
-updated: 2026-11-19
-verified_against: ace2afd4ebe49b1819230d15281e611068c49716
+updated: 2026-11-27
+verified_against: 901d6e315bbb41253d5e9c090fb64bf317fc723d
 related:
   - .github/workflows/deploy.yml
   - backend/wrangler.toml
@@ -24,7 +24,7 @@ The public site and the RSVP service are two deploys that share one content file
 
 Ceremony and reception start times come only from `events[].startsAt`, in `America/Chicago`. On 19 December 2026 that offset is `-06:00`. `formalTimeLine` in `scripts/lib/format.mjs` writes the invitation. At 12:00 exactly the line is “Ceremony at Twelve Noon” and does not append `formalDayPart`. Other hours stay “at … O’Clock in the {formalDayPart}”. Clock labels everywhere else stay in the “12:00 p.m.” / “1:00 p.m.” style. `endsAt` stays null, and the calendar files have `DTSTART` and no `DTEND`.
 
-Rob set the ceremony to `2026-12-19T12:00:00-06:00` and the reception to `2026-12-19T13:00:00-06:00` (`formalDayPart` Afternoon) on 7 November 2026. Those starts stay on the invitation, the hero, the Details glance pills, and the Wedding Day cards. On 8 November 2026 he removed three Details cards: Children, Charity, and Between Ceremony & Reception. The glance pills are the schedule, not that gap card. `travel.betweenVenues` is still unpublished; an approved transport note would show under Travel & Stay as “Between the venues”, not as a Details card. The guest-facing frames in `src/img/invitation-frame-*` have the artwork wording removed; the live text is painted over them. `assets/invitation-approved-charcoal.png` still shows the earlier “Two O’Clock” / “Four O’Clock” wording and is not copied into `dist/`.
+Rob set the ceremony to `2026-12-19T12:00:00-06:00` and the reception to `2026-12-19T13:00:00-06:00` (`formalDayPart` Afternoon) on 7 November 2026. Those starts stay on the invitation, the hero, the Details glance pills, and the Wedding Day cards. On 8 November 2026 he removed three Details cards: Children, Charity, and Between Ceremony & Reception. The glance pills are the schedule, not that gap card. `travel.betweenVenues` is still unpublished; an approved transport note would show under Travel & Stay as “Between the venues”, not as a Details card. On 27 November 2026 he supplied a published email and phone for the Contact Us card (the values live in `contact` in the site config, not in this note). That card is no longer full-width: on a wide viewport Dress Code and Contact Us stack in the left column with the same 24px gap as between the columns, so Transport & Parking's height does not open a hole under Dress Code. Transport & Parking stays in the right column. On a single column the order stays Dress Code, Transport & Parking, Contact Us. The guest-facing frames in `src/img/invitation-frame-*` have the artwork wording removed; the live text is painted over them. `assets/invitation-approved-charcoal.png` still shows the earlier “Two O’Clock” / “Four O’Clock” wording and is not copied into `dist/`.
 
 ## The RSVP service
 

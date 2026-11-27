@@ -436,10 +436,10 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   assert.doesNotMatch(html, /Two O’Clock|Four O’Clock|(?<!\d)2:00 p\.m\.|(?<!\d)4:00 p\.m\./);
   const cards = [...d.matchAll(/<article class="details-card([^"]*)"[\s\S]*?<\/article>/g)].map((m) => ({ full: /--full/.test(m[1]), title: text(m[0].match(/<h3[^>]*>(.*?)<\/h3>/)[1]), body: [...m[0].matchAll(/<p class="details-card-body">(.*?)<\/p>/g)].map((x) => text(x[1])), tbd: (m[0].match(/<span class="tbd-note">(.*?)<\/span>/) || [])[1] ?? null, badgeHidden: /<span class="tbd-badge" aria-hidden="true">TBD<\/span>/.test(m[0]) }));
   assert.deepEqual(cards.map((c) => c.title), ['Dress Code', 'Transport & Parking', 'Contact Us']);
-  assert.deepEqual(cards.map((c) => c.tbd), [null, 'Parking and shuttle details TBD.', 'Email and phone TBD.']);
+  assert.deepEqual(cards.map((c) => c.tbd), [null, 'Parking and shuttle details TBD.', null]);
   assert.deepEqual(cards[0].body, ['Formal to Business Casual']);
   assert.ok(cards.filter((c) => c.tbd).every((c) => c.badgeHidden), 'the badge is visual only; the note carries the word TBD');
-  assert.deepEqual(cards.map((c) => c.full), [false, false, true], 'Contact Us spans the grid');
+  assert.deepEqual(cards.map((c) => c.full), [false, false, false], 'Contact Us sits under Dress Code and does not span the grid');
   assert.deepEqual(cards[1].body, [
     'Saint Francis Chapel: 17280 Scenic Highway 98, Fairhope, Alabama 36532. The Grand Hotel: One Grand Boulevard, Point Clear, Alabama 36564.',
     'The Grand Hotel — general reservations (251) 928-9201 · Reservations website.',
@@ -447,13 +447,18 @@ test('Details (Rob, 4 Oct 2026): direction A cards render from config, with TBD 
   assert.match(d, /<a href="tel:\+12519289201">\(251\) 928-9201<\/a>/);
   assert.match(d, /<a href="https:\/\/www\.marriott\.com\/en-us\/hotels\/ptlak-the-grand-hotel-golf-resort-and-spa-autograph-collection\/overview\/" rel="noopener">Reservations website<\/a>/);
   assert.doesNotMatch(d, /Room Block|Room block rate/, 'no Room Block card or TBD');
-  assert.deepEqual(cards[2].body, [], 'Contact Us has no body until the owners supply it');
+  assert.deepEqual(cards[2].body, ['coulsonrw@gmail.com · (202) 746-6124']);
+  assert.match(d, /<a href="mailto:coulsonrw@gmail.com">coulsonrw@gmail.com<\/a>/);
+  assert.match(d, /<a href="tel:\+12027466124">\(202\) 746-6124<\/a>/);
   assert.doesNotMatch(d, /id="details-between"|id="details-children"|id="details-charity"|Between Ceremony|Children policy|Charity|Plans for the time between/);
   assert.doesNotMatch(d, /Registry|celebrate with you|Everything you need/i, 'no registry and no copy in the couple\'s voice');
   const questions = html.slice(html.indexOf('<section id="questions"'), html.indexOf('</section>', html.indexOf('<section id="questions"')));
   assert.match(questions, /<details class="faq" id="faq-attire">\s*<summary>What should I wear\?<\/summary>\s*<div class="faq-body"><p>Formal to Business Casual<\/p><\/div>\s*<\/details>/);
   assert.doesNotMatch(b.read('styles/site.css').split('The Details (direction A')[1].split('*/').slice(1).join('').replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-f]{3,8}\b|Playfair|Inter\b|teal/i, 'the details styles use site tokens only');
   const css = b.read('styles/site.css');
+  assert.match(css, /#details-dress-code, #details-contact \{ float: left; clear: left/, 'Dress Code and Contact Us stack in the left column');
+  assert.match(css, /#details-transport \{ float: right/, 'Transport & Parking sits in the right column and does not size the left-column gap');
+  assert.match(css, /#details-dress-code \{ margin-bottom: 24px/, 'the left-column gap matches the 24px column gap');
   assert.match(css, /\.details-band \{[^}]*background: var\(--ink\);/, 'the title band is the footer\'s dark ink (Rob, 3:22 PM ET)');
   assert.doesNotMatch(css.match(/\.details-band \{[^}]*\}/)[0], /border/, 'no hairline under the dark band');
   for (const sel of ['\\.details-band h2', '\\.details-waves', '\\.details-flourish']) assert.match(css, new RegExp(`${sel} \\{[^}]*var\\(--gold-footer\\)`), `${sel} uses --gold-footer on the dark band`);
